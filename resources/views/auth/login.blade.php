@@ -205,7 +205,13 @@
                     </p>
                 </div>
                 <!-- Login Form -->
-                <form class="space-y-lg" onsubmit="return false;">
+                <form class="space-y-lg" method="POST" action="{{ route('auth.login') }}">
+                    @csrf
+                    @if ($errors->any())
+                        <div class="p-md bg-error-container text-on-error-container rounded-lg">
+                            <p class="font-label-lg text-label-lg mb-sm">{{ $errors->first('email') ?: $errors->first() }}</p>
+                        </div>
+                    @endif
                     <!-- Email Field -->
                     <div class="space-y-xs">
                         <label class="font-label-lg text-label-lg text-on-surface-variant ml-xs" for="email">Email
@@ -215,7 +221,7 @@
                                 class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">mail</span>
                             <input
                                 class="w-full h-[48px] pl-2xl pr-md bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md"
-                                id="email" placeholder="name@company.com" type="email" />
+                                id="email" name="email" placeholder="name@company.com" type="email" value="{{ old('email') }}" required />
                         </div>
                     </div>
                     <!-- Password Field -->
@@ -231,7 +237,7 @@
                                 class="material-symbols-outlined absolute left-md top-1/2 -translate-y-1/2 text-outline">lock</span>
                             <input
                                 class="w-full h-[48px] pl-2xl pr-2xl bg-surface-container-lowest border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition-all text-body-md"
-                                id="password" placeholder="••••••••" type="password" />
+                                id="password" name="password" placeholder="••••••••" type="password" required />
                             <button
                                 class="absolute right-md top-1/2 -translate-y-1/2 text-outline hover:text-on-surface transition-colors"
                                 onclick="togglePassword()" type="button">
