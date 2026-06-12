@@ -5,7 +5,7 @@
 <head>
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
-    <title>Register - FinancePro</title>
+    <title>Register - LoanPro</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap"
         rel="stylesheet" />
@@ -132,10 +132,21 @@
         <section
             class="hidden lg:flex flex-col justify-between w-1/3 p-2xl bg-primary rounded-xl relative overflow-hidden text-on-primary">
             <div class="relative z-10">
-                <h1 class="font-headline-md text-headline-md font-bold mb-md">FinancePro</h1>
+                <h1 class="font-headline-md text-headline-md font-bold mb-md">LoanPro</h1>
                 <p class="font-body-lg text-body-lg opacity-90 max-w-xs">Elevate your financial journey with
                     institutional-grade tools and seamless loan management.</p>
             </div>
+           
+           @if ($errors->any())
+                <div class="mt-4 p-md bg-error text-on-error rounded-lg">
+                    <h4 class="font-label-lg text-label-lg font-bold mb-sm">Registration Errors:</h4>
+                    <ul class="list-disc pl-lg space-y-xs">
+                        @foreach ($errors->all() as $error)
+                            <li class="font-body-sm text-body-sm">{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+           @endif
             <!-- Contextual Branding Image -->
             <div class="relative z-10 mt-xl">
                 <div class="glass-panel p-lg rounded-xl border border-white/20 bg-white/10">
@@ -147,7 +158,7 @@
                         with any financial institution."</p>
                     <div class="flex items-center gap-sm mt-md">
                         <div class="w-8 h-8 rounded-full bg-surface-container-high"></div>
-                        <span class="font-label-md text-label-md">Michael Chen, SME Owner</span>
+                        <span class="font-label-md text-label-md">Gody Ouwa, SME Owner</span>
                     </div>
                 </div>
             </div>
@@ -167,14 +178,15 @@
                     <div class="font-label-lg text-label-lg text-primary font-bold" id="step-label-1">Personal Info
                     </div>
                     <div class="font-label-lg text-label-lg text-outline" id="step-label-2">Security</div>
-                    <div class="font-label-lg text-label-lg text-outline" id="step-label-3">Verification</div>
+                    <div class="font-label-lg text-label-lg text-outline" style="display:none" id="step-label-3">Verification</div>
                 </div>
                 <div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden flex">
                     <div class="h-full bg-primary transition-all duration-500 ease-out" id="progress-bar"
                         style="width: 33.33%"></div>
                 </div>
             </div>
-            <form class="flex-1 flex flex-col" id="registration-form">
+            <form id="registration-form" class="flex-1 flex flex-col" method="POST" action="{{ route('auth.register') }}">
+                @csrf
                 <!-- Step 1: Personal Info -->
                 <div class="step-transition" id="step-content-1">
                     <div class="mb-xl">
@@ -187,37 +199,37 @@
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Full Name</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                placeholder="Johnathan Doe" type="text" />
+                                placeholder="Johnathan Doe" name="fullname" type="text" value="{{ old('fullname') }}" required/>
                         </div>
                         <div class="flex flex-col gap-xs">
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Username</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                placeholder="johndoe_finance" type="text" />
+                                placeholder="johndoe_finance" name="username" type="text" value="{{ old('username') }}" required/>
                         </div>
                         <div class="flex flex-col gap-xs">
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Email Address</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                placeholder="john@example.com" type="email" />
+                                placeholder="john@example.com" name="email" type="email" value="{{ old('email') }}" required/>
                         </div>
                         <div class="flex flex-col gap-xs">
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Phone Number</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                placeholder="+1 (555) 000-0000" type="tel" />
+                                placeholder="0700000000" name="phone" type="tel" value="{{ old('phone') }}" required/>
                         </div>
                         <div class="flex flex-col gap-xs">
                             <label class="font-label-lg text-label-lg text-on-surface-variant">NIDA Number</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                placeholder="19900101-XXXXX-XXXXX" type="text" />
+                                placeholder="19900101-XXXXX-XXXXX" name="nida_number" type="text" value="{{ old('nida_number') }}" required/>
                         </div>
                         <div class="flex flex-col gap-xs">
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Date of Birth</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                type="date" />
+                                name="date_of_birth" type="date" value="{{ old('date_of_birth') }}" required/>
                         </div>
                         <div class="flex flex-col gap-xs md:col-span-2">
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Gender</label>
@@ -225,19 +237,19 @@
                                 <label
                                     class="flex-1 flex items-center gap-sm p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
                                     <input class="text-primary focus:ring-primary" name="gender" type="radio"
-                                        value="male" />
+                                        value="male" @checked(old('gender', 'male') === 'male')/>
                                     <span class="font-body-md text-body-md">Male</span>
                                 </label>
                                 <label
                                     class="flex-1 flex items-center gap-sm p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
                                     <input class="text-primary focus:ring-primary" name="gender" type="radio"
-                                        value="female" />
+                                        value="female" @checked(old('gender') === 'female')/>
                                     <span class="font-body-md text-body-md">Female</span>
                                 </label>
                                 <label
                                     class="flex-1 flex items-center gap-sm p-md border border-outline-variant rounded-lg cursor-pointer hover:bg-surface-container-low transition-colors has-[:checked]:border-primary has-[:checked]:bg-primary-container/10">
                                     <input class="text-primary focus:ring-primary" name="gender" type="radio"
-                                        value="other" />
+                                        value="other" @checked(old('gender') === 'other')/>
                                     <span class="font-body-md text-body-md">Other</span>
                                 </label>
                             </div>
@@ -257,19 +269,14 @@
                             <div class="relative">
                                 <input
                                     class="w-full h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md pr-12 transition-all"
-                                    placeholder="••••••••" type="password" />
+                                    placeholder="Password" name="password" type="password" required/>
                                 <button
                                     class="absolute right-4 top-1/2 -translate-y-1/2 text-outline-variant hover:text-on-surface-variant"
-                                    type="button">
+                                    id="password-toggle" type="button">
                                     <span class="material-symbols-outlined">visibility</span>
                                 </button>
                             </div>
-                            <div class="mt-sm flex gap-xs">
-                                <div class="h-1 flex-1 bg-error rounded-full"></div>
-                                <div class="h-1 flex-1 bg-surface-container-high rounded-full"></div>
-                                <div class="h-1 flex-1 bg-surface-container-high rounded-full"></div>
-                                <div class="h-1 flex-1 bg-surface-container-high rounded-full"></div>
-                            </div>
+                            
                             <p class="font-label-md text-label-md text-on-surface-variant mt-xs">Password must be at
                                 least 8 characters long.</p>
                         </div>
@@ -277,7 +284,7 @@
                             <label class="font-label-lg text-label-lg text-on-surface-variant">Confirm Password</label>
                             <input
                                 class="h-12 border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-lg font-body-md text-body-md px-md transition-all"
-                                placeholder="••••••••" type="password" />
+                                placeholder="Confirm password" name="password_confirmation" type="password" required />
                         </div>
                         <div class="bg-surface-container p-lg rounded-xl border border-outline-variant/50">
                             <h4 class="font-label-lg text-label-lg text-on-surface mb-sm flex items-center gap-xs">
@@ -289,28 +296,6 @@
                                 <li>Avoid using common words or personal birthdays.</li>
                                 <li>Enable 2FA in settings after registration.</li>
                             </ul>
-                        </div>
-                    </div>
-                </div>
-                <!-- Step 3: Verification (Hidden by Default) -->
-                <div class="step-transition hidden" id="step-content-3">
-                    <div class="mb-xl">
-                        <h2 class="font-headline-md text-headline-md text-on-surface mb-xs">Verify Identity</h2>
-                        <p class="font-body-md text-body-md text-on-surface-variant">We need to verify your National ID
-                            to comply with financial regulations.</p>
-                    </div>
-                    <div class="flex flex-col gap-xl">
-                        <div class="flex flex-col gap-xs">
-                            <label class="font-label-lg text-label-lg text-on-surface-variant">National ID
-                                Document</label>
-                            <div
-                                class="border-2 border-dashed border-outline-variant hover:border-primary hover:bg-primary-container/5 rounded-xl p-3xl flex flex-col items-center justify-center cursor-pointer transition-all">
-                                <span class="material-symbols-outlined text-primary text-4xl mb-md">cloud_upload</span>
-                                <p class="font-body-md text-body-md text-on-surface font-semibold">Click to upload or
-                                    drag and drop</p>
-                                <p class="font-body-sm text-body-sm text-on-surface-variant mt-xs">PNG, JPG or PDF (max.
-                                    10MB)</p>
-                            </div>
                         </div>
                         <div class="flex flex-col gap-md">
                             <label class="flex items-start gap-md group cursor-pointer">
@@ -338,19 +323,9 @@
                                     insights and product updates.</span>
                             </label>
                         </div>
-                        <!-- Success Simulation State (Invisible) -->
-                        <div class="hidden text-center py-xl" id="success-message">
-                            <div
-                                class="w-20 h-20 bg-tertiary-container text-on-tertiary-container rounded-full flex items-center justify-center mx-auto mb-lg">
-                                <span class="material-symbols-outlined text-4xl"
-                                    style="font-variation-settings: 'FILL' 1;">check_circle</span>
-                            </div>
-                            <h3 class="font-headline-md text-headline-md text-on-surface">Account Created!</h3>
-                            <p class="font-body-md text-body-md text-on-surface-variant mt-sm">Your information is being
-                                reviewed. We'll notify you shortly.</p>
-                        </div>
                     </div>
                 </div>
+                
                 <!-- Form Navigation Actions -->
                 <div class="mt-auto pt-2xl flex items-center justify-between">
                     <button
@@ -373,11 +348,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             let currentStep = 1;
-            const totalSteps = 3;
+            const totalSteps = 2;
 
             const nextBtn = document.getElementById('next-btn');
             const prevBtn = document.getElementById('prev-btn');
             const progressBar = document.getElementById('progress-bar');
+
+            const validateCurrentStep = () => {
+                const content = document.getElementById(`step-content-${currentStep}`);
+                const controls = content.querySelectorAll('input, select, textarea');
+
+                for (const control of controls) {
+                    if (!control.checkValidity()) {
+                        control.reportValidity();
+
+                        return false;
+                    }
+                }
+
+                return true;
+            };
 
             const updateUI = () => {
                 // Handle Step Contents
@@ -416,18 +406,26 @@
 
             nextBtn.addEventListener('click', () => {
                 if (currentStep < totalSteps) {
+                    if (!validateCurrentStep()) {
+                        return;
+                    }
+
                     currentStep++;
                     updateUI();
                 } else {
-                    // Final Submission Logic
+                    // Final submission uses built-in browser constraint validation first.
                     const form = document.getElementById('registration-form');
-                    const contents = [1, 2, 3].map(i => document.getElementById(`step-content-${i}`));
-                    contents.forEach(c => c.classList.add('hidden'));
 
-                    document.getElementById('success-message').classList.remove('hidden');
-                    nextBtn.innerText = 'Go to Dashboard';
-                    nextBtn.onclick = () => window.location.reload(); // Redirect simulation
-                    prevBtn.classList.add('hidden');
+                    // Prefer requestSubmit (runs constraint validation). Fallback to checkValidity/reportValidity.
+                    if (typeof form.requestSubmit === 'function') {
+                        form.requestSubmit();
+                    } else {
+                        if (form.checkValidity()) {
+                            form.submit();
+                        } else {
+                            form.reportValidity();
+                        }
+                    }
                 }
             });
 
@@ -439,7 +437,7 @@
             });
 
             // Password Visibility Toggle Logic
-            const eyeBtn = document.querySelector('button .material-symbols-outlined:contains("visibility")')?.parentElement;
+            const eyeBtn = document.getElementById('password-toggle');
             if (eyeBtn) {
                 eyeBtn.addEventListener('click', (e) => {
                     const input = eyeBtn.previousElementSibling;
