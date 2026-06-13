@@ -26,9 +26,15 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('/dashboard/user')->group(function () {
         Route::get('/', [UserDashboardController::class, 'index'])->name('dashboard.user');
-        Route::resource('loans', LoanController::class)->only(['index', 'create', 'store', 'show']);
-        Route::resource('portfolio', PortfolioController::class)->only(['index', 'create', 'store']);
-        Route::resource('budget', BudgetController::class)->only(['index', 'create', 'store']);
+        Route::get('loans', [LoanController::class, 'index'])->name('loans.index');
+        Route::get('loans/repayments', [LoanController::class, 'create'])->name('loans.payments');
+        Route::get('loans/apply', [LoanController::class, 'applyloan'])->name('loans.apply');
+        Route::post('loans', [LoanController::class, 'store'])->name('loans.store');
+        //Route::get('loans/{loan}', [LoanController::class, 'show'])->name('loans.show');
+        //Route::resource('portfolio', PortfolioController::class)->only(['index', 'create', 'store']);
+        //Route::resource('budget', BudgetController::class)->only(['index', 'create', 'store']);
+
+        Route::get('/profile', [UserDashboardController::class, 'profile'])->name('user.profile');
     });
 
     Route::prefix('/dashboard/admin')->middleware('role:admin,manager,loan_officer')->group(function () {

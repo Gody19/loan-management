@@ -13,8 +13,8 @@
             </div>
             <div class="flex gap-md w-full md:w-auto">
                 <button class="flex-1 md:flex-none bg-on-primary text-primary font-bold px-xl py-md rounded-lg shadow-sm hover:bg-surface-container-lowest transition-all active:scale-95">
-                    Apply for New Loan
-                </button>
+                    <a href="{{ route('loans.apply') }}">Apply for New Loan</a>
+                </button></a>
                 <!--<button class="flex-1 md:flex-none border border-on-primary/30 text-on-primary font-bold px-xl py-md rounded-lg hover:bg-on-primary/10 transition-all active:scale-95">
                     Make a Payment
                 </button>-->

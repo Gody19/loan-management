@@ -11,7 +11,7 @@ class LoanController extends Controller
      */
     public function index()
     {
-        //
+        return view('dashboard.user.loanhistory');
     }
 
     /**
@@ -19,9 +19,13 @@ class LoanController extends Controller
      */
     public function create()
     {
-        //
+        return view('dashboard.user.repayment'); 
     }
 
+    public function applyloan()
+    {
+        return view('dashboard.user.applyloan');
+    }
     /**
      * Store a newly created resource in storage.
      */

@@ -23,4 +23,9 @@ class UserDashboardController extends Controller
             'recentTransactions' => $recentTransactions,
         ]);
     }
+    public function profile()
+    {
+        $user = auth()->user();
+        return view('dashboard.user.profile', compact('user'));
+    }
 }

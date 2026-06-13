@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class LoginController extends Controller
@@ -43,7 +44,7 @@ class LoginController extends Controller
             'username' => 'required|string|max:255',
             'email' => 'required|email|unique:users',
             'phone' => 'required|string|max:20',
-            'nida_number' => 'required|string|unique:users',
+            'nida_number' => 'required|string|',Rule::unique('users','nida_number'),
             'date_of_birth' => 'required|date',
             'gender' => 'required|in:male,female,other',
             'password' => 'required|confirmed|min:8',
