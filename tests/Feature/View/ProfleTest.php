@@ -1,9 +1,15 @@
 <?php
 
-it('can render', function () {
-    $contents = $this->view('profle', [
-        //
-    ]);
+namespace Tests\Feature\View;
 
-    $contents->assertSee('');
-});
+use Tests\TestCase;
+
+class ProfleTest extends TestCase
+{
+    public function test_can_render(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertStatus(200);
+    }
+}

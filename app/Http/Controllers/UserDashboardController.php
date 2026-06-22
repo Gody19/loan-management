@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
 class UserDashboardController extends Controller
 {
     public function index()
@@ -22,10 +20,5 @@ class UserDashboardController extends Controller
             'budgets' => $budgets,
             'recentTransactions' => $recentTransactions,
         ]);
-    }
-    public function profile()
-    {
-        $user = auth()->user();
-        return view('dashboard.user.profile', compact('user'));
     }
 }

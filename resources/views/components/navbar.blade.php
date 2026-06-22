@@ -1,62 +1,57 @@
-<!-- Header / Top Nav Context -->
-<header class="sticky top-0 w-full z-30 flex items-center justify-between px-margin-mobile md:px-xl h-16 bg-surface-container-lowest shadow-sm border-b border-outline-variant">
-    <div class="flex items-center gap-md">
-        <button class="md:hidden p-base rounded-full hover:bg-surface-container-high transition-colors" id="mobileMenuButton">
-            <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div class="hidden md:block">
-            <span class="font-headline-md text-headline-md font-bold text-primary">@yield('page-title', 'Dashboard')</span>
+<!-- Top Navbar -->
+<div class="bg-white border-b border-gray-200 px-4 md:px-6 py-4 flex items-center justify-between sticky top-0 z-30">
+    <!-- Mobile Sidebar Toggle -->
+    <button id="sidebar-toggle" class="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors mr-2">
+        <span class="material-symbols-outlined">menu</span>
+    </button>
+
+    <!-- Search Bar -->
+    <div class="flex-1 max-w-md">
+        <div class="relative">
+            <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <input type="text" placeholder="Search..." class="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 text-sm" />
         </div>
     </div>
-    
-    <div class="flex items-center gap-lg">
-        <div class="hidden lg:flex items-center bg-surface-container-low px-md py-xs rounded-full border border-outline-variant">
-            <span class="material-symbols-outlined text-outline">search</span>
-            <input class="bg-transparent border-none focus:ring-0 text-sm w-48" 
-                   placeholder="Search transactions..." 
-                   type="text" 
-                   id="searchInput">
-        </div>
-        
-        <div class="flex items-center gap-md">
-            <button class="relative material-symbols-outlined text-on-surface-variant p-base hover:bg-surface-container-high rounded-full cursor-pointer transition-colors" 
-                    id="notificationButton">
-                notifications
-                <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
-            </button>
-            
-            <div class="flex items-center gap-sm">
-                <img alt="User profile" 
-                     class="w-8 h-8 rounded-full border border-primary/20 cursor-pointer hover:opacity-80 transition-opacity" 
-                     src="{{ Auth::user()->avatar ?? 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvbB8s4zZHELNowvIovmtcnec0LxWksHSRwRTVrrRY5Z9LYTjTBX-o08ovZJKv_04G6XHnUOfh2svGJMrs9yBJujKmq7fQWQqpjOx0oCi0yN6WjSQHPESA4TeqNWotaHbtyQdhCt6Qnle8j7aIdqxeXFPD1V_AcPVOrW3JNU5lBeOAg99wkjHjNYNpZpvNImr2cSrd-jEp1fu6Ek3xjnWpEboiBBiNUY8giNUNw5ZfRGMFjYazBS8KJKpMyUHuY0McVQNPCRoEG1Y' }}">
-                <span class="hidden sm:inline font-label-lg text-label-lg text-on-surface">{{ Auth::user()->fullname ?? 'Alex Sterling' }}</span>
+
+    <!-- Right Side Actions -->
+    <div class="flex items-center gap-2 md:gap-4 ml-auto">
+        <button class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+            <span class="material-symbols-outlined">notifications</span>
+            <span class="absolute top-1 right-1 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+
+        <div class="flex items-center gap-3 pl-4 border-l border-gray-200">
+            <div class="text-right hidden sm:block">
+                <p class="text-sm font-semibold text-gray-900">{{ auth()->user()->fullname ?? auth()->user()->name }}</p>
+                <p class="text-xs text-gray-500 capitalize">{{ auth()->user()->role }}</p>
+            </div>
+            <div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-on-primary font-semibold text-sm">
+                {{ strtoupper(substr(auth()->user()->fullname ?? auth()->user()->name, 0, 1)) }}
+            </div>
+
+            <div class="relative group">
+                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                    <span class="material-symbols-outlined">expand_more</span>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100 first:rounded-t-lg">
+                        <span class="material-symbols-outlined inline text-sm mr-2">person</span>
+                        Profile
+                    </a>
+                    <a href="{{ route('settings.index') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">
+                        <span class="material-symbols-outlined inline text-sm mr-2">settings</span>
+                        Settings
+                    </a>
+                    <hr class="my-2">
+                    <form action="{{ route('logout') }}" method="POST" class="block">
+                        @csrf
+                        <button type="submit" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 last:rounded-b-lg">
+                            <span class="material-symbols-outlined inline text-sm mr-2">logout</span>
+                            Logout
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</header>
-
-@push('scripts')
-<script>
-    // Mobile menu toggle
-    document.getElementById('mobileMenuButton')?.addEventListener('click', function() {
-        const sidebar = document.querySelector('aside');
-        sidebar.classList.toggle('hidden');
-        sidebar.classList.toggle('fixed');
-        sidebar.classList.toggle('inset-0');
-        sidebar.classList.toggle('z-50');
-    });
-    
-    // Search functionality
-    document.getElementById('searchInput')?.addEventListener('input', function(e) {
-        const searchTerm = e.target.value.toLowerCase();
-        // Implement search logic here
-        console.log('Searching for:', searchTerm);
-    });
-    
-    // Notifications
-    document.getElementById('notificationButton')?.addEventListener('click', function() {
-        // Implement notification panel toggle
-        console.log('Notifications clicked');
-    });
-</script>
-@endpush
+</div>

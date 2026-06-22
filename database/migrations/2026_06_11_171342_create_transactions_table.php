@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->foreignId('portfolio_id')->nullable()->constrained('portfolios')->onDelete('set null');
-            $table->foreignId('budget_id')->nullable()->constrained('budgets')->onDelete('set null');
+            $table->unsignedBigInteger('budget_id')->nullable();
             $table->enum('type', ['income', 'expense', 'transfer', 'investment'])->default('expense');
             $table->decimal('amount', 12, 2);
             $table->string('description');

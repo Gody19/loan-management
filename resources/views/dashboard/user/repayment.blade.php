@@ -49,7 +49,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-label-lg text-on-surface-variant font-medium">Outstanding Balance</p>
-                        <h4 class="font-display-md text-display-md text-on-surface mt-xs">$12,450.00</h4>
+                        <h4 class="font-display-md text-display-md text-on-surface mt-xs">TZS 12,450.00</h4>
                     </div>
                     <div class="w-12 h-12 rounded-full bg-error-container/30 flex items-center justify-center text-error">
                         <span class="material-symbols-outlined">account_balance_wallet</span>
@@ -67,7 +67,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-label-lg text-primary font-medium">Next Payment</p>
-                        <h4 class="font-display-md text-display-md text-primary mt-xs">$850.00</h4>
+                        <h4 class="font-display-md text-display-md text-primary mt-xs">TZS  850.00</h4>
                     </div>
                     <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                         <span class="material-symbols-outlined">event</span>
@@ -89,17 +89,17 @@
                         </div>
                         <div>
                             <p class="text-label-lg text-on-surface-variant font-medium">Total Paid to Date</p>
-                            <h4 class="font-headline-lg text-headline-lg text-on-surface mt-xs">$28,550.00</h4>
+                            <h4 class="font-headline-lg text-headline-lg text-on-surface mt-xs">TZS 28,550.00</h4>
                         </div>
                     </div>
                     <div class="flex items-center gap-xl md:border-l border-outline-variant md:pl-xl">
                         <div>
                             <p class="text-label-md text-on-surface-variant">Principal</p>
-                            <p class="font-bold text-on-surface">$24,000.00</p>
+                            <p class="font-bold text-on-surface">TZS 24,000.00</p>
                         </div>
                         <div>
                             <p class="text-label-md text-on-surface-variant">Interest</p>
-                            <p class="font-bold text-on-surface">$4,550.00</p>
+                            <p class="font-bold text-on-surface">TZS 4,550.00</p>
                         </div>
                     </div>
                 </div>
@@ -140,7 +140,7 @@
                     <tr class="hover:bg-surface-container-low transition-colors group">
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">#08</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">Sep 15, 2024</td>
-                        <td class="px-lg py-md font-bold text-body-md text-on-surface">$850.00</td>
+                        <td class="px-lg py-md font-bold text-body-md text-on-surface">TZS 850.00</td>
                         <td class="px-lg py-md">
                             <span
                                 class="inline-flex items-center gap-xs px-md py-xs rounded-full bg-tertiary-container/20 text-tertiary font-bold text-label-md">
@@ -158,7 +158,7 @@
                     <tr class="bg-primary/5 hover:bg-primary/10 transition-colors group">
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">#09</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">Oct 15, 2024</td>
-                        <td class="px-lg py-md font-bold text-body-md text-on-surface">$850.00</td>
+                        <td class="px-lg py-md font-bold text-body-md text-on-surface">TZS 850.00</td>
                         <td class="px-lg py-md">
                             <span
                                 class="inline-flex items-center gap-xs px-md py-xs rounded-full bg-primary/10 text-primary font-bold text-label-md">
@@ -176,7 +176,7 @@
                     <tr class="hover:bg-surface-container-low transition-colors group">
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">#10</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">Nov 15, 2024</td>
-                        <td class="px-lg py-md font-bold text-body-md text-on-surface">$850.00</td>
+                        <td class="px-lg py-md font-bold text-body-md text-on-surface">TZS 850.00</td>
                         <td class="px-lg py-md">
                             <span
                                 class="inline-flex items-center gap-xs px-md py-xs rounded-full bg-surface-container-high text-on-surface-variant font-bold text-label-md">
@@ -193,7 +193,7 @@
                     <tr class="hover:bg-surface-container-low transition-colors group">
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">#11</td>
                         <td class="px-lg py-md font-body-md text-body-md text-on-surface">Dec 15, 2024</td>
-                        <td class="px-lg py-md font-bold text-body-md text-on-surface">$850.00</td>
+                        <td class="px-lg py-md font-bold text-body-md text-on-surface">TZS 850.00</td>
                         <td class="px-lg py-md">
                             <span
                                 class="inline-flex items-center gap-xs px-md py-xs rounded-full bg-surface-container-high text-on-surface-variant font-bold text-label-md">

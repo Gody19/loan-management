@@ -2,61 +2,59 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Budget;
 use Illuminate\Http\Request;
 
 class BudgetController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $budgets = auth()->user()->budgets()->with('category')->latest()->paginate(10);
+
+        return view('dashboard.user.budgets.index', compact('budgets'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
-        //
+        return view('dashboard.user.budgets.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'limit_amount' => 'required|numeric|min:0',
+            'category_id' => 'nullable|exists:categories,id',
+            'period' => 'required|in:weekly,monthly,quarterly,yearly',
+            'start_date' => 'required|date',
+            'end_date' => 'nullable|date|after:start_date',
+        ]);
+
+        $validated['user_id'] = auth()->id();
+        $validated['spent_amount'] = 0;
+        $validated['status'] = 'active';
+
+        Budget::create($validated);
+
+        return redirect()->route('budget.index')->with('success', 'Budget created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(string $id)
     {
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         //

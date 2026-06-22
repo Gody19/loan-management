@@ -9,7 +9,7 @@
 
         <div class="flex flex-col gap-xs">
             <label class="font-label-lg text-label-lg text-on-surface-variant">Loan Amount</label>
-            <input type="number" name="amount" step="0.01" placeholder="50000" class="p-md border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary" required />
+            <input type="number" name="amount" step="0.01" placeholder="" class="p-md border border-outline-variant rounded-lg focus:ring-2 focus:ring-primary" required />
         </div>
 
         <div class="flex flex-col gap-xs">

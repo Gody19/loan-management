@@ -23,6 +23,14 @@
             background: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(8px);
         }
+
+        @media print {
+            body * { visibility: hidden; }
+            #sidebar, #sidebar-overlay, nav, footer, .no-print { display: none !important; }
+            main { margin-left: 0 !important; }
+            .print-area, .print-area * { visibility: visible; }
+            .print-area { position: absolute; left: 0; top: 0; width: 100%; }
+        }
     </style>
     
     <script id="tailwind-config">
@@ -137,7 +145,7 @@
     @include('components.sidebar')
     
     <!-- Main Content Area -->
-    <main class="md:ml-64 min-h-screen">
+    <main class="md:ml-64 min-h-screen pt-0">
         <!-- Navbar -->
         @include('components.navbar')
         
