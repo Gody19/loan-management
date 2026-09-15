@@ -1,0 +1,287 @@
+/* VICOBA Finance Management - Custom Styles */
+
+/* =====================================================
+   SIDEBAR STYLES
+   ===================================================== */
+.vicoba-sidebar {
+    width: var(--sidebar-width);
+    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    transition: all 0.3s ease;
+    background: linear-gradient(180deg, #1a1f36 0%, #0f1225 100%);
+    overflow-y: auto;
+}
+
+.vicoba-sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
+}
+
+.vicoba-sidebar .nav-link {
+    color: rgba(255, 255, 255, 0.65);
+    padding: 0.625rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.875rem;
+    border-radius: 0.375rem;
+    margin: 0.125rem 0.75rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.vicoba-sidebar .nav-link:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.vicoba-sidebar .nav-link.active {
+    color: #ffffff;
+    background: var(--vicoba-primary);
+    font-weight: 500;
+}
+
+.vicoba-sidebar .nav-link i {
+    width: 1.25rem;
+    text-align: center;
+    font-size: 1.1rem;
+}
+
+.vicoba-sidebar .sidebar-section {
+    padding: 0.75rem 1.25rem 0.375rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 600;
+}
+
+/* =====================================================
+   MAIN CONTENT AREA
+   ===================================================== */
+.vicoba-main {
+    margin-left: var(--sidebar-width);
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    transition: all 0.3s ease;
+}
+
+.vicoba-main.expanded {
+    margin-left: var(--sidebar-collapsed-width);
+}
+
+/* =====================================================
+   TOP NAVBAR
+   ===================================================== */
+.vicoba-navbar {
+    height: var(--navbar-height);
+    background: #ffffff;
+    border-bottom: 1px solid #e9ecef;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+/* =====================================================
+   STAT CARDS
+   ===================================================== */
+.vicoba-stat-card {
+    border: none;
+    border-radius: 0.75rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.vicoba-stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.vicoba-stat-card .stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.vicoba-stat-card .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.vicoba-stat-card .stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* =====================================================
+   DATA TABLES
+   ===================================================== */
+.vicoba-table {
+    font-size: 0.875rem;
+}
+
+.vicoba-table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    color: #495057;
+    padding: 0.75rem 1rem;
+}
+
+.vicoba-table tbody td {
+    padding: 0.75rem 1rem;
+    vertical-align: middle;
+    border-color: #f0f0f0;
+}
+
+.vicoba-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* =====================================================
+   BADGES
+   ===================================================== */
+.badge-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+/* =====================================================
+   FORMS
+   ===================================================== */
+.vicoba-form .form-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.375rem;
+}
+
+.vicoba-form .form-control,
+.vicoba-form .form-select {
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+    border-color: #dee2e6;
+}
+
+.vicoba-form .form-control:focus,
+.vicoba-form .form-select:focus {
+    border-color: var(--vicoba-primary);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+}
+
+/* =====================================================
+   BUTTONS
+   ===================================================== */
+.vicoba-btn {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
+
+/* =====================================================
+   CARDS
+   ===================================================== */
+.vicoba-card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.vicoba-card .card-header {
+    background: #ffffff;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 1.25rem;
+    border-radius: 0.75rem 0.75rem 0 0 !important;
+}
+
+/* =====================================================
+   BREADCRUMB
+   ===================================================== */
+.vicoba-breadcrumb {
+    background: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.vicoba-breadcrumb .breadcrumb-item a {
+    color: var(--vicoba-primary);
+    text-decoration: none;
+}
+
+.vicoba-breadcrumb .breadcrumb-item.active {
+    color: #6c757d;
+}
+
+/* =====================================================
+   MODAL OVERRIDES
+   ===================================================== */
+.modal-content {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.modal-header {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 1rem 1.25rem;
+}
+
+.modal-footer {
+    border-top: 1px solid #f0f0f0;
+    padding: 0.75rem 1.25rem;
+}
+
+/* =====================================================
+   CURRENCY FORMAT
+   ===================================================== */
+.currency-value {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+}
+
+/* =====================================================
+   RESPONSIVE OVERRIDES
+   ===================================================== */
+@media (max-width: 991.98px) {
+    .vicoba-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .vicoba-sidebar.show {
+        transform: translateX(0);
+    }
+
+    .vicoba-main {
+        margin-left: 0;
+    }
+}
+
+/* =====================================================
+   SCROLLBAR
+   ===================================================== */
+.vicoba-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.vicoba-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 2px;
+}
+
+.vicoba-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}

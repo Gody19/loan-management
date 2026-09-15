@@ -41,28 +41,13 @@ class User extends Authenticatable
         ];
     }
 
-    public function loans()
+    public function isActive(): bool
     {
-        return $this->hasMany(Loan::class);
+        return $this->is_active;
     }
 
-    public function processedLoans()
+    public function getSetting(string $key, mixed $default = null): mixed
     {
-        return $this->hasMany(Loan::class, 'processed_by');
-    }
-
-    public function portfolios()
-    {
-        return $this->hasMany(Portfolio::class);
-    }
-
-    public function budgets()
-    {
-        return $this->hasMany(Budget::class);
-    }
-
-    public function transactions()
-    {
-        return $this->hasMany(Transaction::class);
+        return data_get($this->settings, $key, $default);
     }
 }
