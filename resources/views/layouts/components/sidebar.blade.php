@@ -98,10 +98,24 @@
             <span>Settings</span>
         </a>
 
-        @if(auth()->check() && in_array(auth()->user()->role, ['admin', 'manager']))
-        <a href="#" class="nav-link">
+        @if(auth()->check() && auth()->user()->can('user.view'))
+        <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+            <i class="bi bi-people-fill"></i>
+            <span>Users</span>
+        </a>
+        @endif
+
+        @if(auth()->check() && auth()->user()->can('role.view'))
+        <a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
             <i class="bi bi-shield-lock"></i>
-            <span>Users & Roles</span>
+            <span>Roles</span>
+        </a>
+        @endif
+
+        @if(auth()->check() && auth()->user()->can('permission.view'))
+        <a href="{{ route('permissions.index') }}" class="nav-link {{ request()->routeIs('permissions.*') ? 'active' : '' }}">
+            <i class="bi bi-key"></i>
+            <span>Permissions</span>
         </a>
         @endif
 
@@ -117,7 +131,9 @@
             </div>
             <div class="flex-grow-1 overflow-hidden">
                 <div class="text-white fw-medium small text-truncate">{{ auth()->user()->fullname ?? 'User' }}</div>
-                <div class="text-white-50" style="font-size: 0.65rem;">{{ ucfirst(auth()->user()->role ?? 'user') }}</div>
+                <div class="text-white-50" style="font-size: 0.65rem;">
+                    {{ auth()->user()->roles->pluck('name')->first() ?? 'No Role' }}
+                </div>
             </div>
         </div>
     </div>

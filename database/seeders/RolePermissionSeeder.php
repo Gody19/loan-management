@@ -1,0 +1,175 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\User;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
+
+class RolePermissionSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Reset cached roles and permissions
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Permissions
+        |--------------------------------------------------------------------------
+        */
+        $modules = [
+            'user',
+            'role',
+            'permission',
+            'dashboard',
+            'member',
+            'group',
+            'branch',
+            'savings',
+            'shares',
+            'loans',
+            'accounting',
+            'meetings',
+            'reports',
+            'settings',
+            'audit',
+        ];
+
+        $actions = [
+            'view',
+            'create',
+            'update',
+            'delete',
+            'assign',
+            'approve',
+            'export',
+            'import',
+        ];
+
+        foreach ($modules as $module) {
+            foreach ($actions as $action) {
+                Permission::firstOrCreate([
+                    'name' => "{$module}.{$action}",
+                    'guard_name' => 'web',
+                ]);
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Roles
+        |--------------------------------------------------------------------------
+        */
+        $allPermissions = Permission::all();
+
+        // Super Administrator - has all permissions
+        $superAdmin = Role::firstOrCreate(['name' => 'Super Administrator', 'guard_name' => 'web']);
+        $superAdmin->syncPermissions($allPermissions);
+
+        // Organization Administrator
+        $orgAdmin = Role::firstOrCreate(['name' => 'Organization Administrator', 'guard_name' => 'web']);
+        $orgAdmin->syncPermissions($allPermissions->filter(fn ($p) => !str_contains($p->name, 'audit.')));
+
+        // Branch Manager
+        $branchManager = Role::firstOrCreate(['name' => 'Branch Manager', 'guard_name' => 'web']);
+        $branchManager->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array(explode('.', $p->name)[0], ['dashboard', 'member', 'group', 'savings', 'shares', 'loans', 'meetings', 'reports'])
+        ));
+
+        // Loan Officer
+        $loanOfficer = Role::firstOrCreate(['name' => 'Loan Officer', 'guard_name' => 'web']);
+        $loanOfficer->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array($p->name, ['dashboard.view', 'member.view', 'loans.view', 'loans.create', 'loans.update', 'reports.view'])
+        ));
+
+        // Credit Officer
+        $creditOfficer = Role::firstOrCreate(['name' => 'Credit Officer', 'guard_name' => 'web']);
+        $creditOfficer->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array($p->name, ['dashboard.view', 'member.view', 'loans.view', 'loans.create', 'loans.update', 'loans.approve', 'reports.view'])
+        ));
+
+        // Treasurer
+        $treasurer = Role::firstOrCreate(['name' => 'Treasurer', 'guard_name' => 'web']);
+        $treasurer->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array(explode('.', $p->name)[0], ['dashboard', 'savings', 'shares', 'accounting', 'reports'])
+        ));
+
+        // Accountant
+        $accountant = Role::firstOrCreate(['name' => 'Accountant', 'guard_name' => 'web']);
+        $accountant->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array(explode('.', $p->name)[0], ['dashboard', 'accounting', 'reports'])
+        ));
+
+        // Secretary
+        $secretary = Role::firstOrCreate(['name' => 'Secretary', 'guard_name' => 'web']);
+        $secretary->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array(explode('.', $p->name)[0], ['dashboard', 'member', 'group', 'meetings', 'reports'])
+        ));
+
+        // Collection Officer
+        $collectionOfficer = Role::firstOrCreate(['name' => 'Collection Officer', 'guard_name' => 'web']);
+        $collectionOfficer->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings.create', 'loans.view', 'reports.view'])
+        ));
+
+        // Auditor
+        $auditor = Role::firstOrCreate(['name' => 'Auditor', 'guard_name' => 'web']);
+        $auditor->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array(explode('.', $p->name)[0], ['dashboard', 'reports', 'audit'])
+        ));
+
+        // VICOBA Member
+        $member = Role::firstOrCreate(['name' => 'VICOBA Member', 'guard_name' => 'web']);
+        $member->syncPermissions($allPermissions->filter(fn ($p) =>
+            in_array($p->name, ['dashboard.view', 'savings.view', 'shares.view', 'loans.view'])
+        ));
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Default Super Administrator
+        |--------------------------------------------------------------------------
+        */
+        $admin = User::firstOrCreate(
+            ['email' => 'admin@financepro.co.tz'],
+            [
+                'fullname' => 'System Administrator',
+                'username' => 'admin',
+                'phone' => '+255700000000',
+                'nida_number' => '00000000000000000000',
+                'status' => 'active',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $admin->assignRole('Super Administrator');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Create Test User
+        |--------------------------------------------------------------------------
+        */
+        $testUser = User::firstOrCreate(
+            ['email' => 'test@financepro.co.tz'],
+            [
+                'fullname' => 'Test User',
+                'username' => 'testuser',
+                'phone' => '+255711111111',
+                'nida_number' => '11111111111111111111',
+                'status' => 'active',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
+        $testUser->assignRole('VICOBA Member');
+    }
+}
