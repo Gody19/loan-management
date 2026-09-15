@@ -55,10 +55,12 @@
         {{-- Members Section --}}
         <div class="sidebar-section mt-3">Members</div>
 
-        <a href="#" class="nav-link">
+        @if(auth()->check() && auth()->user()->can('member.view'))
+        <a href="{{ route('members.index') }}" class="nav-link {{ request()->routeIs('members.*') ? 'active' : '' }}">
             <i class="bi bi-person-plus"></i>
             <span>Members</span>
         </a>
+        @endif
 
         {{-- Financial Section --}}
         <div class="sidebar-section mt-3">Finance</div>

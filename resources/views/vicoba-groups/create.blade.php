@@ -15,8 +15,8 @@
 
 @section('content')
 
-<div class="row">
-    <div class="col-lg-8">
+<div class="row justify-content-center">
+    <div class="col-lg-10">
         <form method="POST" action="{{ route('vicoba-groups.store') }}" data-validate>
             @csrf
 

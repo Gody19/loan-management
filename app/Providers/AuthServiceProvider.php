@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\Branch;
+use App\Models\Member;
 use App\Models\Organization;
 use App\Models\User;
 use App\Models\VicobaGroup;
 use App\Policies\BranchPolicy;
+use App\Policies\MemberPolicy;
 use App\Policies\OrganizationPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
@@ -28,6 +30,7 @@ class AuthServiceProvider extends ServiceProvider
         Organization::class => OrganizationPolicy::class,
         Branch::class => BranchPolicy::class,
         VicobaGroup::class => VicobaGroupPolicy::class,
+        Member::class => MemberPolicy::class,
     ];
 
     /**

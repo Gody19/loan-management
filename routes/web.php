@@ -5,6 +5,9 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\MemberController;
+use App\Http\Controllers\MemberDocumentController;
+use App\Http\Controllers\MemberNextOfKinController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
@@ -104,6 +107,29 @@ Route::middleware(['auth', 'suspended'])->group(function () {
 
     // VICOBA Group Management
     Route::resource('vicoba-groups', VicobaGroupController::class);
+
+    // Member Management
+    Route::resource('members', MemberController::class);
+    Route::post('/members/{member}/change-status', [MemberController::class, 'changeStatus'])
+        ->name('members.change-status');
+    Route::get('/members-branches', [MemberController::class, 'getBranches'])
+        ->name('members.get-branches');
+    Route::get('/members-groups', [MemberController::class, 'getGroups'])
+        ->name('members.get-groups');
+    Route::post('/members/{member}/next-of-kin', [MemberNextOfKinController::class, 'store'])
+        ->name('members.next-of-kin.store');
+    Route::put('/members/{member}/next-of-kin/{kin}', [MemberNextOfKinController::class, 'update'])
+        ->name('members.next-of-kin.update');
+    Route::delete('/members/{member}/next-of-kin/{kin}', [MemberNextOfKinController::class, 'destroy'])
+        ->name('members.next-of-kin.destroy');
+    Route::post('/members/{member}/documents', [MemberDocumentController::class, 'store'])
+        ->name('members.documents.store');
+    Route::get('/members/{member}/documents/{document}/download', [MemberDocumentController::class, 'download'])
+        ->name('members.documents.download');
+    Route::post('/members/{member}/documents/{document}/verify', [MemberDocumentController::class, 'verify'])
+        ->name('members.documents.verify');
+    Route::delete('/members/{member}/documents/{document}', [MemberDocumentController::class, 'destroy'])
+        ->name('members.documents.destroy');
 
     // Permission Management
     Route::get('/permissions', [PermissionController::class, 'index'])

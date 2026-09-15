@@ -46,6 +46,11 @@ class Branch extends Model
             ->withTimestamps();
     }
 
+    public function members(): HasMany
+    {
+        return $this->hasMany(Member::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', BranchStatus::Active);

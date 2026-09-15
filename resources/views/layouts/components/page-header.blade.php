@@ -7,6 +7,6 @@
         @endisset
     </div>
     <div class="d-flex gap-2">
-        {{ $actions ?? '' }}
+        {!! $actions ?? '' !!}
     </div>
 </div>
