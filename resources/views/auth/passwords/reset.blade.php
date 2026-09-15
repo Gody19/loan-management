@@ -8,17 +8,17 @@
     Enter your new password below.
 </p>
 
-<form method="POST" action="{{ route('password.update') }}">
+<form method="POST" action="{{ route('password.update') }}" data-validate>
     @csrf
 
     <input type="hidden" name="token" value="{{ $token }}">
 
     {{-- Email --}}
     <div class="mb-3">
-        <label for="email" class="form-label">Email Address</label>
+        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
         <input type="email" class="form-control @error('email') is-invalid @enderror"
                id="email" name="email" value="{{ $email ?? old('email') }}"
-               required autofocus>
+               autofocus>
         @error('email')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
@@ -26,9 +26,9 @@
 
     {{-- Password --}}
     <div class="mb-3">
-        <label for="password" class="form-label">New Password</label>
+        <label for="password" class="form-label">New Password <span class="text-danger">*</span></label>
         <input type="password" class="form-control @error('password') is-invalid @enderror"
-               id="password" name="password" required>
+               id="password" name="password">
         @error('password')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
@@ -36,9 +36,9 @@
 
     {{-- Confirm Password --}}
     <div class="mb-4">
-        <label for="password_confirmation" class="form-label">Confirm Password</label>
+        <label for="password_confirmation" class="form-label">Confirm Password <span class="text-danger">*</span></label>
         <input type="password" class="form-control"
-               id="password_confirmation" name="password_confirmation" required>
+               id="password_confirmation" name="password_confirmation">
     </div>
 
     {{-- Submit --}}

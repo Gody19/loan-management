@@ -8,15 +8,15 @@
     Enter your email address and we'll send you a link to reset your password.
 </p>
 
-<form method="POST" action="{{ route('password.email') }}">
+<form method="POST" action="{{ route('password.email') }}" data-validate>
     @csrf
 
     {{-- Email --}}
     <div class="mb-4">
-        <label for="email" class="form-label">Email Address</label>
+        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
         <input type="email" class="form-control @error('email') is-invalid @enderror"
                id="email" name="email" value="{{ old('email') }}"
-               placeholder="Enter your email" required autofocus>
+               placeholder="Enter your email" autofocus>
         @error('email')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror

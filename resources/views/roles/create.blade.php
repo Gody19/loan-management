@@ -15,7 +15,7 @@
 
 @section('content')
 
-<form method="POST" action="{{ route('roles.store') }}">
+<form method="POST" action="{{ route('roles.store') }}" data-validate>
     @csrf
 
     <div class="card vicoba-card mb-4">
@@ -27,7 +27,7 @@
                 <div class="col-md-6">
                     <label for="name" class="form-label">Role Name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control @error('name') is-invalid @enderror"
-                           id="name" name="name" value="{{ old('name') }}" required>
+                           id="name" name="name" value="{{ old('name') }}">
                     @error('name')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

@@ -15,7 +15,7 @@
 
 @section('content')
 
-<form method="POST" action="{{ route('roles.update', $role) }}">
+<form method="POST" action="{{ route('roles.update', $role) }}" data-validate>
     @csrf
     @method('PUT')
 
@@ -28,7 +28,7 @@
                 <div class="col-md-6">
                     <label for="name" class="form-label">Role Name <span class="text-danger">*</span></label>
                     <input type="text" class="form-control @error('name') is-invalid @enderror"
-                           id="name" name="name" value="{{ old('name', $role->name) }}" required>
+                           id="name" name="name" value="{{ old('name', $role->name) }}">
                     @error('name')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror

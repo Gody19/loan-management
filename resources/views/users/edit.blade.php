@@ -17,7 +17,7 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <form method="POST" action="{{ route('users.update', $user) }}">
+        <form method="POST" action="{{ route('users.update', $user) }}" data-validate>
             @csrf
             @method('PUT')
 
@@ -30,7 +30,7 @@
                         <div class="col-md-6">
                             <label for="fullname" class="form-label">Full Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('fullname') is-invalid @enderror"
-                                   id="fullname" name="fullname" value="{{ old('fullname', $user->fullname) }}" required>
+                                   id="fullname" name="fullname" value="{{ old('fullname', $user->fullname) }}">
                             @error('fullname')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -39,7 +39,7 @@
                         <div class="col-md-6">
                             <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('username') is-invalid @enderror"
-                                   id="username" name="username" value="{{ old('username', $user->username) }}" required>
+                                   id="username" name="username" value="{{ old('username', $user->username) }}">
                             @error('username')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -48,7 +48,7 @@
                         <div class="col-md-6">
                             <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
                             <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                   id="email" name="email" value="{{ old('email', $user->email) }}" required>
+                                   id="email" name="email" value="{{ old('email', $user->email) }}">
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -66,7 +66,7 @@
                         <div class="col-md-6">
                             <label for="nida_number" class="form-label">NIDA Number <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('nida_number') is-invalid @enderror"
-                                   id="nida_number" name="nida_number" value="{{ old('nida_number', $user->nida_number) }}" required>
+                                   id="nida_number" name="nida_number" value="{{ old('nida_number', $user->nida_number) }}">
                             @error('nida_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -98,7 +98,7 @@
 
                         <div class="col-md-6">
                             <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
-                            <select class="form-select @error('status') is-invalid @enderror" id="status" name="status" required>
+                            <select class="form-select @error('status') is-invalid @enderror" id="status" name="status">
                                 @foreach(\App\Enums\UserStatus::cases() as $status)
                                     <option value="{{ $status->value }}" {{ old('status', $user->status->value) === $status->value ? 'selected' : '' }}>
                                         {{ $status->label() }}

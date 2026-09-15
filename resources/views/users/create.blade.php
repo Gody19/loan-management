@@ -17,7 +17,7 @@
 
 <div class="row">
     <div class="col-lg-8">
-        <form method="POST" action="{{ route('users.store') }}">
+        <form method="POST" action="{{ route('users.store') }}" data-validate>
             @csrf
 
             <div class="card vicoba-card mb-4">
@@ -29,7 +29,7 @@
                         <div class="col-md-6">
                             <label for="fullname" class="form-label">Full Name <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('fullname') is-invalid @enderror"
-                                   id="fullname" name="fullname" value="{{ old('fullname') }}" required>
+                                   id="fullname" name="fullname" value="{{ old('fullname') }}">
                             @error('fullname')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -38,7 +38,7 @@
                         <div class="col-md-6">
                             <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('username') is-invalid @enderror"
-                                   id="username" name="username" value="{{ old('username') }}" required>
+                                   id="username" name="username" value="{{ old('username') }}">
                             @error('username')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -47,7 +47,7 @@
                         <div class="col-md-6">
                             <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
                             <input type="email" class="form-control @error('email') is-invalid @enderror"
-                                   id="email" name="email" value="{{ old('email') }}" required>
+                                   id="email" name="email" value="{{ old('email') }}">
                             @error('email')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -65,7 +65,7 @@
                         <div class="col-md-6">
                             <label for="nida_number" class="form-label">NIDA Number <span class="text-danger">*</span></label>
                             <input type="text" class="form-control @error('nida_number') is-invalid @enderror"
-                                   id="nida_number" name="nida_number" value="{{ old('nida_number') }}" required>
+                                   id="nida_number" name="nida_number" value="{{ old('nida_number') }}">
                             @error('nida_number')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -107,7 +107,7 @@
                         <div class="col-md-6">
                             <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
                             <input type="password" class="form-control @error('password') is-invalid @enderror"
-                                   id="password" name="password" required>
+                                   id="password" name="password">
                             @error('password')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -116,7 +116,7 @@
                         <div class="col-md-6">
                             <label for="password_confirmation" class="form-label">Confirm Password <span class="text-danger">*</span></label>
                             <input type="password" class="form-control"
-                                   id="password_confirmation" name="password_confirmation" required>
+                                   id="password_confirmation" name="password_confirmation">
                         </div>
                     </div>
                 </div>

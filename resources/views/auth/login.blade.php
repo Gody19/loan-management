@@ -5,15 +5,15 @@
 @section('content')
 <h5 class="fw-semibold mb-3">Sign in to your account</h5>
 
-<form method="POST" action="{{ route('login') }}">
+<form method="POST" action="{{ route('login') }}" data-validate>
     @csrf
 
     {{-- Email --}}
     <div class="mb-3">
-        <label for="email" class="form-label">Email Address</label>
+        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
         <input type="email" class="form-control @error('email') is-invalid @enderror"
                id="email" name="email" value="{{ old('email') }}"
-               placeholder="Enter your email" required autofocus>
+               placeholder="Enter your email" autofocus>
         @error('email')
             <div class="invalid-feedback">{{ $message }}</div>
         @enderror
@@ -21,11 +21,11 @@
 
     {{-- Password --}}
     <div class="mb-3">
-        <label for="password" class="form-label">Password</label>
+        <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
         <div class="input-group">
             <input type="password" class="form-control @error('password') is-invalid @enderror"
                    id="password" name="password"
-                   placeholder="Enter your password" required>
+                   placeholder="Enter your password">
             <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
                 <i class="bi bi-eye" id="toggleIcon"></i>
             </button>
