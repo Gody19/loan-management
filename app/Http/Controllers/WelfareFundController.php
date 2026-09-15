@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreWelfareFundRequest;
+use App\Models\Organization;
 use App\Models\WelfareFund;
 use Illuminate\Http\Request;
 
@@ -25,16 +26,23 @@ class WelfareFundController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
+        }
+
+        $organizations = Organization::active()->get();
         $funds = $query->latest()->paginate(15)->withQueryString();
 
-        return view('welfare-funds.index', compact('funds'));
+        return view('welfare-funds.index', compact('funds', 'organizations'));
     }
 
     public function create()
     {
         $this->authorize('create', WelfareFund::class);
 
-        return view('welfare-funds.create');
+        $organizations = Organization::active()->get();
+
+        return view('welfare-funds.create', compact('organizations'));
     }
 
     public function store(StoreWelfareFundRequest $request)
@@ -60,7 +68,9 @@ class WelfareFundController extends Controller
     {
         $this->authorize('update', $welfareFund);
 
-        return view('welfare-funds.edit', ['fund' => $welfareFund]);
+        $organizations = Organization::active()->get();
+
+        return view('welfare-funds.edit', ['fund' => $welfareFund, 'organizations' => $organizations]);
     }
 
     public function update(StoreWelfareFundRequest $request, WelfareFund $welfareFund)

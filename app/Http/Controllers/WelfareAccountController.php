@@ -6,6 +6,7 @@ use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreWelfareBenefitRequest;
 use App\Http\Requests\StoreWelfareContributionRequest;
 use App\Models\Member;
+use App\Models\Organization;
 use App\Models\WelfareAccount;
 use App\Models\WelfareFund;
 use App\Services\WelfareTransactionService;
@@ -41,12 +42,17 @@ class WelfareAccountController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
+        }
+
         $accounts = $query->latest()->paginate(15)->withQueryString();
 
+        $organizations = Organization::active()->get();
         $funds = WelfareFund::active()->get();
         $members = Member::active()->get();
 
-        return view('welfare-accounts.index', compact('accounts', 'funds', 'members'));
+        return view('welfare-accounts.index', compact('accounts', 'funds', 'members', 'organizations'));
     }
 
     public function create()
@@ -55,8 +61,9 @@ class WelfareAccountController extends Controller
 
         $members = Member::active()->get();
         $funds = WelfareFund::active()->get();
+        $organizations = Organization::active()->get();
 
-        return view('welfare-accounts.create', compact('members', 'funds'));
+        return view('welfare-accounts.create', compact('members', 'funds', 'organizations'));
     }
 
     public function store(Request $request)

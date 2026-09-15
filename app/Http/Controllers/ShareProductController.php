@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreShareProductRequest;
+use App\Models\Organization;
 use App\Models\ShareProduct;
 use Illuminate\Http\Request;
 
@@ -25,16 +26,23 @@ class ShareProductController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
+        }
+
+        $organizations = Organization::active()->get();
         $products = $query->latest()->paginate(15)->withQueryString();
 
-        return view('share-products.index', compact('products'));
+        return view('share-products.index', compact('products', 'organizations'));
     }
 
     public function create()
     {
         $this->authorize('create', ShareProduct::class);
 
-        return view('share-products.create');
+        $organizations = Organization::active()->get();
+
+        return view('share-products.create', compact('organizations'));
     }
 
     public function store(StoreShareProductRequest $request)
@@ -60,7 +68,9 @@ class ShareProductController extends Controller
     {
         $this->authorize('update', $shareProduct);
 
-        return view('share-products.edit', ['product' => $shareProduct]);
+        $organizations = Organization::active()->get();
+
+        return view('share-products.edit', ['product' => $shareProduct, 'organizations' => $organizations]);
     }
 
     public function update(StoreShareProductRequest $request, ShareProduct $shareProduct)

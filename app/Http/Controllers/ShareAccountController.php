@@ -7,6 +7,7 @@ use App\Http\Requests\StoreShareAccountRequest;
 use App\Http\Requests\StoreSharePurchaseRequest;
 use App\Http\Requests\StoreShareRedemptionRequest;
 use App\Models\Member;
+use App\Models\Organization;
 use App\Models\ShareAccount;
 use App\Models\ShareProduct;
 use App\Services\ShareTransactionService;
@@ -42,12 +43,17 @@ class ShareAccountController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
+        }
+
         $accounts = $query->latest()->paginate(15)->withQueryString();
 
+        $organizations = Organization::active()->get();
         $products = ShareProduct::active()->get();
         $members = Member::active()->get();
 
-        return view('share-accounts.index', compact('accounts', 'products', 'members'));
+        return view('share-accounts.index', compact('accounts', 'products', 'members', 'organizations'));
     }
 
     public function create()
@@ -56,8 +62,9 @@ class ShareAccountController extends Controller
 
         $members = Member::active()->get();
         $products = ShareProduct::active()->get();
+        $organizations = Organization::active()->get();
 
-        return view('share-accounts.create', compact('members', 'products'));
+        return view('share-accounts.create', compact('members', 'products', 'organizations'));
     }
 
     public function store(StoreShareAccountRequest $request)
