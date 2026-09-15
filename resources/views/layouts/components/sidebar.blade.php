@@ -18,7 +18,7 @@
     </div>
 
     {{-- Navigation --}}
-    <nav class="mt-2">
+    <nav class="mt-2 flex-grow-1 overflow-auto">
 
         {{-- Main Section --}}
         <div class="sidebar-section">Main</div>

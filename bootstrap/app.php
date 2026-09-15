@@ -3,6 +3,7 @@
 use App\Http\Middleware\CheckPermission;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\CheckSuspended;
+use App\Http\Middleware\HandleAuthorizationFailure;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             CheckSuspended::class,
+            HandleAuthorizationFailure::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

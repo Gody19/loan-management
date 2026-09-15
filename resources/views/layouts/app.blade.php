@@ -61,6 +61,62 @@
     {{-- Mobile Sidebar Overlay --}}
     <div class="modal-backdrop fade d-none" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
+    {{-- Permission Denied Toast --}}
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+        <div id="permissionToast" class="toast align-items-center text-bg-danger border-0" role="alert" data-bs-autohide="false">
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi bi-shield-lock me-2"></i>
+                    <strong>Access Denied!</strong> You don't have permission to perform this action.
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        </div>
+    </div>
+
+    {{-- Global Permission Denied Handler --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user lacks permission for current action
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('error') === 'unauthorized') {
+                showToastAndRedirect('Access Denied! You don\'t have permission for this action.');
+            }
+
+            // Intercept 403 responses from AJAX calls
+            document.addEventListener('ajaxerror', function(e) {
+                if (e.detail && e.detail.status === 403) {
+                    showToastAndRedirect('Access Denied! You don\'t have permission for this action.');
+                }
+            });
+
+            // Global fetch interceptor for 403
+            const originalFetch = window.fetch;
+            window.fetch = function() {
+                return originalFetch.apply(this, arguments).then(function(response) {
+                    if (response.status === 403) {
+                        showToastAndRedirect('Access Denied! You don\'t have permission for this action.');
+                    }
+                    return response;
+                });
+            };
+        });
+
+        function showToastAndRedirect(message) {
+            const toast = document.getElementById('permissionToast');
+            if (toast) {
+                toast.querySelector('.toast-body').innerHTML =
+                    '<i class="bi bi-shield-lock me-2"></i><strong>Access Denied!</strong> ' + message;
+                const bsToast = new bootstrap.Toast(toast, { autohide: false });
+                bsToast.show();
+
+                setTimeout(function() {
+                    window.location.href = '{{ route("dashboard") }}';
+                }, 3000);
+            }
+        }
+    </script>
+
     @stack('scripts')
 
 </body>

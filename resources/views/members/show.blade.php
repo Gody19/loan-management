@@ -7,17 +7,20 @@
 @endphp
 
 @section('page-header')
+    @php
+        $headerActions = '<a href="' . route('members.index') . '" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>';
+        if (auth()->user()->can('update', $member)) {
+            $headerActions .= '<a href="' . route('members.edit', $member) . '" class="btn btn-warning">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>';
+        }
+    @endphp
     @include('layouts.components.page-header', [
         'title' => $member->full_name,
-        'subtitle' => 'Member No: ' . $member->member_number . ' | ' . $member->membership_status->label(),
-        'actions' => '<a href="' . route('members.index') . '" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back
-        </a>
-        @can("update", $member)
-        <a href="' . route('members.edit', $member) . '" class="btn btn-warning">
-            <i class="bi bi-pencil me-1"></i> Edit
-        </a>
-        @endcan'
+        'subtitle' => 'Member No: ' . $member->member_number . ' . ' . $member->membership_status->label(),
+        'actions' => $headerActions,
     ])
 @endsection
 

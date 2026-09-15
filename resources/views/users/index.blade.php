@@ -81,7 +81,7 @@
                                     </div>
                                     <div>
                                         <div class="fw-medium">{{ $user->fullname }}</div>
-                                        <small class="text-muted">@{{ $user->username }}</small>
+                                        <small class="text-muted">{{ $user->username }}</small>
                                     </div>
                                 </div>
                             </td>
