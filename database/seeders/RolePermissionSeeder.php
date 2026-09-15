@@ -29,6 +29,7 @@ class RolePermissionSeeder extends Seeder
             'user',
             'role',
             'permission',
+            'organization',
             'dashboard',
             'member',
             'group',
@@ -76,12 +77,24 @@ class RolePermissionSeeder extends Seeder
 
         // Organization Administrator
         $orgAdmin = Role::firstOrCreate(['name' => 'Organization Administrator', 'guard_name' => 'web']);
-        $orgAdmin->syncPermissions($allPermissions->filter(fn ($p) => !str_contains($p->name, 'audit.')));
+        $orgAdmin->syncPermissions($allPermissions->filter(fn ($p) =>
+            !str_contains($p->name, 'audit.') &&
+            in_array(explode('.', $p->name)[0], [
+                'dashboard', 'organization', 'branch', 'group',
+                'member', 'savings', 'shares', 'loans',
+                'accounting', 'meetings', 'reports', 'settings',
+                'user', 'role',
+            ])
+        ));
 
         // Branch Manager
         $branchManager = Role::firstOrCreate(['name' => 'Branch Manager', 'guard_name' => 'web']);
         $branchManager->syncPermissions($allPermissions->filter(fn ($p) =>
-            in_array(explode('.', $p->name)[0], ['dashboard', 'member', 'group', 'savings', 'shares', 'loans', 'meetings', 'reports'])
+            in_array(explode('.', $p->name)[0], [
+                'dashboard', 'branch', 'group',
+                'member', 'savings', 'shares', 'loans',
+                'meetings', 'reports',
+            ])
         ));
 
         // Loan Officer

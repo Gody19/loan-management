@@ -28,30 +28,36 @@
             <span>Dashboard</span>
         </a>
 
+        {{-- Organization Section --}}
+        <div class="sidebar-section mt-3">Organization</div>
+
+        @if(auth()->check() && auth()->user()->can('organization.view'))
+        <a href="{{ route('organizations.index') }}" class="nav-link {{ request()->routeIs('organizations.*') ? 'active' : '' }}">
+            <i class="bi bi-building"></i>
+            <span>Organizations</span>
+        </a>
+        @endif
+
+        @if(auth()->check() && auth()->user()->can('branch.view'))
+        <a href="{{ route('branches.index') }}" class="nav-link {{ request()->routeIs('branches.*') ? 'active' : '' }}">
+            <i class="bi bi-diagram-3"></i>
+            <span>Branches</span>
+        </a>
+        @endif
+
+        @if(auth()->check() && auth()->user()->can('group.view'))
+        <a href="{{ route('vicoba-groups.index') }}" class="nav-link {{ request()->routeIs('vicoba-groups.*') ? 'active' : '' }}">
+            <i class="bi bi-people"></i>
+            <span>VICOBA Groups</span>
+        </a>
+        @endif
+
         {{-- Members Section --}}
         <div class="sidebar-section mt-3">Members</div>
 
         <a href="#" class="nav-link">
-            <i class="bi bi-people"></i>
-            <span>Members</span>
-        </a>
-
-        <a href="#" class="nav-link">
             <i class="bi bi-person-plus"></i>
-            <span>Register Member</span>
-        </a>
-
-        {{-- VICOBA Groups --}}
-        <div class="sidebar-section mt-3">Groups</div>
-
-        <a href="#" class="nav-link">
-            <i class="bi bi-diagram-3"></i>
-            <span>VICOBA Groups</span>
-        </a>
-
-        <a href="#" class="nav-link">
-            <i class="bi bi-building"></i>
-            <span>Branches</span>
+            <span>Members</span>
         </a>
 
         {{-- Financial Section --}}
