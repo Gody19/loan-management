@@ -25,7 +25,7 @@ class StoreOrganizationRequest extends FormRequest
         ];
 
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            $rules['registration_number'] = ['required', 'string', 'max:50', 'unique:organizations,registration_number,' . $this->route('organization')->id];
+            $rules['registration_number'] = ['required', 'string', 'max:50', 'unique:organizations,registration_number,'.$this->route('organization')->id];
         }
 
         return $rules;

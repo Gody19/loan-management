@@ -29,7 +29,7 @@ class UpdateMemberRequest extends FormRequest
             'phone' => ['required', 'string', 'max:20'],
             'alternate_phone' => ['nullable', 'string', 'max:20'],
             'email' => ['nullable', 'email', 'max:255'],
-            'national_id' => ['nullable', 'string', 'max:50', 'unique:members,national_id,' . $memberId],
+            'national_id' => ['nullable', 'string', 'max:50', 'unique:members,national_id,'.$memberId],
             'occupation' => ['nullable', 'string', 'max:100'],
             'employer_or_business' => ['nullable', 'string', 'max:255'],
             'marital_status' => ['nullable', 'in:single,married,divorced,widowed,separated,other'],

@@ -26,11 +26,13 @@ class MemberService
 
         if ($user->hasRole('Organization Administrator')) {
             $orgIds = $user->organizations()->pluck('organizations.id');
+
             return $query->whereIn('organization_id', $orgIds);
         }
 
         if ($user->hasRole('Branch Manager')) {
             $branchIds = $user->branches()->pluck('branches.id');
+
             return $query->whereIn('branch_id', $branchIds);
         }
 
@@ -79,7 +81,7 @@ class MemberService
 
     public function changeStatus(Member $member, MemberStatus $newStatus, ?string $reason = null): Member
     {
-        if (!$member->membership_status->canTransitionTo($newStatus)) {
+        if (! $member->membership_status->canTransitionTo($newStatus)) {
             throw new \InvalidArgumentException(
                 "Cannot transition from {$member->membership_status->label()} to {$newStatus->label()}."
             );
@@ -110,7 +112,7 @@ class MemberService
 
     public function addNextOfKin(Member $member, array $data): MemberNextOfKin
     {
-        if (!empty($data['is_primary'])) {
+        if (! empty($data['is_primary'])) {
             $member->nextOfKins()->where('is_primary', true)->update(['is_primary' => false]);
         }
 
@@ -123,7 +125,7 @@ class MemberService
 
     public function updateNextOfKin(MemberNextOfKin $kin, array $data): MemberNextOfKin
     {
-        if (!empty($data['is_primary'])) {
+        if (! empty($data['is_primary'])) {
             $kin->member->nextOfKins()
                 ->where('id', '!=', $kin->id)
                 ->where('is_primary', true)
@@ -146,8 +148,8 @@ class MemberService
         /** @var UploadedFile $file */
         $file = $data['file'];
 
-        $safeFilename = $member->member_number . '_' . time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
-        $path = $file->storeAs('member-documents/' . $member->id, $safeFilename, 'private');
+        $safeFilename = $member->member_number.'_'.time().'_'.preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs('member-documents/'.$member->id, $safeFilename, 'private');
 
         $document = $member->documents()->create([
             'document_type' => $data['document_type'],
@@ -221,7 +223,7 @@ class MemberService
 
     public function restoreMember(Member $member, ?string $reason = null): Member
     {
-        if (!$member->trashed()) {
+        if (! $member->trashed()) {
             throw new \InvalidArgumentException('Member is not archived.');
         }
 

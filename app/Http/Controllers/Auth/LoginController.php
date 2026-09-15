@@ -30,7 +30,7 @@ class LoginController extends Controller
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
-        if (!Auth::attempt($credentials, $remember)) {
+        if (! Auth::attempt($credentials, $remember)) {
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->onlyInput('email');
@@ -41,6 +41,7 @@ class LoginController extends Controller
         // Check if user is suspended
         if ($user->status === UserStatus::Suspended) {
             Auth::logout();
+
             return back()->withErrors([
                 'email' => 'Your account has been suspended. Please contact support.',
             ])->onlyInput('email');
@@ -49,6 +50,7 @@ class LoginController extends Controller
         // Check if user is inactive
         if ($user->status === UserStatus::Inactive) {
             Auth::logout();
+
             return back()->withErrors([
                 'email' => 'Your account is inactive. Please contact support.',
             ])->onlyInput('email');

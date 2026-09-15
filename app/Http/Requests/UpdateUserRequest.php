@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateUserRequest extends FormRequest
@@ -17,7 +18,7 @@ class UpdateUserRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
@@ -25,10 +26,10 @@ class UpdateUserRequest extends FormRequest
 
         return [
             'fullname' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $userId],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email,' . $userId],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$userId],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$userId],
             'phone' => ['nullable', 'string', 'max:20'],
-            'nida_number' => ['required', 'string', 'max:30', 'unique:users,nida_number,' . $userId],
+            'nida_number' => ['required', 'string', 'max:30', 'unique:users,nida_number,'.$userId],
             'date_of_birth' => ['nullable', 'date'],
             'gender' => ['nullable', 'in:male,female,other'],
             'status' => ['required', 'in:active,inactive,suspended'],

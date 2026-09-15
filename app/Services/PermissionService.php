@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -17,6 +16,7 @@ class PermissionService
     {
         return Permission::all()->groupBy(function (Permission $permission) {
             $parts = explode('.', $permission->name);
+
             return $parts[0];
         });
     }

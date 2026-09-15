@@ -3,10 +3,8 @@
 namespace Tests\Feature\UserManagement;
 
 use App\Enums\UserStatus;
-use App\Models\Branch;
 use App\Models\Organization;
 use App\Models\User;
-use App\Models\VicobaGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -34,7 +32,7 @@ class OrganizationTest extends TestCase
         $adminRole->syncPermissions(Permission::all());
 
         $orgAdminRole = Role::create(['name' => 'Organization Administrator', 'guard_name' => 'web']);
-        $orgAdminRole->syncPermissions(Permission::all()->filter(fn ($p) => !str_contains($p->name, 'audit.')));
+        $orgAdminRole->syncPermissions(Permission::all()->filter(fn ($p) => ! str_contains($p->name, 'audit.')));
     }
 
     public function test_authorized_users_can_view_organizations(): void

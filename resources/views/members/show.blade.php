@@ -362,15 +362,126 @@
                 </div>
             </div>
 
-            {{-- Financial Summary Tab (Placeholder) --}}
+            {{-- Financial Summary Tab --}}
             <div class="tab-pane fade {{ $activeTab === 'financial' ? 'show active' : '' }}" id="tab-financial">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body text-center py-5">
-                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
-                            <i class="bi bi-wallet2 text-muted fs-1"></i>
+                <div class="row g-3">
+                    {{-- Savings Accounts --}}
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-wallet2 me-2"></i>Savings Accounts</h6>
+                                <a href="{{ route('members.statement', ['member' => $member, 'type' => 'savings']) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body">
+                                @if($member->savingsAccounts->count())
+                                    @foreach($member->savingsAccounts as $account)
+                                        <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                            <div>
+                                                <div class="fw-medium">{{ $account->account_number }}</div>
+                                                <small class="text-muted">{{ $account->product->name ?? 'N/A' }}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold">TSh {{ number_format($account->balance, 2) }}</div>
+                                                <span class="badge bg-{{ $account->status === App\Enums\SavingsAccountStatus::ACTIVE ? 'success' : 'secondary' }}">{{ $account->status->label() }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="text-center py-3 text-muted">
+                                        <i class="bi bi-wallet2 fs-3 d-block mb-1"></i>
+                                        <small>No savings accounts</small>
+                                    </div>
+                                @endif
+                            </div>
                         </div>
-                        <h5 class="text-muted">Financial Summary</h5>
-                        <p class="text-muted mb-0">Savings, shares, loans, and financial records will be available once those modules are implemented.</p>
+                    </div>
+
+                    {{-- Share Accounts --}}
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-bar-chart-line me-2"></i>Share Accounts</h6>
+                                <a href="{{ route('members.statement', ['member' => $member, 'type' => 'shares']) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body">
+                                @if($member->shareAccounts->count())
+                                    @foreach($member->shareAccounts as $account)
+                                        <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                            <div>
+                                                <div class="fw-medium">{{ $account->account_number }}</div>
+                                                <small class="text-muted">{{ $account->product->name ?? 'N/A' }}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold">{{ number_format($account->number_of_shares) }} shares</div>
+                                                <small class="text-muted">TSh {{ number_format($account->total_value, 2) }}</small>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="text-center py-3 text-muted">
+                                        <i class="bi bi-bar-chart-line fs-3 d-block mb-1"></i>
+                                        <small>No share accounts</small>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Welfare Accounts --}}
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-heart me-2"></i>Welfare Accounts</h6>
+                                <a href="{{ route('members.statement', ['member' => $member, 'type' => 'welfare']) }}" class="btn btn-sm btn-outline-primary">View All</a>
+                            </div>
+                            <div class="card-body">
+                                @if($member->welfareAccounts->count())
+                                    @foreach($member->welfareAccounts as $account)
+                                        <div class="d-flex justify-content-between align-items-center py-2 {{ !$loop->last ? 'border-bottom' : '' }}">
+                                            <div>
+                                                <div class="fw-medium">{{ $account->account_number }}</div>
+                                                <small class="text-muted">{{ $account->fund->name ?? 'N/A' }}</small>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold">TSh {{ number_format($account->balance, 2) }}</div>
+                                                <span class="badge bg-{{ $account->status === App\Enums\WelfareAccountStatus::ACTIVE ? 'success' : 'secondary' }}">{{ $account->status->label() }}</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="text-center py-3 text-muted">
+                                        <i class="bi bi-heart fs-3 d-block mb-1"></i>
+                                        <small>No welfare accounts</small>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Quick Actions --}}
+                    <div class="col-lg-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom">
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-lightning me-2"></i>Quick Actions</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a href="{{ route('members.statement', ['member' => $member]) }}" class="btn btn-outline-primary">
+                                        <i class="bi bi-file-earmark-text me-2"></i>View Full Statement
+                                    </a>
+                                    @if($member->savingsAccounts->count())
+                                        <a href="{{ route('savings-accounts.deposit', $member->savingsAccounts->first()) }}" class="btn btn-outline-success">
+                                            <i class="bi bi-plus-circle me-2"></i>Make Deposit
+                                        </a>
+                                    @endif
+                                    @if($member->shareAccounts->count())
+                                        <a href="{{ route('share-accounts.purchase', $member->shareAccounts->first()) }}" class="btn btn-outline-primary">
+                                            <i class="bi bi-cart-plus me-2"></i>Purchase Shares
+                                        </a>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

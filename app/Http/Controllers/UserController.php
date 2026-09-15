@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserStatus;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Models\User;
-use App\Services\AuditService;
 use App\Services\UserService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,9 +27,9 @@ class UserController extends Controller
         $users = $this->userService->getFilteredQuery(
             $request->only(['search', 'status', 'role'])
         )->with('roles')
-         ->latest()
-         ->paginate(15)
-         ->withQueryString();
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         $roles = Role::all();
 

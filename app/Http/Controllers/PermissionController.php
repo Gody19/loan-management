@@ -7,7 +7,6 @@ use App\Services\PermissionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class PermissionController extends Controller
@@ -53,6 +52,6 @@ class PermissionController extends Controller
         );
 
         return redirect()->route('permissions.index')
-            ->with('success', 'Permissions updated for role: ' . $role->name);
+            ->with('success', 'Permissions updated for role: '.$role->name);
     }
 }

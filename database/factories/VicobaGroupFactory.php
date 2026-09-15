@@ -14,11 +14,11 @@ class VicobaGroupFactory extends Factory
     {
         return [
             'branch_id' => Branch::factory(),
-            'code' => 'GRP-' . fake()->unique()->numerify('####'),
+            'code' => 'GRP-'.fake()->unique()->numerify('####'),
             'name' => fake()->randomElement([
                 'Jeshi', 'Umoja', 'Maendeleo', 'Ujamaa', 'Amani',
                 'Tumaini', 'Furaha', 'Baraka', 'Imani', 'Upendo',
-            ]) . ' ' . fake()->randomElement(['A', 'B', 'C', 'I', 'II', 'III']),
+            ]).' '.fake()->randomElement(['A', 'B', 'C', 'I', 'II', 'III']),
             'meeting_day' => fake()->randomElement(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']),
             'meeting_time' => fake()->randomElement(['09:00', '10:00', '14:00', '15:00']),
             'meeting_location' => fake()->optional(0.7)->city(),

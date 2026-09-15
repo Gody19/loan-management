@@ -25,12 +25,12 @@ class VicobaGroupSeeder extends Seeder
             for ($i = 0; $i < $numGroups; $i++) {
                 VicobaGroup::create([
                     'branch_id' => $branch->id,
-                    'code' => 'GRP-' . str_pad($branch->id * 10 + $i, 4, '0', STR_PAD_LEFT),
-                    'name' => $groupNames[array_rand($groupNames)] . ' ' . ($i + 1),
+                    'code' => 'GRP-'.str_pad($branch->id * 10 + $i, 4, '0', STR_PAD_LEFT),
+                    'name' => $groupNames[array_rand($groupNames)].' '.($i + 1),
                     'meeting_day' => $days[array_rand($days)],
                     'meeting_time' => $times[array_rand($times)],
-                    'meeting_location' => $branch->name . ' Hall',
-                    'description' => 'VICOBA group meeting at ' . $branch->name,
+                    'meeting_location' => $branch->name.' Hall',
+                    'description' => 'VICOBA group meeting at '.$branch->name,
                     'status' => 'active',
                 ]);
             }

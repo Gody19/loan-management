@@ -62,13 +62,13 @@ class Member extends Model
         parent::boot();
 
         static::creating(function (Member $member) {
-            if (!$member->created_by) {
+            if (! $member->created_by) {
                 $member->created_by = auth()->id();
             }
         });
 
         static::updating(function (Member $member) {
-            if (!$member->updated_by) {
+            if (! $member->updated_by) {
                 $member->updated_by = auth()->id();
             }
         });
@@ -121,6 +121,21 @@ class Member extends Model
         return $this->hasMany(MemberStatusHistory::class);
     }
 
+    public function savingsAccounts(): HasMany
+    {
+        return $this->hasMany(SavingsAccount::class);
+    }
+
+    public function shareAccounts(): HasMany
+    {
+        return $this->hasMany(ShareAccount::class);
+    }
+
+    public function welfareAccounts(): HasMany
+    {
+        return $this->hasMany(WelfareAccount::class);
+    }
+
     // Helpers
 
     public function getFullNameAttribute(): string
@@ -164,7 +179,7 @@ class Member extends Model
 
     public function scopeSearch($query, ?string $search)
     {
-        if (!$search) {
+        if (! $search) {
             return $query;
         }
 

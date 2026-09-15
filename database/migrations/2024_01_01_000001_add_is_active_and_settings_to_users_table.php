@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            if (!Schema::hasColumn('users', 'is_active')) {
+            if (! Schema::hasColumn('users', 'is_active')) {
                 $table->boolean('is_active')->default(true)->after('role');
             }
-            if (!Schema::hasColumn('users', 'settings')) {
+            if (! Schema::hasColumn('users', 'settings')) {
                 $table->json('settings')->nullable()->after('is_active');
             }
         });

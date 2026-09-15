@@ -10,12 +10,14 @@ use App\Models\Member;
 use App\Models\Organization;
 use App\Models\VicobaGroup;
 use App\Services\MemberService;
+use App\Services\FinancialStatementService;
 use Illuminate\Http\Request;
 
 class MemberController extends Controller
 {
     public function __construct(
         private MemberService $memberService,
+        private FinancialStatementService $statementService,
     ) {}
 
     public function index(Request $request)
@@ -84,7 +86,7 @@ class MemberController extends Controller
         $member = $this->memberService->create($request->validated());
 
         return redirect()->route('members.show', $member)
-            ->with('success', 'Member "' . $member->full_name . '" created successfully. Member No: ' . $member->member_number);
+            ->with('success', 'Member "'.$member->full_name.'" created successfully. Member No: '.$member->member_number);
     }
 
     public function show(Member $member)
@@ -99,6 +101,9 @@ class MemberController extends Controller
             'documents.verifier',
             'statusHistories.changer',
             'creator',
+            'savingsAccounts.product',
+            'shareAccounts.product',
+            'welfareAccounts.fund',
         ]);
 
         return view('members.show', compact('member'));
@@ -132,7 +137,7 @@ class MemberController extends Controller
         $this->authorize('delete', $member);
 
         if ($member->membership_status->value === 'active') {
-            $this->memberService->archiveMember($member, 'Member record archived by ' . auth()->user()->fullname);
+            $this->memberService->archiveMember($member, 'Member record archived by '.auth()->user()->fullname);
         }
 
         $member->delete();
@@ -158,7 +163,7 @@ class MemberController extends Controller
             );
 
             return redirect()->route('members.show', $member)
-                ->with('success', 'Member status changed to ' . MemberStatus::from($request->status)->label() . '.');
+                ->with('success', 'Member status changed to '.MemberStatus::from($request->status)->label().'.');
         } catch (\InvalidArgumentException $e) {
             return redirect()->route('members.show', $member)
                 ->with('error', $e->getMessage());
@@ -181,5 +186,49 @@ class MemberController extends Controller
             ->get(['id', 'name']);
 
         return response()->json($groups);
+    }
+
+    public function statement(Request $request, Member $member)
+    {
+        $this->authorize('view', $member);
+
+        $type = $request->get('type', 'savings');
+        $from = $request->get('from');
+        $to = $request->get('to');
+
+        $data = match ($type) {
+            'shares' => [
+                'accounts' => $member->shareAccounts()->with('product')->get(),
+                'transactions' => null,
+            ],
+            'welfare' => [
+                'accounts' => $member->welfareAccounts()->with('fund')->get(),
+                'transactions' => null,
+            ],
+            default => [
+                'accounts' => $member->savingsAccounts()->with('product')->get(),
+                'transactions' => null,
+            ],
+        };
+
+        $accountId = $request->get('account_id');
+        if ($accountId) {
+            $data['transactions'] = match ($type) {
+                'shares' => $this->statementService->getShareStatement(
+                    $member->shareAccounts()->findOrFail($accountId), $from, $to
+                ),
+                'welfare' => $this->statementService->getWelfareStatement(
+                    $member->welfareAccounts()->findOrFail($accountId), $from, $to
+                ),
+                default => $this->statementService->getSavingsStatement(
+                    $member->savingsAccounts()->findOrFail($accountId), $from, $to
+                ),
+            };
+        }
+
+        $data['summary'] = $this->statementService->getMemberFinancialSummary($member);
+        $data['type'] = $type;
+
+        return view('members.statement', array_merge(['member' => $member], $data));
     }
 }

@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Enums\MemberStatus;
+use App\Models\Branch;
 use App\Models\Member;
 use App\Models\MemberStatusHistory;
 use App\Models\Organization;
-use App\Models\Branch;
-use App\Models\VicobaGroup;
 use App\Models\User;
+use App\Models\VicobaGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -19,6 +18,7 @@ class MemberStatusTest extends TestCase
     use RefreshDatabase;
 
     protected Member $member;
+
     protected User $admin;
 
     protected function setUp(): void

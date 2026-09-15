@@ -11,8 +11,17 @@ use App\Http\Controllers\MemberNextOfKinController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SavingsAccountController;
+use App\Http\Controllers\SavingsProductController;
+use App\Http\Controllers\SavingsTransactionController;
+use App\Http\Controllers\ShareAccountController;
+use App\Http\Controllers\ShareProductController;
+use App\Http\Controllers\ShareTransactionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VicobaGroupController;
+use App\Http\Controllers\WelfareAccountController;
+use App\Http\Controllers\WelfareFundController;
+use App\Http\Controllers\WelfareTransactionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -130,6 +139,61 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('members.documents.verify');
     Route::delete('/members/{member}/documents/{document}', [MemberDocumentController::class, 'destroy'])
         ->name('members.documents.destroy');
+
+    // Financial Management - Savings
+    Route::resource('savings-products', SavingsProductController::class);
+    Route::resource('savings-accounts', SavingsAccountController::class)->except(['edit', 'update', 'destroy']);
+    Route::get('/savings-accounts/{savingsAccount}/deposit', [SavingsAccountController::class, 'deposit'])
+        ->name('savings-accounts.deposit');
+    Route::post('/savings-accounts/{savingsAccount}/deposit', [SavingsAccountController::class, 'doDeposit'])
+        ->name('savings-accounts.do-deposit');
+    Route::get('/savings-accounts/{savingsAccount}/withdraw', [SavingsAccountController::class, 'withdraw'])
+        ->name('savings-accounts.withdraw');
+    Route::post('/savings-accounts/{savingsAccount}/withdraw', [SavingsAccountController::class, 'doWithdraw'])
+        ->name('savings-accounts.do-withdraw');
+    Route::post('/savings-transactions/{transaction}/reverse', [SavingsAccountController::class, 'reverse'])
+        ->name('savings-transactions.reverse');
+    Route::resource('savings-transactions', SavingsTransactionController::class)->only(['index', 'show']);
+    Route::get('/savings-transactions/{savingsTransaction}/receipt', [SavingsTransactionController::class, 'receipt'])
+        ->name('savings-transactions.receipt');
+
+    // Financial Management - Shares
+    Route::resource('share-products', ShareProductController::class);
+    Route::resource('share-accounts', ShareAccountController::class)->except(['edit', 'update', 'destroy']);
+    Route::get('/share-accounts/{shareAccount}/purchase', [ShareAccountController::class, 'purchase'])
+        ->name('share-accounts.purchase');
+    Route::post('/share-accounts/{shareAccount}/purchase', [ShareAccountController::class, 'doPurchase'])
+        ->name('share-accounts.do-purchase');
+    Route::get('/share-accounts/{shareAccount}/redeem', [ShareAccountController::class, 'redeem'])
+        ->name('share-accounts.redeem');
+    Route::post('/share-accounts/{shareAccount}/redeem', [ShareAccountController::class, 'doRedeem'])
+        ->name('share-accounts.do-redeem');
+    Route::post('/share-transactions/{transaction}/reverse', [ShareAccountController::class, 'reverse'])
+        ->name('share-transactions.reverse');
+    Route::resource('share-transactions', ShareTransactionController::class)->only(['index', 'show']);
+    Route::get('/share-transactions/{shareTransaction}/receipt', [ShareTransactionController::class, 'receipt'])
+        ->name('share-transactions.receipt');
+
+    // Financial Management - Welfare
+    Route::resource('welfare-funds', WelfareFundController::class);
+    Route::resource('welfare-accounts', WelfareAccountController::class)->except(['edit', 'update', 'destroy']);
+    Route::get('/welfare-accounts/{welfareAccount}/contribute', [WelfareAccountController::class, 'contribute'])
+        ->name('welfare-accounts.contribute');
+    Route::post('/welfare-accounts/{welfareAccount}/contribute', [WelfareAccountController::class, 'doContribute'])
+        ->name('welfare-accounts.do-contribute');
+    Route::get('/welfare-accounts/{welfareAccount}/benefit', [WelfareAccountController::class, 'benefit'])
+        ->name('welfare-accounts.benefit');
+    Route::post('/welfare-accounts/{welfareAccount}/benefit', [WelfareAccountController::class, 'doBenefit'])
+        ->name('welfare-accounts.do-benefit');
+    Route::post('/welfare-transactions/{transaction}/reverse', [WelfareAccountController::class, 'reverse'])
+        ->name('welfare-transactions.reverse');
+    Route::resource('welfare-transactions', WelfareTransactionController::class)->only(['index', 'show']);
+    Route::get('/welfare-transactions/{welfareTransaction}/receipt', [WelfareTransactionController::class, 'receipt'])
+        ->name('welfare-transactions.receipt');
+
+    // Member Financial Summary
+    Route::get('/members/{member}/statement', [\App\Http\Controllers\MemberController::class, 'statement'])
+        ->name('members.statement');
 
     // Permission Management
     Route::get('/permissions', [PermissionController::class, 'index'])

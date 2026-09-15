@@ -25,7 +25,7 @@ class StoreVicobaGroupRequest extends FormRequest
         ];
 
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            $rules['code'][array_search('unique:vicoba_groups,code', $rules['code'])] = 'unique:vicoba_groups,code,' . $this->route('vicoba_group')->id;
+            $rules['code'][array_search('unique:vicoba_groups,code', $rules['code'])] = 'unique:vicoba_groups,code,'.$this->route('vicoba_group')->id;
         }
 
         return $rules;

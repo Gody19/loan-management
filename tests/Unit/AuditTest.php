@@ -2,7 +2,6 @@
 
 namespace Tests\Unit;
 
-use App\Models\AuditLog;
 use App\Models\User;
 use App\Services\AuditService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,7 +24,7 @@ class AuditTest extends TestCase
         // Simulate authentication for the audit service
         Auth::shouldReceive('id')->andReturn($user->id);
 
-        $auditService = new AuditService();
+        $auditService = new AuditService;
         $auditService->logLogin($user);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -40,7 +39,7 @@ class AuditTest extends TestCase
 
         Auth::shouldReceive('id')->andReturn($user->id);
 
-        $auditService = new AuditService();
+        $auditService = new AuditService;
         $auditService->logLogout($user);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -52,7 +51,7 @@ class AuditTest extends TestCase
     public function test_user_creation_is_audited(): void
     {
         $user = User::factory()->create();
-        $auditService = new AuditService();
+        $auditService = new AuditService;
 
         $auditService->logUserCreated($user);
 
@@ -66,7 +65,7 @@ class AuditTest extends TestCase
     public function test_user_update_is_audited(): void
     {
         $user = User::factory()->create();
-        $auditService = new AuditService();
+        $auditService = new AuditService;
 
         $oldData = ['fullname' => 'Old Name'];
         $newData = ['fullname' => 'New Name'];
@@ -83,7 +82,7 @@ class AuditTest extends TestCase
     public function test_role_assignment_is_audited(): void
     {
         $user = User::factory()->create();
-        $auditService = new AuditService();
+        $auditService = new AuditService;
 
         $auditService->logRoleAssigned($user, 'Admin');
 

@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\ReverseTransactionRequest;
+use App\Http\Requests\StoreShareAccountRequest;
+use App\Http\Requests\StoreSharePurchaseRequest;
+use App\Http\Requests\StoreShareRedemptionRequest;
+use App\Models\Member;
+use App\Models\ShareAccount;
+use App\Models\ShareProduct;
+use App\Services\ShareTransactionService;
+use Illuminate\Http\Request;
+
+class ShareAccountController extends Controller
+{
+    public function __construct(
+        private ShareTransactionService $transactionService,
+    ) {}
+
+    public function index(Request $request)
+    {
+        $this->authorize('viewAny', ShareAccount::class);
+
+        $query = ShareAccount::with(['member', 'product']);
+
+        if ($request->filled('search')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('account_number', 'like', "%{$request->search}%")
+                    ->orWhereHas('member', function ($mq) use ($request) {
+                        $mq->where('first_name', 'like', "%{$request->search}%")
+                            ->orWhere('last_name', 'like', "%{$request->search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('product_id')) {
+            $query->where('share_product_id', $request->product_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $accounts = $query->latest()->paginate(15)->withQueryString();
+
+        $products = ShareProduct::active()->get();
+        $members = Member::active()->get();
+
+        return view('share-accounts.index', compact('accounts', 'products', 'members'));
+    }
+
+    public function create()
+    {
+        $this->authorize('create', ShareAccount::class);
+
+        $members = Member::active()->get();
+        $products = ShareProduct::active()->get();
+
+        return view('share-accounts.create', compact('members', 'products'));
+    }
+
+    public function store(StoreShareAccountRequest $request)
+    {
+        $this->authorize('create', ShareAccount::class);
+
+        $account = ShareAccount::create([
+            'member_id' => $request->member_id,
+            'share_product_id' => $request->share_product_id,
+            'account_number' => ShareAccount::generateAccountNumber(),
+            'status' => 'active',
+        ]);
+
+        return redirect()->route('share-accounts.show', $account)
+            ->with('success', 'Share account "'.$account->account_number.'" created successfully.');
+    }
+
+    public function show(ShareAccount $shareAccount)
+    {
+        $this->authorize('view', $shareAccount);
+
+        $shareAccount->load([
+            'member',
+            'product',
+            'transactions.creator',
+        ]);
+
+        return view('share-accounts.show', ['account' => $shareAccount]);
+    }
+
+    public function purchase(ShareAccount $shareAccount)
+    {
+        $this->authorize('view', $shareAccount);
+
+        $shareAccount->load('product');
+
+        return view('share-accounts.purchase', ['account' => $shareAccount]);
+    }
+
+    public function doPurchase(StoreSharePurchaseRequest $request, ShareAccount $shareAccount)
+    {
+        $this->authorize('view', $shareAccount);
+
+        $transaction = $this->transactionService->purchase(
+            $shareAccount,
+            $request->validated()
+        );
+
+        return redirect()->route('share-transactions.show', $transaction)
+            ->with('success', 'Share purchase recorded successfully. Transaction: '.$transaction->reference_number);
+    }
+
+    public function redeem(ShareAccount $shareAccount)
+    {
+        $this->authorize('view', $shareAccount);
+
+        $shareAccount->load('product');
+
+        return view('share-accounts.redeem', ['account' => $shareAccount]);
+    }
+
+    public function doRedeem(StoreShareRedemptionRequest $request, ShareAccount $shareAccount)
+    {
+        $this->authorize('view', $shareAccount);
+
+        $transaction = $this->transactionService->redeem(
+            $shareAccount,
+            $request->validated()
+        );
+
+        return redirect()->route('share-transactions.show', $transaction)
+            ->with('success', 'Share redemption recorded successfully. Transaction: '.$transaction->reference_number);
+    }
+
+    public function reverse(ReverseTransactionRequest $request, ShareAccount $shareAccount)
+    {
+        $this->authorize('view', $shareAccount);
+
+        $transaction = $this->transactionService->reverse(
+            $shareAccount,
+            $request->validated()
+        );
+
+        return redirect()->route('share-transactions.show', $transaction)
+            ->with('success', 'Transaction reversed successfully.');
+    }
+}

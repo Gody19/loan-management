@@ -16,13 +16,14 @@ class MemberSeeder extends Seeder
 {
     public function run(): void
     {
-        $generator = new MemberNumberGenerator();
+        $generator = new MemberNumberGenerator;
         $organizations = Organization::all();
         $branches = Branch::all();
         $groups = VicobaGroup::all();
 
         if ($organizations->isEmpty() || $branches->isEmpty() || $groups->isEmpty()) {
             $this->command->warn('Please run Organization, Branch, and Group seeders first.');
+
             return;
         }
 
@@ -78,7 +79,7 @@ class MemberSeeder extends Seeder
                 'last_name' => $lastName,
                 'gender' => $genders[array_rand($genders)],
                 'date_of_birth' => fake()->dateTimeBetween('-60 years', '-18 years'),
-                'phone' => '+255' . fake()->numerify('7########'),
+                'phone' => '+255'.fake()->numerify('7########'),
                 'alternate_phone' => fake()->optional(0.3)->numerify('+2557#########'),
                 'email' => fake()->optional(0.5)->safeEmail(),
                 'national_id' => fake()->numerify('##################'),
@@ -98,7 +99,7 @@ class MemberSeeder extends Seeder
                 'member_id' => $member->id,
                 'full_name' => fake()->name(),
                 'relationship' => fake()->randomElement(['spouse', 'parent', 'child', 'sibling']),
-                'phone' => '+255' . fake()->numerify('7########'),
+                'phone' => '+255'.fake()->numerify('7########'),
                 'address' => fake()->optional(0.5)->address(),
                 'is_primary' => true,
             ]);
@@ -108,13 +109,13 @@ class MemberSeeder extends Seeder
                     'member_id' => $member->id,
                     'full_name' => fake()->name(),
                     'relationship' => fake()->randomElement(['parent', 'sibling', 'relative']),
-                    'phone' => '+255' . fake()->numerify('7########'),
+                    'phone' => '+255'.fake()->numerify('7########'),
                     'address' => fake()->optional(0.5)->address(),
                     'is_primary' => false,
                 ]);
             }
         }
 
-        $this->command->info('Created ' . count($members) . ' members with next-of-kin records.');
+        $this->command->info('Created '.count($members).' members with next-of-kin records.');
     }
 }

@@ -5,8 +5,8 @@ namespace App\Models;
 use App\Enums\UserStatus;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -159,6 +159,7 @@ class User extends Authenticatable
         foreach (array_slice($names, 0, 2) as $name) {
             $initials .= strtoupper(mb_substr($name, 0, 1));
         }
+
         return $initials;
     }
 }

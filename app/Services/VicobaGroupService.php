@@ -15,6 +15,7 @@ class VicobaGroupService
     public function update(VicobaGroup $group, array $data): VicobaGroup
     {
         $group->update($data);
+
         return $group;
     }
 
@@ -22,20 +23,20 @@ class VicobaGroupService
     {
         $query = VicobaGroup::with('branch.organization');
 
-        if (!empty($filters['search'])) {
+        if (! empty($filters['search'])) {
             $search = $filters['search'];
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('code', 'like', "%{$search}%")
-                  ->orWhere('meeting_location', 'like', "%{$search}%");
+                    ->orWhere('code', 'like', "%{$search}%")
+                    ->orWhere('meeting_location', 'like', "%{$search}%");
             });
         }
 
-        if (!empty($filters['status'])) {
+        if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
         }
 
-        if (!empty($filters['branch_id'])) {
+        if (! empty($filters['branch_id'])) {
             $query->where('branch_id', $filters['branch_id']);
         }
 
@@ -46,10 +47,10 @@ class VicobaGroupService
     {
         $query = VicobaGroup::with('branch.organization');
 
-        if (!$user->hasRole('Super Administrator')) {
+        if (! $user->hasRole('Super Administrator')) {
             $query->where(function ($q) use ($user) {
                 $q->whereHas('branch.users', fn ($uq) => $uq->where('users.id', $user->id))
-                  ->orWhereHas('branch.organization.users', fn ($uq) => $uq->where('users.id', $user->id));
+                    ->orWhereHas('branch.organization.users', fn ($uq) => $uq->where('users.id', $user->id));
             });
         }
 

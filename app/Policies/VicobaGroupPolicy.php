@@ -23,6 +23,7 @@ class VicobaGroupPolicy
         }
 
         $branch = $group->branch;
+
         return $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
     }
 
@@ -42,6 +43,7 @@ class VicobaGroupPolicy
         }
 
         $branch = $group->branch;
+
         return $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
     }
 
@@ -56,6 +58,7 @@ class VicobaGroupPolicy
         }
 
         $branch = $group->branch;
+
         return $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
     }
 }

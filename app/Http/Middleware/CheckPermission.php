@@ -11,11 +11,11 @@ class CheckPermission
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next, ...$permissions): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect()->route('login');
         }
 
@@ -25,6 +25,6 @@ class CheckPermission
             }
         }
 
-        abort(403, 'Unauthorized. Required permission: ' . implode(' or ', $permissions));
+        abort(403, 'Unauthorized. Required permission: '.implode(' or ', $permissions));
     }
 }

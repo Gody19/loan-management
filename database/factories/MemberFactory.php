@@ -23,13 +23,13 @@ class MemberFactory extends Factory
 
         $firstName = fake()->firstName();
         $lastName = fake()->lastName();
-        $phone = '+255' . fake()->numerify('7########');
+        $phone = '+255'.fake()->numerify('7########');
 
         return [
             'organization_id' => Organization::factory(),
             'branch_id' => Branch::factory(),
             'vicoba_group_id' => VicobaGroup::factory(),
-            'member_number' => 'VCB-' . str_pad(self::$counter, 6, '0', STR_PAD_LEFT),
+            'member_number' => 'VCB-'.str_pad(self::$counter, 6, '0', STR_PAD_LEFT),
             'first_name' => $firstName,
             'middle_name' => fake()->optional(0.3)->firstName(),
             'last_name' => $lastName,

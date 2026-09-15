@@ -24,7 +24,7 @@ class StoreBranchRequest extends FormRequest
         ];
 
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
-            $rules['code'][array_search('unique:branches,code', $rules['code'])] = 'unique:branches,code,' . $this->route('branch')->id;
+            $rules['code'][array_search('unique:branches,code', $rules['code'])] = 'unique:branches,code,'.$this->route('branch')->id;
         }
 
         return $rules;

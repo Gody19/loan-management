@@ -7,7 +7,6 @@ use App\Http\Requests\VerifyDocumentRequest;
 use App\Models\Member;
 use App\Models\MemberDocument;
 use App\Services\MemberService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class MemberDocumentController extends Controller
@@ -30,7 +29,7 @@ class MemberDocumentController extends Controller
     {
         $this->authorize('manageDocuments', $member);
 
-        if (!Storage::disk('private')->exists($document->file_path)) {
+        if (! Storage::disk('private')->exists($document->file_path)) {
             abort(404, 'Document file not found.');
         }
 

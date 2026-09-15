@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Enums\MemberStatus;
 use App\Models\Branch;
 use App\Models\Member;
 use App\Models\Organization;
@@ -20,10 +19,15 @@ class MemberTest extends TestCase
     use RefreshDatabase;
 
     protected Organization $organization;
+
     protected Branch $branch;
+
     protected VicobaGroup $group;
+
     protected User $admin;
+
     protected User $orgAdmin;
+
     protected User $branchManager;
 
     protected function setUp(): void
@@ -45,11 +49,10 @@ class MemberTest extends TestCase
         $adminRole->syncPermissions(Permission::all());
 
         $orgAdminRole = Role::create(['name' => 'Organization Administrator', 'guard_name' => 'web']);
-        $orgAdminRole->syncPermissions(Permission::all()->filter(fn ($p) => !str_contains($p->name, 'audit.')));
+        $orgAdminRole->syncPermissions(Permission::all()->filter(fn ($p) => ! str_contains($p->name, 'audit.')));
 
         $branchManagerRole = Role::create(['name' => 'Branch Manager', 'guard_name' => 'web']);
-        $branchManagerRole->syncPermissions(Permission::all()->filter(fn ($p) =>
-            in_array(explode('.', $p->name)[0], ['dashboard', 'branch', 'group', 'member'])
+        $branchManagerRole->syncPermissions(Permission::all()->filter(fn ($p) => in_array(explode('.', $p->name)[0], ['dashboard', 'branch', 'group', 'member'])
         ));
 
         $this->organization = Organization::create([
@@ -90,7 +93,7 @@ class MemberTest extends TestCase
             'organization_id' => $this->organization->id,
             'branch_id' => $this->branch->id,
             'vicoba_group_id' => $this->group->id,
-            'member_number' => 'VCB-' . str_pad(rand(100, 999999), 6, '0', STR_PAD_LEFT),
+            'member_number' => 'VCB-'.str_pad(rand(100, 999999), 6, '0', STR_PAD_LEFT),
             'first_name' => 'John',
             'last_name' => 'Doe',
             'gender' => 'male',

@@ -19,6 +19,6 @@ class OrganizationSeeder extends Seeder
             Organization::create($org);
         }
 
-        $this->command->info('Created ' . count($organizations) . ' organizations.');
+        $this->command->info('Created '.count($organizations).' organizations.');
     }
 }
