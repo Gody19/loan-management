@@ -36,7 +36,7 @@
         @include('layouts.components.navbar')
 
         {{-- Page Content --}}
-        <div class="p-4">
+        <div class="p-4 flex-grow-1">
             {{-- Flash Messages --}}
             @include('layouts.components.alerts')
 
