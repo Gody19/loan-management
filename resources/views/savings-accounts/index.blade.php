@@ -6,6 +6,9 @@
     @include('layouts.components.page-header', [
         'title' => 'Member Savings Accounts',
         'subtitle' => 'Manage member savings accounts',
+        'breadcrumb' => [
+            ['label' => 'Member Savings Accounts'],
+        ],
         'actions' => '<a href="' . route('savings-accounts.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Open Account
         </a>'

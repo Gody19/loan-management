@@ -6,6 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Edit Savings Plan',
         'subtitle' => 'Update ' . $product->name . ' (' . $product->code . ')',
+        'breadcrumb' => [
+            ['label' => 'Savings Plans', 'url' => route('savings-products.index')],
+            ['label' => $product->name, 'url' => route('savings-products.show', $product)],
+            ['label' => 'Edit'],
+        ],
         'actions' => '<a href="' . route('savings-products.show', $product) . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Plan
         </a>'

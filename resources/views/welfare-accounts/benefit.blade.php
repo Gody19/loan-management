@@ -6,6 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Welfare Benefit',
         'subtitle' => 'Account: ' . $account->account_number . ' | ' . ($account->member->full_name ?? '—'),
+        'breadcrumb' => [
+            ['label' => 'Member Welfare Accounts', 'url' => route('welfare-accounts.index')],
+            ['label' => $account->account_number, 'url' => route('welfare-accounts.show', $account)],
+            ['label' => 'Benefit'],
+        ],
         'actions' => '<a href="' . route('welfare-accounts.show', $account) . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Account
         </a>'

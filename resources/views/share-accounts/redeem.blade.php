@@ -6,6 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Redeem Shares',
         'subtitle' => 'Account: ' . $account->account_number . ' | ' . ($account->member->full_name ?? '—'),
+        'breadcrumb' => [
+            ['label' => 'Member Share Accounts', 'url' => route('share-accounts.index')],
+            ['label' => $account->account_number, 'url' => route('share-accounts.show', $account)],
+            ['label' => 'Redeem'],
+        ],
         'actions' => '<a href="' . route('share-accounts.show', $account) . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Account
         </a>'

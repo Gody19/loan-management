@@ -20,6 +20,10 @@
     @include('layouts.components.page-header', [
         'title' => $member->full_name,
         'subtitle' => 'Member No: ' . $member->member_number . ' . ' . $member->membership_status->label(),
+        'breadcrumb' => [
+            ['label' => 'Members', 'url' => route('members.index')],
+            ['label' => $member->full_name],
+        ],
         'actions' => $headerActions,
     ])
 @endsection

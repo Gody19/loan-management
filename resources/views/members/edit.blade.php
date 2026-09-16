@@ -6,6 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Edit Member',
         'subtitle' => 'Update ' . $member->full_name . ' (' . $member->member_number . ')',
+        'breadcrumb' => [
+            ['label' => 'Members', 'url' => route('members.index')],
+            ['label' => $member->full_name, 'url' => route('members.show', $member)],
+            ['label' => 'Edit'],
+        ],
         'actions' => '<a href="' . route('members.show', $member) . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Profile
         </a>'

@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Register New Member',
         'subtitle' => 'Add a new VICOBA member',
+        'breadcrumb' => [
+            ['label' => 'Members', 'url' => route('members.index')],
+            ['label' => 'Register'],
+        ],
         'actions' => '<a href="' . route('members.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

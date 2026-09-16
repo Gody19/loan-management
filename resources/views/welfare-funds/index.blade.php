@@ -6,6 +6,9 @@
     @include('layouts.components.page-header', [
         'title' => 'Welfare Funds',
         'subtitle' => 'Manage welfare funds and contributions',
+        'breadcrumb' => [
+            ['label' => 'Welfare Funds'],
+        ],
         'actions' => '<a href="' . route('welfare-funds.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Add Fund
         </a>'

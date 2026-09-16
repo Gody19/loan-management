@@ -6,8 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Share Plans',
         'subtitle' => 'Manage share plans and pricing',
+        'breadcrumb' => [
+            ['label' => 'Share Plans'],
+        ],
         'actions' => '<a href="' . route('share-products.create') . '" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Add Product
+            <i class="bi bi-plus-lg me-1"></i> Add Plan
         </a>'
     ])
 @endsection

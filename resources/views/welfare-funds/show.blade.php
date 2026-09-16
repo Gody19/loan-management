@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => $fund->name,
         'subtitle' => 'Code: ' . $fund->code . ' | ' . $fund->status->label(),
+        'breadcrumb' => [
+            ['label' => 'Welfare Funds', 'url' => route('welfare-funds.index')],
+            ['label' => $fund->name],
+        ],
         'actions' => '<a href="' . route('welfare-funds.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>

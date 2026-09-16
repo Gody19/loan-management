@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Create Share Plan',
         'subtitle' => 'Add a new share plan',
+        'breadcrumb' => [
+            ['label' => 'Share Plans', 'url' => route('share-products.index')],
+            ['label' => 'Create'],
+        ],
         'actions' => '<a href="' . route('share-products.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

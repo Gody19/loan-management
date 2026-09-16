@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Transaction: ' . $transaction->transaction_number,
         'subtitle' => ucfirst($transaction->type) . ' | ' . ucfirst($transaction->status),
+        'breadcrumb' => [
+            ['label' => 'Savings Transactions', 'url' => route('savings-transactions.index')],
+            ['label' => $transaction->transaction_number],
+        ],
         'actions' => '<a href="' . route('savings-transactions.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => $product->name,
         'subtitle' => 'Code: ' . $product->code . ' | ' . $product->status->label(),
+        'breadcrumb' => [
+            ['label' => 'Share Plans', 'url' => route('share-products.index')],
+            ['label' => $product->name],
+        ],
         'actions' => '<a href="' . route('share-products.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>

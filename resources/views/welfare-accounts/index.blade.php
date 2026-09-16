@@ -6,6 +6,9 @@
     @include('layouts.components.page-header', [
         'title' => 'Member Welfare Accounts',
         'subtitle' => 'Manage member welfare accounts',
+        'breadcrumb' => [
+            ['label' => 'Member Welfare Accounts'],
+        ],
         'actions' => '<a href="' . route('welfare-accounts.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Open Account
         </a>'

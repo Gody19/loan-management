@@ -6,6 +6,9 @@
     @include('layouts.components.page-header', [
         'title' => 'Member Share Accounts',
         'subtitle' => 'Manage member share accounts',
+        'breadcrumb' => [
+            ['label' => 'Member Share Accounts'],
+        ],
         'actions' => '<a href="' . route('share-accounts.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Open Account
         </a>'

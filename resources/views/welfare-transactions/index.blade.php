@@ -5,7 +5,10 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Welfare Transactions',
-        'subtitle' => 'View all welfare contributions and benefit transactions'
+        'subtitle' => 'View all welfare contributions and benefit transactions',
+        'breadcrumb' => [
+            ['label' => 'Welfare Transactions'],
+        ]
     ])
 @endsection
 

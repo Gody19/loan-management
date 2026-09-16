@@ -5,7 +5,10 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Share Transactions',
-        'subtitle' => 'View all share purchase and redemption transactions'
+        'subtitle' => 'View all share purchase and redemption transactions',
+        'breadcrumb' => [
+            ['label' => 'Share Transactions'],
+        ]
     ])
 @endsection
 

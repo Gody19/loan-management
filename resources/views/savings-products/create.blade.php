@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Create Savings Plan',
         'subtitle' => 'Add a new savings plan',
+        'breadcrumb' => [
+            ['label' => 'Savings Plans', 'url' => route('savings-products.index')],
+            ['label' => 'Create'],
+        ],
         'actions' => '<a href="' . route('savings-products.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

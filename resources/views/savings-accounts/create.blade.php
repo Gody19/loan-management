@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Open Savings Account',
         'subtitle' => 'Register a new savings account for a member',
+        'breadcrumb' => [
+            ['label' => 'Member Savings Accounts', 'url' => route('savings-accounts.index')],
+            ['label' => 'Open Account'],
+        ],
         'actions' => '<a href="' . route('savings-accounts.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

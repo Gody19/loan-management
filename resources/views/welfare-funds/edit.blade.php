@@ -5,6 +5,11 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Edit Welfare Fund',
+        'breadcrumb' => [
+            ['label' => 'Welfare Funds', 'url' => route('welfare-funds.index')],
+            ['label' => $fund->name, 'url' => route('welfare-funds.show', $fund)],
+            ['label' => 'Edit'],
+        ],
         'subtitle' => 'Update ' . $fund->name . ' (' . $fund->code . ')',
         'actions' => '<a href="' . route('welfare-funds.show', $fund) . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Fund

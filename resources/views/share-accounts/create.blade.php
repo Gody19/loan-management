@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Open Share Account',
         'subtitle' => 'Create a new share account for a member',
+        'breadcrumb' => [
+            ['label' => 'Member Share Accounts', 'url' => route('share-accounts.index')],
+            ['label' => 'Open Account'],
+        ],
         'actions' => '<a href="' . route('share-accounts.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

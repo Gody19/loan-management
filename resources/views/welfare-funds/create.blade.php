@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => 'Create Welfare Fund',
         'subtitle' => 'Add a new welfare fund',
+        'breadcrumb' => [
+            ['label' => 'Welfare Funds', 'url' => route('welfare-funds.index')],
+            ['label' => 'Create'],
+        ],
         'actions' => '<a href="' . route('welfare-funds.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'

@@ -6,6 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Make Deposit',
         'subtitle' => 'Account: ' . $account->account_number . ' | Balance: ' . number_format($account->balance, 2),
+        'breadcrumb' => [
+            ['label' => 'Member Savings Accounts', 'url' => route('savings-accounts.index')],
+            ['label' => $account->account_number, 'url' => route('savings-accounts.show', $account)],
+            ['label' => 'Deposit'],
+        ],
         'actions' => '<a href="' . route('savings-accounts.show', $account) . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to Account
         </a>'

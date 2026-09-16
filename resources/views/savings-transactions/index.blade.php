@@ -6,6 +6,9 @@
     @include('layouts.components.page-header', [
         'title' => 'Savings Transactions',
         'subtitle' => 'View all savings transactions',
+        'breadcrumb' => [
+            ['label' => 'Savings Transactions'],
+        ],
         'actions' => ''
     ])
 @endsection

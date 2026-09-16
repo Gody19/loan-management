@@ -6,6 +6,10 @@
     @include('layouts.components.page-header', [
         'title' => $product->name,
         'subtitle' => 'Plan Code: ' . $product->code . ' | ' . ucfirst($product->status),
+        'breadcrumb' => [
+            ['label' => 'Savings Plans', 'url' => route('savings-products.index')],
+            ['label' => $product->name],
+        ],
         'actions' => '<a href="' . route('savings-products.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>

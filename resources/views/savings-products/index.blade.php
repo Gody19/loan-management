@@ -6,8 +6,11 @@
     @include('layouts.components.page-header', [
         'title' => 'Savings Plans',
         'subtitle' => 'Manage savings plan offerings',
+        'breadcrumb' => [
+            ['label' => 'Savings Plans'],
+        ],
         'actions' => '<a href="' . route('savings-products.create') . '" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Add Product
+            <i class="bi bi-plus-lg me-1"></i> Add Plan
         </a>'
     ])
 @endsection

@@ -1,3 +1,8 @@
+{{-- Breadcrumb --}}
+@if(isset($breadcrumbs) && count($breadcrumbs))
+    @include('layouts.components.breadcrumb', ['breadcrumbs' => $breadcrumbs])
+@endif
+
 {{-- Page Header --}}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
