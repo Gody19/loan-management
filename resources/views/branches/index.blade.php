@@ -92,7 +92,7 @@
                                         <i class="bi bi-people"></i>
                                     </a>
                                     <form action="{{ route('branches.destroy', $branch) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this branch?')">
+                                          data-confirm="Are you sure you want to delete this branch?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-outline-danger" title="Delete">

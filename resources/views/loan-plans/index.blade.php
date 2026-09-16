@@ -108,7 +108,7 @@
                                     <a href="{{ route('loan-plans.edit', $plan) }}" class="btn btn-outline-warning" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form method="POST" action="{{ route('loan-plans.destroy', $plan) }}" class="d-inline" onsubmit="return confirm('Delete this loan plan?')">
+                                    <form method="POST" action="{{ route('loan-plans.destroy', $plan) }}" class="d-inline" data-confirm="Delete this loan plan?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-outline-danger" title="Delete">

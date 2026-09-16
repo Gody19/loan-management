@@ -225,7 +225,7 @@
                                                 </td>
                                                 @can('manageNextOfKin', $member)
                                                     <td class="text-end">
-                                                        <form method="POST" action="{{ route('members.next-of-kin.destroy', [$member, $kin]) }}" class="d-inline" onsubmit="return confirm('Remove this next of kin?')">
+                                                        <form method="POST" action="{{ route('members.next-of-kin.destroy', [$member, $kin]) }}" class="d-inline" data-confirm="Remove this next of kin?">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
@@ -304,7 +304,7 @@
                                                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Reject"><i class="bi bi-x-lg"></i></button>
                                                                 </form>
                                                             @endif
-                                                            <form method="POST" action="{{ route('members.documents.destroy', [$member, $doc]) }}" class="d-inline" onsubmit="return confirm('Delete this document?')">
+                                                            <form method="POST" action="{{ route('members.documents.destroy', [$member, $doc]) }}" class="d-inline" data-confirm="Delete this document?">
                                                                 @csrf
                                                                 @method('DELETE')
                                                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>

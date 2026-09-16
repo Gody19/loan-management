@@ -87,7 +87,7 @@
                                         <i class="bi bi-people"></i>
                                     </a>
                                     <form action="{{ route('organizations.destroy', $org) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this organization?')">
+                                          data-confirm="Are you sure you want to delete this organization?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-outline-danger" title="Delete">

@@ -69,7 +69,7 @@
                                     <td>{{ $user->email }}</td>
                                     <td class="text-end">
                                         <form action="{{ route('branches.remove-user', $branch) }}" method="POST" class="d-inline"
-                                              onsubmit="return confirm('Remove this user from the branch?')">
+                                              data-confirm="Remove this user from the branch?">
                                             @csrf
                                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                                             <button type="submit" class="btn btn-sm btn-outline-danger">

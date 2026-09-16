@@ -121,7 +121,7 @@
                                         @if(auth()->user()->can('update', $organization))
                                             <td class="text-end">
                                                 <form method="POST" action="{{ route('organizations.remove-admin', [$organization, $admin]) }}" class="d-inline"
-                                                      onsubmit="return confirm('Remove this administrator? An organization must have at least one administrator.')">
+                                                      data-confirm="Remove this administrator? An organization must have at least one administrator.">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Remove">

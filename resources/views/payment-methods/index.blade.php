@@ -80,7 +80,7 @@
                                 <a href="{{ route('payment-methods.edit', $method) }}" class="btn btn-sm btn-outline-warning" title="Edit">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <form action="{{ route('payment-methods.destroy', $method) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure?')">
+                                <form action="{{ route('payment-methods.destroy', $method) }}" method="POST" class="d-inline" data-confirm="Are you sure?">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">

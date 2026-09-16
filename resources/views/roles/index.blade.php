@@ -46,7 +46,7 @@
                                     </a>
                                     @if($role->name !== 'Super Administrator')
                                         <form action="{{ route('roles.destroy', $role) }}" method="POST" class="d-inline"
-                                              onsubmit="return confirm('Are you sure you want to delete this role?')">
+                                              data-confirm="Are you sure you want to delete this role?">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-outline-danger" title="Delete">

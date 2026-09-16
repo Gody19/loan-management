@@ -14,6 +14,9 @@
     {{-- Bootstrap Icons --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
+    {{-- SweetAlert2 --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
     {{-- Vite Assets --}}
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/vendor.css', 'resources/css/app.css', 'resources/css/app-custom.css', 'resources/js/app.js'])
@@ -61,60 +64,160 @@
     {{-- Mobile Sidebar Overlay --}}
     <div class="modal-backdrop fade d-none" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-    {{-- Permission Denied Toast --}}
-    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
-        <div id="permissionToast" class="toast align-items-center text-bg-danger border-0" role="alert" data-bs-autohide="false">
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi bi-shield-lock me-2"></i>
-                    <strong>Access Denied!</strong> You don't have permission to perform this action.
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>
-    </div>
+    {{-- SweetAlert2 --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    {{-- Global Permission Denied Handler --}}
+    {{-- Flash Messages via SweetAlert2 --}}
+    @if(session('success'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: {!! json_encode(session('success')) !!},
+                    timer: 4000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            });
+        </script>
+    @endif
+
+    @if(session('error'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: {!! json_encode(session('error')) !!},
+                    timer: 6000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            });
+        </script>
+    @endif
+
+    @if(session('warning'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Warning',
+                    text: {!! json_encode(session('warning')) !!},
+                    timer: 5000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            });
+        </script>
+    @endif
+
+    @if(session('info'))
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Info',
+                    text: {!! json_encode(session('info')) !!},
+                    timer: 4000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            });
+        </script>
+    @endif
+
+    {{-- Global Confirm Handler (replaces native confirm()) --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Check if user lacks permission for current action
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('error') === 'unauthorized') {
-                showToastAndRedirect('Access Denied! You don\'t have permission for this action.');
-            }
+            // Override native confirm with SweetAlert2
+            window._originalConfirm = window.confirm;
+            window.confirm = function(message) {
+                return new Promise(function(resolve) {
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: message,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true
+                    }).then(function(result) {
+                        resolve(result.isConfirmed);
+                    });
+                });
+            };
 
-            // Intercept 403 responses from AJAX calls
-            document.addEventListener('ajaxerror', function(e) {
-                if (e.detail && e.detail.status === 403) {
-                    showToastAndRedirect('Access Denied! You don\'t have permission for this action.');
+            // Global data-confirm handler for forms
+            document.addEventListener('submit', function(e) {
+                var form = e.target;
+                if (form.dataset.confirm) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: 'Are you sure?',
+                        text: form.dataset.confirm,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#0d6efd',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Yes, proceed',
+                        cancelButtonText: 'Cancel',
+                        reverseButtons: true
+                    }).then(function(result) {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                    return false;
                 }
             });
 
-            // Global fetch interceptor for 403
+            // Global 403 handler
+            document.addEventListener('ajaxerror', function(e) {
+                if (e.detail && e.detail.status === 403) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Access Denied',
+                        text: 'You don\'t have permission to perform this action.',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    }).then(function() {
+                        window.location.href = '{{ route("dashboard") }}';
+                    });
+                }
+            });
+
             const originalFetch = window.fetch;
             window.fetch = function() {
                 return originalFetch.apply(this, arguments).then(function(response) {
                     if (response.status === 403) {
-                        showToastAndRedirect('Access Denied! You don\'t have permission for this action.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Access Denied',
+                            text: 'You don\'t have permission to perform this action.',
+                            timer: 3000,
+                            timerProgressBar: true,
+                            showConfirmButton: false
+                        }).then(function() {
+                            window.location.href = '{{ route("dashboard") }}';
+                        });
                     }
                     return response;
                 });
             };
         });
-
-        function showToastAndRedirect(message) {
-            const toast = document.getElementById('permissionToast');
-            if (toast) {
-                toast.querySelector('.toast-body').innerHTML =
-                    '<i class="bi bi-shield-lock me-2"></i><strong>Access Denied!</strong> ' + message;
-                const bsToast = new bootstrap.Toast(toast, { autohide: false });
-                bsToast.show();
-
-                setTimeout(function() {
-                    window.location.href = '{{ route("dashboard") }}';
-                }, 3000);
-            }
-        }
     </script>
 
     @stack('scripts')

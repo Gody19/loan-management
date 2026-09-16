@@ -89,7 +89,7 @@
                                         <i class="bi bi-pencil"></i>
                                     </a>
                                     <form action="{{ route('vicoba-groups.destroy', $group) }}" method="POST" class="d-inline"
-                                          onsubmit="return confirm('Are you sure you want to delete this group?')">
+                                          data-confirm="Are you sure you want to delete this group?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-outline-danger" title="Delete">

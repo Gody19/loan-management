@@ -74,7 +74,7 @@
                                     <a href="{{ route('loan-approval-levels.edit', $level) }}" class="btn btn-outline-warning" title="Edit">
                                         <i class="bi bi-pencil"></i>
                                     </a>
-                                    <form method="POST" action="{{ route('loan-approval-levels.destroy', $level) }}" class="d-inline" onsubmit="return confirm('Delete this approval level?')">
+                                    <form method="POST" action="{{ route('loan-approval-levels.destroy', $level) }}" class="d-inline" data-confirm="Delete this approval level?">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="btn btn-outline-danger" title="Delete">

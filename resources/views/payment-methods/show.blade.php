@@ -62,7 +62,7 @@
             <a href="{{ route('payment-methods.edit', $paymentMethod) }}" class="btn btn-warning">
                 <i class="bi bi-pencil me-1"></i> Edit
             </a>
-            <form action="{{ route('payment-methods.destroy', $paymentMethod) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this payment method?')">
+            <form action="{{ route('payment-methods.destroy', $paymentMethod) }}" method="POST" class="d-inline" data-confirm="Are you sure you want to delete this payment method?">
                 @csrf
                 @method('DELETE')
                 <button type="submit" class="btn btn-danger">
