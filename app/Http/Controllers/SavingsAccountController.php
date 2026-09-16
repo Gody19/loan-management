@@ -78,7 +78,17 @@ class SavingsAccountController extends Controller
             ->latest()
             ->paginate(15);
 
-        return view('savings-accounts.show', ['account' => $savingsAccount, 'transactions' => $transactions]);
+        $totalDeposits = $savingsAccount->transactions()
+            ->where('transaction_type', 'deposit')
+            ->sum('amount');
+        $totalWithdrawals = $savingsAccount->transactions()
+            ->where('transaction_type', 'withdrawal')
+            ->sum('amount');
+
+        return view('savings-accounts.show', array_merge(
+            ['account' => $savingsAccount, 'transactions' => $transactions],
+            compact('totalDeposits', 'totalWithdrawals')
+        ));
     }
 
     public function deposit(SavingsAccount $savingsAccount)
@@ -91,9 +101,14 @@ class SavingsAccountController extends Controller
     public function doDeposit(StoreSavingsDepositRequest $request, SavingsAccount $savingsAccount)
     {
         $this->authorize('deposit', $savingsAccount);
-        $this->transactionService->deposit($savingsAccount, $request->validated());
-        return redirect()->route('savings-accounts.show', $savingsAccount)
-            ->with('success', 'Deposit completed successfully.');
+        try {
+            $this->transactionService->deposit($savingsAccount, $request->validated());
+            return redirect()->route('savings-accounts.show', $savingsAccount)
+                ->with('success', 'Deposit completed successfully.');
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('savings-accounts.show', $savingsAccount)
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function withdraw(SavingsAccount $savingsAccount)
@@ -120,7 +135,7 @@ class SavingsAccountController extends Controller
     {
         $this->authorize('reverse', $transaction);
         try {
-            $reversal = $this->transactionService->reverse($transaction, $request->reason);
+            $reversal = $this->transactionService->reverse($transaction, $request->validated()['reason']);
             return redirect()->route('savings-accounts.show', $transaction->account)
                 ->with('success', 'Transaction reversed successfully.');
         } catch (\InvalidArgumentException $e) {

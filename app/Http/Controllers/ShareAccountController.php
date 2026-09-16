@@ -78,8 +78,14 @@ class ShareAccountController extends Controller
         $account = ShareAccount::create([
             'member_id' => $request->member_id,
             'share_product_id' => $request->share_product_id,
+            'organization_id' => $request->organization_id,
+            'branch_id' => $request->branch_id,
+            'vicoba_group_id' => $request->vicoba_group_id,
             'account_number' => ShareAccount::generateAccountNumber(),
+            'total_shares' => 0,
+            'total_value' => 0,
             'status' => 'active',
+            'created_by' => auth()->id(),
         ]);
 
         return redirect()->route('share-accounts.show', $account)
@@ -110,15 +116,20 @@ class ShareAccountController extends Controller
 
     public function doPurchase(StoreSharePurchaseRequest $request, ShareAccount $shareAccount)
     {
-        $this->authorize('view', $shareAccount);
+        $this->authorize('update', $shareAccount);
 
-        $transaction = $this->transactionService->purchase(
-            $shareAccount,
-            $request->validated()
-        );
+        try {
+            $transaction = $this->transactionService->purchase(
+                $shareAccount,
+                $request->validated()
+            );
 
-        return redirect()->route('share-transactions.show', $transaction)
-            ->with('success', 'Share purchase recorded successfully. Transaction: '.$transaction->reference_number);
+            return redirect()->route('share-transactions.show', $transaction)
+                ->with('success', 'Share purchase recorded successfully. Transaction: '.$transaction->transaction_number);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('share-accounts.show', $shareAccount)
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function redeem(ShareAccount $shareAccount)
@@ -132,27 +143,37 @@ class ShareAccountController extends Controller
 
     public function doRedeem(StoreShareRedemptionRequest $request, ShareAccount $shareAccount)
     {
-        $this->authorize('view', $shareAccount);
+        $this->authorize('update', $shareAccount);
 
-        $transaction = $this->transactionService->redeem(
-            $shareAccount,
-            $request->validated()
-        );
+        try {
+            $transaction = $this->transactionService->redeem(
+                $shareAccount,
+                $request->validated()
+            );
 
-        return redirect()->route('share-transactions.show', $transaction)
-            ->with('success', 'Share redemption recorded successfully. Transaction: '.$transaction->reference_number);
+            return redirect()->route('share-transactions.show', $transaction)
+                ->with('success', 'Share redemption recorded successfully. Transaction: '.$transaction->transaction_number);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('share-accounts.show', $shareAccount)
+                ->with('error', $e->getMessage());
+        }
     }
 
-    public function reverse(ReverseTransactionRequest $request, ShareAccount $shareAccount)
+    public function reverse(ReverseTransactionRequest $request, \App\Models\ShareTransaction $transaction)
     {
-        $this->authorize('view', $shareAccount);
+        $this->authorize('reverse', $transaction);
 
-        $transaction = $this->transactionService->reverse(
-            $shareAccount,
-            $request->validated()
-        );
+        try {
+            $reversal = $this->transactionService->reverse(
+                $transaction,
+                $request->validated()['reason']
+            );
 
-        return redirect()->route('share-transactions.show', $transaction)
-            ->with('success', 'Transaction reversed successfully.');
+            return redirect()->route('share-transactions.show', $reversal)
+                ->with('success', 'Transaction reversed successfully.');
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('share-transactions.show', $transaction)
+                ->with('error', $e->getMessage());
+        }
     }
 }

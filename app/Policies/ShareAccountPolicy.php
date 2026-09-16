@@ -30,6 +30,19 @@ class ShareAccountPolicy
         return $auth->can('share_account.create');
     }
 
+    public function update(User $auth, ShareAccount $shareAccount): bool
+    {
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        if ($auth->hasRole('Organization Administrator')) {
+            return $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+        }
+
+        return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();
+    }
+
     public function close(User $auth, ShareAccount $shareAccount): bool
     {
         if ($auth->hasRole('Super Administrator')) {

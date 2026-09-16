@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FinancialTransactionStatus;
 use App\Enums\WelfareAccountStatus;
 use App\Enums\WelfareTransactionType;
+use App\Models\PaymentMethod;
 use App\Models\WelfareAccount;
 use App\Models\WelfareTransaction;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +22,21 @@ class WelfareTransactionService
         $amount = (float) $data['amount'];
 
         if ($amount <= 0) {
-            throw \InvalidArgumentException('Contribution amount must be greater than zero.');
+            throw new \InvalidArgumentException('Contribution amount must be greater than zero.');
         }
 
         if ($account->status !== WelfareAccountStatus::Active) {
-            throw \InvalidArgumentException('Welfare account is not active.');
+            throw new \InvalidArgumentException('Welfare account is not active.');
+        }
+
+        if (isset($data['payment_method_id'])) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+            if (! $paymentMethod || $paymentMethod->status !== 'active') {
+                throw new \InvalidArgumentException('Selected payment method is not active.');
+            }
+            if ($paymentMethod->organization_id !== $account->organization_id) {
+                throw new \InvalidArgumentException('Selected payment method does not belong to this organization.');
+            }
         }
 
         return DB::transaction(function () use ($account, $data, $amount) {
@@ -73,11 +84,21 @@ class WelfareTransactionService
         $amount = (float) $data['amount'];
 
         if ($amount <= 0) {
-            throw \InvalidArgumentException('Benefit amount must be greater than zero.');
+            throw new \InvalidArgumentException('Benefit amount must be greater than zero.');
         }
 
         if ($account->status !== WelfareAccountStatus::Active) {
-            throw \InvalidArgumentException('Welfare account is not active.');
+            throw new \InvalidArgumentException('Welfare account is not active.');
+        }
+
+        if (isset($data['payment_method_id'])) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+            if (! $paymentMethod || $paymentMethod->status !== 'active') {
+                throw new \InvalidArgumentException('Selected payment method is not active.');
+            }
+            if ($paymentMethod->organization_id !== $account->organization_id) {
+                throw new \InvalidArgumentException('Selected payment method does not belong to this organization.');
+            }
         }
 
         return DB::transaction(function () use ($account, $data, $amount) {
@@ -89,7 +110,7 @@ class WelfareTransactionService
             $balanceBefore = (float) $lockedAccount->current_balance;
 
             if ($balanceBefore < $amount) {
-                throw \InvalidArgumentException('Insufficient welfare balance.');
+                throw new \InvalidArgumentException('Insufficient welfare balance.');
             }
 
             $balanceAfter = $balanceBefore - $amount;
@@ -128,7 +149,7 @@ class WelfareTransactionService
     public function reverse(WelfareTransaction $transaction, string $reason): WelfareTransaction
     {
         if ($transaction->status === FinancialTransactionStatus::Reversed) {
-            throw \InvalidArgumentException('Transaction is already reversed.');
+            throw new \InvalidArgumentException('Transaction is already reversed.');
         }
 
         return DB::transaction(function () use ($transaction, $reason) {
@@ -163,7 +184,10 @@ class WelfareTransactionService
 
             $lockedAccount->update(['current_balance' => $balanceAfter]);
 
-            $transaction->update(['status' => FinancialTransactionStatus::Reversed]);
+            $transaction->update([
+                'status' => FinancialTransactionStatus::Reversed,
+                'reversed_by' => auth()->id(),
+            ]);
 
             $this->auditService->log('welfare.reversal', $reversal, [
                 'original_transaction_number' => $transaction->transaction_number,

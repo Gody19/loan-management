@@ -81,4 +81,26 @@ class WelfareAccount extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    public static function generateAccountNumber(): string
+    {
+        $prefix = 'WFA-';
+        $padding = 6;
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($prefix, $padding) {
+            $last = static::withoutGlobalScopes()
+                ->lockForUpdate()
+                ->orderByRaw('CAST(SUBSTRING(account_number, '.(strlen($prefix) + 1).') AS UNSIGNED) DESC')
+                ->first();
+
+            if ($last) {
+                $lastNumber = (int) substr($last->account_number, strlen($prefix));
+                $nextNumber = $lastNumber + 1;
+            } else {
+                $nextNumber = 1;
+            }
+
+            return $prefix.str_pad((string) $nextNumber, $padding, '0', STR_PAD_LEFT);
+        });
+    }
 }

@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShareTransaction;
+use App\Services\ReceiptService;
 use Illuminate\Http\Request;
 
 class ShareTransactionController extends Controller
 {
+    public function __construct(private ReceiptService $receiptService) {}
+
     public function index(Request $request)
     {
         $this->authorize('viewAny', ShareTransaction::class);
@@ -15,15 +18,19 @@ class ShareTransactionController extends Controller
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
-                $q->where('reference_number', 'like', "%{$request->search}%")
+                $q->where('transaction_number', 'like', "%{$request->search}%")
                     ->orWhereHas('account', function ($aq) use ($request) {
                         $aq->where('account_number', 'like', "%{$request->search}%");
                     });
             });
         }
 
-        if ($request->filled('type')) {
-            $query->where('type', $request->type);
+        if ($request->filled('transaction_type')) {
+            $query->where('transaction_type', $request->transaction_type);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
         }
 
         if ($request->filled('account_id')) {
@@ -50,9 +57,16 @@ class ShareTransactionController extends Controller
         $shareTransaction->load([
             'account.member',
             'account.product',
+            'account.organization',
+            'account.branch',
+            'account.vicobaGroup',
+            'member',
+            'organization',
+            'branch',
             'creator',
             'reversalOf',
             'reversedBy',
+            'paymentMethod',
         ]);
 
         return view('share-transactions.show', ['transaction' => $shareTransaction]);
@@ -65,7 +79,14 @@ class ShareTransactionController extends Controller
         $shareTransaction->load([
             'account.member',
             'account.product',
+            'account.organization',
+            'account.branch',
+            'account.vicobaGroup',
+            'member',
+            'organization',
+            'branch',
             'creator',
+            'paymentMethod',
         ]);
 
         return view('share-transactions.receipt', ['transaction' => $shareTransaction]);

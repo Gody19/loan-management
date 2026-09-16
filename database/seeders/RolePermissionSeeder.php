@@ -44,6 +44,11 @@ class RolePermissionSeeder extends Seeder
             'welfare_fund',
             'welfare_account',
             'welfare_transaction',
+            'payment_method',
+            'loan_plan',
+            'loan_eligibility',
+            'loan_application',
+            'loan_approval_level',
             'loans',
             'accounting',
             'meetings',
@@ -90,7 +95,8 @@ class RolePermissionSeeder extends Seeder
                 'dashboard', 'organization', 'branch', 'group',
                 'member', 'savings', 'savings_product', 'savings_account', 'savings_transaction',
                 'shares', 'share_product', 'share_account', 'share_transaction',
-                'welfare_fund', 'welfare_account', 'welfare_transaction',
+                'welfare_fund', 'welfare_account', 'welfare_transaction', 'payment_method',
+                'loan_plan', 'loan_eligibility', 'loan_application', 'loan_approval_level',
                 'loans', 'accounting', 'meetings', 'reports', 'settings',
                 'user', 'role',
             ])
@@ -103,18 +109,19 @@ class RolePermissionSeeder extends Seeder
             'member', 'savings', 'savings_account', 'savings_transaction',
             'shares', 'share_account', 'share_transaction',
             'welfare_account', 'welfare_transaction',
+            'loan_plan', 'loan_eligibility', 'loan_application',
             'loans', 'meetings', 'reports',
         ])
         ));
 
         // Loan Officer
         $loanOfficer = Role::firstOrCreate(['name' => 'Loan Officer', 'guard_name' => 'web']);
-        $loanOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings_account.view', 'shares.view', 'share_account.view', 'loans.view', 'loans.create', 'loans.update', 'reports.view'])
+        $loanOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings_account.view', 'shares.view', 'share_account.view', 'loan_plan.view', 'loan_eligibility.view', 'loan_application.view', 'loan_application.create', 'loan_application.update', 'loans.view', 'loans.create', 'loans.update', 'reports.view'])
         ));
 
         // Credit Officer
         $creditOfficer = Role::firstOrCreate(['name' => 'Credit Officer', 'guard_name' => 'web']);
-        $creditOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings_account.view', 'shares.view', 'share_account.view', 'loans.view', 'loans.create', 'loans.update', 'loans.approve', 'reports.view'])
+        $creditOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings_account.view', 'shares.view', 'share_account.view', 'loan_plan.view', 'loan_eligibility.view', 'loan_application.view', 'loan_application.create', 'loan_application.update', 'loans.view', 'loans.create', 'loans.update', 'loans.approve', 'reports.view'])
         ));
 
         // Treasurer
@@ -122,7 +129,7 @@ class RolePermissionSeeder extends Seeder
         $treasurer->syncPermissions($allPermissions->filter(fn ($p) => in_array(explode('.', $p->name)[0], [
             'dashboard', 'savings', 'savings_product', 'savings_account', 'savings_transaction',
             'shares', 'share_product', 'share_account', 'share_transaction',
-            'welfare_fund', 'welfare_account', 'welfare_transaction',
+            'welfare_fund', 'welfare_account', 'welfare_transaction', 'payment_method',
             'accounting', 'reports',
         ])
         ));
@@ -149,7 +156,7 @@ class RolePermissionSeeder extends Seeder
 
         // VICOBA Member
         $member = Role::firstOrCreate(['name' => 'VICOBA Member', 'guard_name' => 'web']);
-        $member->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'savings.view', 'shares.view', 'loans.view'])
+        $member->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'savings.view', 'shares.view', 'loan_application.view', 'loans.view'])
         ));
 
         /*

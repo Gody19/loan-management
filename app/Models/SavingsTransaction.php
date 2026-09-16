@@ -31,6 +31,7 @@ class SavingsTransaction extends Model
         'description',
         'status',
         'reversed_transaction_id',
+        'reversed_by',
         'created_by',
         'approved_by',
         'approved_at',
@@ -106,5 +107,10 @@ class SavingsTransaction extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(SavingsTransaction::class, 'reversed_transaction_id');
     }
 }

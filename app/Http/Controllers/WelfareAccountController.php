@@ -77,13 +77,21 @@ class WelfareAccountController extends Controller
         $request->validate([
             'member_id' => ['required', 'exists:members,id'],
             'welfare_fund_id' => ['required', 'exists:welfare_funds,id'],
+            'organization_id' => ['required', 'exists:organizations,id'],
+            'branch_id' => ['required', 'exists:branches,id'],
+            'vicoba_group_id' => ['required', 'exists:vicoba_groups,id'],
         ]);
 
         $account = WelfareAccount::create([
             'member_id' => $request->member_id,
             'welfare_fund_id' => $request->welfare_fund_id,
+            'organization_id' => $request->organization_id,
+            'branch_id' => $request->branch_id,
+            'vicoba_group_id' => $request->vicoba_group_id,
             'account_number' => WelfareAccount::generateAccountNumber(),
+            'current_balance' => 0,
             'status' => 'active',
+            'created_by' => auth()->id(),
         ]);
 
         return redirect()->route('welfare-accounts.show', $account)
@@ -114,15 +122,20 @@ class WelfareAccountController extends Controller
 
     public function doContribute(StoreWelfareContributionRequest $request, WelfareAccount $welfareAccount)
     {
-        $this->authorize('view', $welfareAccount);
+        $this->authorize('update', $welfareAccount);
 
-        $transaction = $this->transactionService->contribute(
-            $welfareAccount,
-            $request->validated()
-        );
+        try {
+            $transaction = $this->transactionService->contribute(
+                $welfareAccount,
+                $request->validated()
+            );
 
-        return redirect()->route('welfare-transactions.show', $transaction)
-            ->with('success', 'Welfare contribution recorded successfully. Transaction: '.$transaction->reference_number);
+            return redirect()->route('welfare-transactions.show', $transaction)
+                ->with('success', 'Welfare contribution recorded successfully. Transaction: '.$transaction->transaction_number);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('welfare-accounts.show', $welfareAccount)
+                ->with('error', $e->getMessage());
+        }
     }
 
     public function benefit(WelfareAccount $welfareAccount)
@@ -136,27 +149,37 @@ class WelfareAccountController extends Controller
 
     public function doBenefit(StoreWelfareBenefitRequest $request, WelfareAccount $welfareAccount)
     {
-        $this->authorize('view', $welfareAccount);
+        $this->authorize('update', $welfareAccount);
 
-        $transaction = $this->transactionService->benefit(
-            $welfareAccount,
-            $request->validated()
-        );
+        try {
+            $transaction = $this->transactionService->benefit(
+                $welfareAccount,
+                $request->validated()
+            );
 
-        return redirect()->route('welfare-transactions.show', $transaction)
-            ->with('success', 'Welfare benefit recorded successfully. Transaction: '.$transaction->reference_number);
+            return redirect()->route('welfare-transactions.show', $transaction)
+                ->with('success', 'Welfare benefit recorded successfully. Transaction: '.$transaction->transaction_number);
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('welfare-accounts.show', $welfareAccount)
+                ->with('error', $e->getMessage());
+        }
     }
 
-    public function reverse(ReverseTransactionRequest $request, WelfareAccount $welfareAccount)
+    public function reverse(ReverseTransactionRequest $request, \App\Models\WelfareTransaction $transaction)
     {
-        $this->authorize('view', $welfareAccount);
+        $this->authorize('reverse', $transaction);
 
-        $transaction = $this->transactionService->reverse(
-            $welfareAccount,
-            $request->validated()
-        );
+        try {
+            $reversal = $this->transactionService->reverse(
+                $transaction,
+                $request->validated()['reason']
+            );
 
-        return redirect()->route('welfare-transactions.show', $transaction)
-            ->with('success', 'Transaction reversed successfully.');
+            return redirect()->route('welfare-transactions.show', $reversal)
+                ->with('success', 'Transaction reversed successfully.');
+        } catch (\InvalidArgumentException $e) {
+            return redirect()->route('welfare-transactions.show', $transaction)
+                ->with('error', $e->getMessage());
+        }
     }
 }

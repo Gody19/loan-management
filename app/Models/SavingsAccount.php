@@ -80,6 +80,16 @@ class SavingsAccount extends Model
         return $this->belongsTo(SavingsProduct::class, 'savings_product_id');
     }
 
+    public function plan(): BelongsTo
+    {
+        return $this->product();
+    }
+
+    public function getSavingsProductAttribute()
+    {
+        return $this->product;
+    }
+
     public function transactions(): HasMany
     {
         return $this->hasMany(SavingsTransaction::class, 'savings_account_id');

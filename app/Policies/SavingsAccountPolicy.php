@@ -42,4 +42,30 @@ class SavingsAccountPolicy
 
         return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();
     }
+
+    public function deposit(User $auth, SavingsAccount $savingsAccount): bool
+    {
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        if ($auth->hasRole('Organization Administrator')) {
+            return $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
+        }
+
+        return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();
+    }
+
+    public function withdraw(User $auth, SavingsAccount $savingsAccount): bool
+    {
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        if ($auth->hasRole('Organization Administrator')) {
+            return $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
+        }
+
+        return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();
+    }
 }

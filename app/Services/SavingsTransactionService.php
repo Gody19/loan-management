@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FinancialTransactionStatus;
 use App\Enums\SavingsAccountStatus;
 use App\Enums\SavingsTransactionType;
+use App\Models\PaymentMethod;
 use App\Models\SavingsAccount;
 use App\Models\SavingsTransaction;
 use Illuminate\Support\Facades\DB;
@@ -21,11 +22,21 @@ class SavingsTransactionService
         $amount = (float) $data['amount'];
 
         if ($amount <= 0) {
-            throw \InvalidArgumentException('Deposit amount must be greater than zero.');
+            throw new \InvalidArgumentException('Deposit amount must be greater than zero.');
         }
 
         if ($account->status !== SavingsAccountStatus::Active) {
-            throw \InvalidArgumentException('Savings account is not active.');
+            throw new \InvalidArgumentException('Savings account is not active.');
+        }
+
+        if (isset($data['payment_method_id'])) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+            if (! $paymentMethod || $paymentMethod->status !== 'active') {
+                throw new \InvalidArgumentException('Selected payment method is not active.');
+            }
+            if ($paymentMethod->organization_id !== $account->organization_id) {
+                throw new \InvalidArgumentException('Selected payment method does not belong to this organization.');
+            }
         }
 
         return DB::transaction(function () use ($account, $data, $amount) {
@@ -74,17 +85,27 @@ class SavingsTransactionService
         $amount = (float) $data['amount'];
 
         if ($amount <= 0) {
-            throw \InvalidArgumentException('Withdrawal amount must be greater than zero.');
+            throw new \InvalidArgumentException('Withdrawal amount must be greater than zero.');
         }
 
         if ($account->status !== SavingsAccountStatus::Active) {
-            throw \InvalidArgumentException('Savings account is not active.');
+            throw new \InvalidArgumentException('Savings account is not active.');
         }
 
         $product = $account->product;
 
         if ($product && ! $product->allow_withdrawal) {
-            throw \InvalidArgumentException('Withdrawals are not allowed for this savings product.');
+            throw new \InvalidArgumentException('Withdrawals are not allowed for this savings product.');
+        }
+
+        if (isset($data['payment_method_id'])) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+            if (! $paymentMethod || $paymentMethod->status !== 'active') {
+                throw new \InvalidArgumentException('Selected payment method is not active.');
+            }
+            if ($paymentMethod->organization_id !== $account->organization_id) {
+                throw new \InvalidArgumentException('Selected payment method does not belong to this organization.');
+            }
         }
 
         return DB::transaction(function () use ($account, $data, $amount, $product) {
@@ -96,14 +117,14 @@ class SavingsTransactionService
             $balanceBefore = (float) $lockedAccount->current_balance;
 
             if ($balanceBefore < $amount) {
-                throw \InvalidArgumentException('Insufficient balance.');
+                throw new \InvalidArgumentException('Insufficient balance.');
             }
 
             $balanceAfter = $balanceBefore - $amount;
 
             $minimumBalance = $product ? (float) $product->minimum_balance : 0;
             if ($balanceAfter < $minimumBalance) {
-                throw \InvalidArgumentException(
+                throw new \InvalidArgumentException(
                     "Withdrawal would bring balance below the minimum required balance of {$minimumBalance}."
                 );
             }
@@ -143,7 +164,7 @@ class SavingsTransactionService
     public function reverse(SavingsTransaction $transaction, string $reason): SavingsTransaction
     {
         if ($transaction->status === FinancialTransactionStatus::Reversed) {
-            throw \InvalidArgumentException('Transaction is already reversed.');
+            throw new \InvalidArgumentException('Transaction is already reversed.');
         }
 
         return DB::transaction(function () use ($transaction, $reason) {
@@ -174,11 +195,15 @@ class SavingsTransactionService
                 'description' => $reason,
                 'status' => FinancialTransactionStatus::Completed,
                 'reversed_transaction_id' => $transaction->id,
+                'created_by' => auth()->id(),
             ]);
 
             $lockedAccount->update(['current_balance' => $balanceAfter]);
 
-            $transaction->update(['status' => FinancialTransactionStatus::Reversed]);
+            $transaction->update([
+                'status' => FinancialTransactionStatus::Reversed,
+                'reversed_by' => auth()->id(),
+            ]);
 
             $this->auditService->log('savings.reversal', $reversal, [
                 'original_transaction_number' => $transaction->transaction_number,

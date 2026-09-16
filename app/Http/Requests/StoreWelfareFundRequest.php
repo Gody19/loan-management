@@ -16,8 +16,10 @@ class StoreWelfareFundRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'code' => ['required', 'string', 'max:50'],
+            'organization_id' => ['required', 'exists:organizations,id'],
             'contribution_type' => ['required', 'in:fixed,variable'],
             'default_amount' => ['required', 'numeric', 'min:0.01'],
+            'description' => ['nullable', 'string', 'max:1000'],
         ];
     }
 
@@ -26,6 +28,8 @@ class StoreWelfareFundRequest extends FormRequest
         return [
             'name.required' => 'Welfare fund name is required.',
             'code.required' => 'Welfare fund code is required.',
+            'organization_id.required' => 'Organization is required.',
+            'organization_id.exists' => 'Selected organization does not exist.',
             'contribution_type.required' => 'Contribution type is required.',
             'contribution_type.in' => 'Contribution type must be either fixed or variable.',
             'default_amount.required' => 'Default amount is required.',

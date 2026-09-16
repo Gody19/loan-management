@@ -35,6 +35,7 @@ class ShareTransaction extends Model
         'description',
         'status',
         'reversed_transaction_id',
+        'reversed_by',
         'created_by',
         'approved_by',
         'approved_at',
@@ -103,5 +104,15 @@ class ShareTransaction extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function reversedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(ShareTransaction::class, 'reversed_transaction_id');
     }
 }

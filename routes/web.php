@@ -9,6 +9,7 @@ use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDocumentController;
 use App\Http\Controllers\MemberNextOfKinController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SavingsAccountController;
@@ -21,6 +22,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VicobaGroupController;
 use App\Http\Controllers\WelfareAccountController;
 use App\Http\Controllers\WelfareFundController;
+use App\Http\Controllers\LoanEligibilityController;
+use App\Http\Controllers\LoanPlanController;
+use App\Http\Controllers\LoanApplicationController;
+use App\Http\Controllers\LoanApplicationGuarantorController;
+use App\Http\Controllers\LoanApplicationCollateralController;
+use App\Http\Controllers\LoanApprovalLevelController;
 use App\Http\Controllers\WelfareTransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -194,6 +201,52 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::resource('welfare-transactions', WelfareTransactionController::class)->only(['index', 'show']);
     Route::get('/welfare-transactions/{welfareTransaction}/receipt', [WelfareTransactionController::class, 'receipt'])
         ->name('welfare-transactions.receipt');
+
+    // Financial Management - Payment Methods
+    Route::resource('payment-methods', PaymentMethodController::class);
+
+    // Financial Management - Loan Plans
+    Route::resource('loan-plans', LoanPlanController::class);
+    Route::post('/loan-plans/{loan_plan}/activate', [LoanPlanController::class, 'activate'])
+        ->name('loan-plans.activate');
+    Route::post('/loan-plans/{loan_plan}/deactivate', [LoanPlanController::class, 'deactivate'])
+        ->name('loan-plans.deactivate');
+
+    // Financial Management - Loan Eligibility
+    Route::get('/loan-eligibility', [LoanEligibilityController::class, 'index'])
+        ->name('loan-eligibility.index');
+    Route::post('/loan-eligibility/check', [LoanEligibilityController::class, 'check'])
+        ->name('loan-eligibility.check');
+
+    // Financial Management - Loan Applications
+    Route::resource('loan-applications', LoanApplicationController::class);
+    Route::post('/loan-applications/{loanApplication}/submit', [LoanApplicationController::class, 'submit'])
+        ->name('loan-applications.submit');
+    Route::post('/loan-applications/{loanApplication}/cancel', [LoanApplicationController::class, 'cancel'])
+        ->name('loan-applications.cancel');
+    Route::post('/loan-applications/{loanApplication}/review', [LoanApplicationController::class, 'review'])
+        ->name('loan-applications.review');
+    Route::post('/loan-applications/{loanApplication}/approve', [LoanApplicationController::class, 'approve'])
+        ->name('loan-applications.approve');
+    Route::post('/loan-applications/{loanApplication}/reject', [LoanApplicationController::class, 'reject'])
+        ->name('loan-applications.reject');
+
+    // Loan Application - Guarantors
+    Route::post('/loan-applications/{loanApplication}/guarantors', [LoanApplicationGuarantorController::class, 'store'])
+        ->name('loan-applications.guarantors.store');
+    Route::delete('/loan-applications/{loanApplication}/guarantors/{guarantor}', [LoanApplicationGuarantorController::class, 'destroy'])
+        ->name('loan-applications.guarantors.destroy');
+    Route::post('/loan-applications/guarantors/{guarantor}/respond', [LoanApplicationGuarantorController::class, 'respond'])
+        ->name('loan-guarantors.respond');
+
+    // Loan Application - Collateral
+    Route::post('/loan-applications/{loanApplication}/collaterals', [LoanApplicationCollateralController::class, 'store'])
+        ->name('loan-applications.collaterals.store');
+    Route::delete('/loan-applications/{loanApplication}/collaterals/{collateral}', [LoanApplicationCollateralController::class, 'destroy'])
+        ->name('loan-applications.collaterals.destroy');
+
+    // Loan Approval Levels
+    Route::resource('loan-approval-levels', LoanApprovalLevelController::class);
 
     // Member Financial Summary
     Route::get('/members/{member}/statement', [\App\Http\Controllers\MemberController::class, 'statement'])

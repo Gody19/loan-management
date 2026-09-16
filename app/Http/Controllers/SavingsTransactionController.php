@@ -40,7 +40,7 @@ class SavingsTransactionController extends Controller
     public function receipt(SavingsTransaction $savingsTransaction)
     {
         $this->authorize('view', $savingsTransaction);
-        $receipt = $this->receiptService->generateReceiptData($savingsTransaction, 'savings');
-        return view('receipts.savings', compact('receipt'));
+        $savingsTransaction->load(['account.member', 'account.product', 'account.organization', 'account.branch', 'account.vicobaGroup', 'paymentMethod', 'member', 'organization', 'branch', 'creator']);
+        return view('receipts.savings', ['transaction' => $savingsTransaction]);
     }
 }

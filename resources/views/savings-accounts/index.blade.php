@@ -74,10 +74,10 @@
                                 <small class="text-muted">{{ $account->member->member_number ?? '' }}</small>
                             </td>
                             <td>{{ $account->savingsProduct->name ?? '—' }}</td>
-                            <td class="fw-medium">{{ number_format($account->balance, 2) }}</td>
+                            <td class="fw-medium">{{ number_format($account->current_balance, 2) }}</td>
                             <td>
-                                <span class="badge bg-{{ $account->status === 'active' ? 'success' : ($account->status === 'closed' ? 'danger' : 'secondary') }}">
-                                    {{ ucfirst($account->status) }}
+                                <span class="badge bg-{{ $account->status->color() }}">
+                                    {{ $account->status->label() }}
                                 </span>
                             </td>
                             <td class="text-end">

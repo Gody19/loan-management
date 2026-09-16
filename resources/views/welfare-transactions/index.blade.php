@@ -38,10 +38,10 @@
                     </select>
                 </div>
                 <div class="col-lg-2">
-                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From">
+                    <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="From">
                 </div>
                 <div class="col-lg-2">
-                    <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To">
+                    <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="To">
                 </div>
                 <div class="col-lg-1 d-flex gap-2">
                     <button type="submit" class="btn btn-outline-primary">

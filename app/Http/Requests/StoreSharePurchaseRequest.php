@@ -15,6 +15,7 @@ class StoreSharePurchaseRequest extends FormRequest
     {
         return [
             'quantity' => ['required', 'integer', 'min:1'],
+            'share_price' => ['required', 'numeric', 'min:0.01'],
             'payment_method_id' => ['required', 'exists:payment_methods,id'],
             'reference' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
@@ -28,6 +29,8 @@ class StoreSharePurchaseRequest extends FormRequest
             'quantity.required' => 'Quantity is required.',
             'quantity.integer' => 'Quantity must be a whole number.',
             'quantity.min' => 'Quantity must be at least 1.',
+            'share_price.required' => 'Share price is required.',
+            'share_price.numeric' => 'Share price must be a valid number.',
             'payment_method_id.required' => 'Payment method is required.',
             'payment_method_id.exists' => 'Selected payment method does not exist.',
             'transaction_date.required' => 'Transaction date is required.',

@@ -19,6 +19,7 @@ class StoreSavingsDepositRequest extends FormRequest
             'reference' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:500'],
             'transaction_date' => ['required', 'date'],
+            'idempotency_key' => ['nullable', 'string', 'max:100', 'unique:savings_transactions,idempotency_key'],
         ];
     }
 

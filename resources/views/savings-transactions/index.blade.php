@@ -43,10 +43,10 @@
                     </select>
                 </div>
                 <div class="col-lg-2">
-                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}" placeholder="From Date">
+                    <input type="date" name="from_date" class="form-control" value="{{ request('from_date') }}" placeholder="From Date">
                 </div>
                 <div class="col-lg-2">
-                    <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}" placeholder="To Date">
+                    <input type="date" name="to_date" class="form-control" value="{{ request('to_date') }}" placeholder="To Date">
                 </div>
                 <div class="col-lg-2 d-flex gap-2">
                     <button type="submit" class="btn btn-outline-primary">
@@ -80,12 +80,12 @@
                         <tr>
                             <td><span class="badge bg-primary">{{ $transaction->transaction_number }}</span></td>
                             <td>
-                                <div class="fw-medium">{{ $transaction->savingsAccount->member->full_name ?? '—' }}</div>
-                                <small class="text-muted">{{ $transaction->savingsAccount->account_number ?? '' }}</small>
+                                <div class="fw-medium">{{ $transaction->account->member->full_name ?? '—' }}</div>
+                                <small class="text-muted">{{ $transaction->account->account_number ?? '' }}</small>
                             </td>
                             <td>
-                                <span class="badge bg-{{ $transaction->type === 'deposit' ? 'success' : ($transaction->type === 'withdrawal' ? 'warning' : 'info') }}">
-                                    {{ ucfirst($transaction->type) }}
+                                <span class="badge bg-{{ $transaction->transaction_type->value === 'deposit' ? 'success' : ($transaction->transaction_type->value === 'withdrawal' ? 'warning' : 'info') }}">
+                                    {{ $transaction->transaction_type->label() }}
                                 </span>
                             </td>
                             <td class="fw-medium">{{ number_format($transaction->amount, 2) }}</td>
@@ -93,8 +93,8 @@
                             <td>{{ number_format($transaction->balance_after, 2) }}</td>
                             <td>{{ $transaction->transaction_date?->format('d M Y') ?? '—' }}</td>
                             <td>
-                                <span class="badge bg-{{ $transaction->status === 'completed' ? 'success' : ($transaction->status === 'pending' ? 'warning' : 'danger') }}">
-                                    {{ ucfirst($transaction->status) }}
+                                <span class="badge bg-{{ $transaction->status->color() }}">
+                                    {{ $transaction->status->label() }}
                                 </span>
                             </td>
                             <td class="text-end">

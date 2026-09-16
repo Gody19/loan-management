@@ -5,7 +5,7 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Account: ' . $account->account_number,
-        'subtitle' => $account->member->full_name ?? '' . ' | ' . ucfirst($account->status),
+        'subtitle' => ($account->member->full_name ?? '') . ' | ' . $account->status->label(),
         'breadcrumb' => [
             ['label' => 'Member Savings Accounts', 'url' => route('savings-accounts.index')],
             ['label' => $account->account_number],
@@ -31,19 +31,19 @@
                         <h4 class="mb-0 fw-bold">{{ $account->account_number }}</h4>
                         <div class="d-flex align-items-center gap-3 mt-1">
                             <span class="badge bg-primary">{{ $account->savingsProduct->name ?? '—' }}</span>
-                            <span class="badge bg-{{ $account->status === 'active' ? 'success' : ($account->status === 'closed' ? 'danger' : 'secondary') }}">{{ ucfirst($account->status) }}</span>
+                            <span class="badge bg-{{ $account->status->color() }}">{{ $account->status->label() }}</span>
                         </div>
                     </div>
                     <div class="text-end">
                         <div class="text-muted small">Current Balance</div>
-                        <div class="fw-bold fs-4 text-primary">{{ number_format($account->balance, 2) }}</div>
+                        <div class="fw-bold fs-4 text-primary">{{ number_format($account->current_balance, 2) }}</div>
                     </div>
                 </div>
             </div>
         </div>
 
         {{-- Action Buttons --}}
-        @if($account->status === 'active')
+        @if($account->status->value === 'active')
         <div class="d-flex gap-2 mb-4">
             <a href="{{ route('savings-accounts.deposit', $account) }}" class="btn btn-success">
                 <i class="bi bi-plus-circle me-1"></i> Deposit
@@ -73,7 +73,7 @@
                             <tr><td class="text-muted">Branch</td><td class="fw-medium">{{ $account->branch->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Group</td><td class="fw-medium">{{ $account->vicobaGroup->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Opening Date</td><td class="fw-medium">{{ $account->opening_date?->format('d M Y') ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">Status</td><td><span class="badge bg-{{ $account->status === 'active' ? 'success' : ($account->status === 'closed' ? 'danger' : 'secondary') }}">{{ ucfirst($account->status) }}</span></td></tr>
+                            <tr><td class="text-muted">Status</td><td><span class="badge bg-{{ $account->status->color() }}">{{ $account->status->label() }}</span></td></tr>
                         </table>
                     </div>
                 </div>
@@ -87,10 +87,10 @@
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted" style="width:45%">Current Balance</td><td class="fw-bold text-primary">{{ number_format($account->balance, 2) }}</td></tr>
-                            <tr><td class="text-muted">Total Deposits</td><td class="fw-medium">{{ number_format($account->total_deposits ?? 0, 2) }}</td></tr>
-                            <tr><td class="text-muted">Total Withdrawals</td><td class="fw-medium">{{ number_format($account->total_withdrawals ?? 0, 2) }}</td></tr>
-                            <tr><td class="text-muted">Transactions</td><td class="fw-medium">{{ $account->transactions_count ?? $account->transactions->count() }}</td></tr>
+                            <tr><td class="text-muted" style="width:45%">Current Balance</td><td class="fw-bold text-primary">{{ number_format($account->current_balance, 2) }}</td></tr>
+                            <tr><td class="text-muted">Total Deposits</td><td class="fw-medium">{{ number_format($totalDeposits, 2) }}</td></tr>
+                            <tr><td class="text-muted">Total Withdrawals</td><td class="fw-medium">{{ number_format($totalWithdrawals, 2) }}</td></tr>
+                            <tr><td class="text-muted">Transactions</td><td class="fw-medium">{{ $transactions->total() }}</td></tr>
                         </table>
                     </div>
                 </div>
@@ -124,8 +124,8 @@
                                     <tr>
                                         <td><span class="badge bg-primary">{{ $transaction->transaction_number }}</span></td>
                                         <td>
-                                            <span class="badge bg-{{ $transaction->type === 'deposit' ? 'success' : ($transaction->type === 'withdrawal' ? 'warning' : 'info') }}">
-                                                {{ ucfirst($transaction->type) }}
+                                            <span class="badge bg-{{ $transaction->transaction_type->value === 'deposit' ? 'success' : ($transaction->transaction_type->value === 'withdrawal' ? 'warning' : 'info') }}">
+                                                {{ $transaction->transaction_type->label() }}
                                             </span>
                                         </td>
                                         <td class="fw-medium">{{ number_format($transaction->amount, 2) }}</td>
@@ -133,8 +133,8 @@
                                         <td>{{ number_format($transaction->balance_after, 2) }}</td>
                                         <td>{{ $transaction->transaction_date?->format('d M Y') ?? '—' }}</td>
                                         <td>
-                                            <span class="badge bg-{{ $transaction->status === 'completed' ? 'success' : ($transaction->status === 'pending' ? 'warning' : 'danger') }}">
-                                                {{ ucfirst($transaction->status) }}
+                                            <span class="badge bg-{{ $transaction->status->color() }}">
+                                                {{ $transaction->status->label() }}
                                             </span>
                                         </td>
                                         <td class="text-end">

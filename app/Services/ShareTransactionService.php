@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\FinancialTransactionStatus;
 use App\Enums\ShareAccountStatus;
 use App\Enums\ShareTransactionType;
+use App\Models\PaymentMethod;
 use App\Models\ShareAccount;
 use App\Models\ShareTransaction;
 use Illuminate\Support\Facades\DB;
@@ -21,25 +22,35 @@ class ShareTransactionService
         $quantity = (int) $data['quantity'];
 
         if ($quantity <= 0) {
-            throw \InvalidArgumentException('Share quantity must be greater than zero.');
+            throw new \InvalidArgumentException('Share quantity must be greater than zero.');
         }
 
         if ($account->status !== ShareAccountStatus::Active) {
-            throw \InvalidArgumentException('Share account is not active.');
+            throw new \InvalidArgumentException('Share account is not active.');
         }
 
         $product = $account->product;
         $sharePrice = (float) $data['share_price'];
 
         if ($product && abs($sharePrice - (float) $product->share_price) > 0.001) {
-            throw \InvalidArgumentException('Provided share price does not match the product share price.');
+            throw new \InvalidArgumentException('Provided share price does not match the product share price.');
+        }
+
+        if (isset($data['payment_method_id'])) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+            if (! $paymentMethod || $paymentMethod->status !== 'active') {
+                throw new \InvalidArgumentException('Selected payment method is not active.');
+            }
+            if ($paymentMethod->organization_id !== $account->organization_id) {
+                throw new \InvalidArgumentException('Selected payment method does not belong to this organization.');
+            }
         }
 
         $expectedAmount = $quantity * $sharePrice;
         $providedAmount = isset($data['amount']) ? (float) $data['amount'] : $expectedAmount;
 
         if (abs($providedAmount - $expectedAmount) > 0.001) {
-            throw \InvalidArgumentException(
+            throw new \InvalidArgumentException(
                 'Amount does not match the expected value of quantity × share_price ('.$expectedAmount.').'
             );
         }
@@ -101,11 +112,21 @@ class ShareTransactionService
         $quantity = (int) $data['quantity'];
 
         if ($quantity <= 0) {
-            throw \InvalidArgumentException('Share quantity must be greater than zero.');
+            throw new \InvalidArgumentException('Share quantity must be greater than zero.');
         }
 
         if ($account->status !== ShareAccountStatus::Active) {
-            throw \InvalidArgumentException('Share account is not active.');
+            throw new \InvalidArgumentException('Share account is not active.');
+        }
+
+        if (isset($data['payment_method_id'])) {
+            $paymentMethod = PaymentMethod::find($data['payment_method_id']);
+            if (! $paymentMethod || $paymentMethod->status !== 'active') {
+                throw new \InvalidArgumentException('Selected payment method is not active.');
+            }
+            if ($paymentMethod->organization_id !== $account->organization_id) {
+                throw new \InvalidArgumentException('Selected payment method does not belong to this organization.');
+            }
         }
 
         return DB::transaction(function () use ($account, $data, $quantity) {
@@ -115,11 +136,11 @@ class ShareTransactionService
                 ->first();
 
             if ($lockedAccount->total_shares < $quantity) {
-                throw \InvalidArgumentException('Insufficient shares for redemption.');
+                throw new \InvalidArgumentException('Insufficient shares for redemption.');
             }
 
             $product = $lockedAccount->product;
-            $sharePrice = (float) ($data['share_price'] ?? ($product ? $product->share_price : 0));
+            $sharePrice = (float) ($product ? $product->share_price : 0);
 
             $sharesBefore = $lockedAccount->total_shares;
             $valueBefore = (float) $lockedAccount->total_value;
@@ -178,7 +199,7 @@ class ShareTransactionService
     public function reverse(ShareTransaction $transaction, string $reason): ShareTransaction
     {
         if ($transaction->status === FinancialTransactionStatus::Reversed) {
-            throw \InvalidArgumentException('Transaction is already reversed.');
+            throw new \InvalidArgumentException('Transaction is already reversed.');
         }
 
         return DB::transaction(function () use ($transaction, $reason) {
@@ -224,7 +245,10 @@ class ShareTransactionService
                 'total_value' => max(0, $valueAfter),
             ]);
 
-            $transaction->update(['status' => FinancialTransactionStatus::Reversed]);
+            $transaction->update([
+                'status' => FinancialTransactionStatus::Reversed,
+                'reversed_by' => auth()->id(),
+            ]);
 
             $this->auditService->log('shares.reversal', $reversal, [
                 'original_transaction_number' => $transaction->transaction_number,

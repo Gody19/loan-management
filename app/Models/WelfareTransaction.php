@@ -19,7 +19,7 @@ class WelfareTransaction extends Model
         'vicoba_group_id', 'transaction_number', 'transaction_type', 'amount',
         'balance_before', 'balance_after', 'transaction_date', 'payment_method_id',
         'reference', 'description', 'status', 'reversed_transaction_id',
-        'created_by', 'approved_by', 'approved_at',
+        'reversed_by', 'created_by', 'approved_by', 'approved_at',
     ];
 
     protected function casts(): array
@@ -83,5 +83,15 @@ class WelfareTransaction extends Model
     public function approvedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function reversedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    public function reversalOf(): BelongsTo
+    {
+        return $this->belongsTo(WelfareTransaction::class, 'reversed_transaction_id');
     }
 }

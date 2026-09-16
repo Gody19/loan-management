@@ -69,6 +69,11 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    public function member(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Member::class);
+    }
+
     /**
      * Check if user has a specific status.
      */

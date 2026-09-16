@@ -28,45 +28,56 @@
             <span>Dashboard</span>
         </a>
 
-        {{-- Organization Section --}}
+        {{-- Organization Section — only show if user has any org/branch/group permission --}}
+        @php
+            $hasOrgSection = auth()->check() && (auth()->user()->can('organization.view') || auth()->user()->can('branch.view') || auth()->user()->can('group.view'));
+        @endphp
+        @if($hasOrgSection)
         <div class="sidebar-section mt-3">Organization</div>
 
-        @if(auth()->check() && auth()->user()->can('organization.view'))
+        @if(auth()->user()->can('organization.view'))
         <a href="{{ route('organizations.index') }}" class="nav-link {{ request()->routeIs('organizations.*') ? 'active' : '' }}">
             <i class="bi bi-building"></i>
             <span>Organizations</span>
         </a>
         @endif
 
-        @if(auth()->check() && auth()->user()->can('branch.view'))
+        @if(auth()->user()->can('branch.view'))
         <a href="{{ route('branches.index') }}" class="nav-link {{ request()->routeIs('branches.*') ? 'active' : '' }}">
             <i class="bi bi-diagram-3"></i>
             <span>Branches</span>
         </a>
         @endif
 
-        @if(auth()->check() && auth()->user()->can('group.view'))
+        @if(auth()->user()->can('group.view'))
         <a href="{{ route('vicoba-groups.index') }}" class="nav-link {{ request()->routeIs('vicoba-groups.*') ? 'active' : '' }}">
             <i class="bi bi-people"></i>
             <span>VICOBA Groups</span>
         </a>
         @endif
+        @endif
 
-        {{-- Members Section --}}
+        {{-- Members Section — only show if user has any member permission --}}
+        @if(auth()->check() && auth()->user()->can('member.view'))
         <div class="sidebar-section mt-3">Members</div>
 
-        @if(auth()->check() && auth()->user()->can('member.view'))
         <a href="{{ route('members.index') }}" class="nav-link {{ request()->routeIs('members.*') ? 'active' : '' }}">
             <i class="bi bi-person-plus"></i>
             <span>Members</span>
         </a>
         @endif
 
-        {{-- Financial Section --}}
+        {{-- Financial Section — only show if user has any finance permission --}}
+        @php
+            $hasSavingsMenu = auth()->check() && (auth()->user()->can('savings_product.view') || auth()->user()->can('savings_account.view') || auth()->user()->can('savings_transaction.view'));
+            $hasSharesMenu = auth()->check() && (auth()->user()->can('share_product.view') || auth()->user()->can('share_account.view') || auth()->user()->can('share_transaction.view'));
+            $hasWelfareMenu = auth()->check() && (auth()->user()->can('welfare_fund.view') || auth()->user()->can('welfare_account.view') || auth()->user()->can('welfare_transaction.view'));
+        @endphp
+        @if($hasSavingsMenu || $hasSharesMenu || $hasWelfareMenu)
         <div class="sidebar-section mt-3">Finance</div>
 
         {{-- Savings Sub-menu --}}
-        @if(auth()->check() && (auth()->user()->can('savings_product.view') || auth()->user()->can('savings_account.view') || auth()->user()->can('savings_transaction.view')))
+        @if($hasSavingsMenu)
         <div class="nav-parent">
             <a href="#" class="nav-link nav-toggle {{ request()->routeIs('savings-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-savings')">
                 <i class="bi bi-wallet2"></i>
@@ -94,7 +105,7 @@
         @endif
 
         {{-- Shares Sub-menu --}}
-        @if(auth()->check() && (auth()->user()->can('share_product.view') || auth()->user()->can('share_account.view') || auth()->user()->can('share_transaction.view')))
+        @if($hasSharesMenu)
         <div class="nav-parent">
             <a href="#" class="nav-link nav-toggle {{ request()->routeIs('share-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-shares')">
                 <i class="bi bi-cash-stack"></i>
@@ -122,7 +133,7 @@
         @endif
 
         {{-- Welfare Sub-menu --}}
-        @if(auth()->check() && (auth()->user()->can('welfare_fund.view') || auth()->user()->can('welfare_account.view') || auth()->user()->can('welfare_transaction.view')))
+        @if($hasWelfareMenu)
         <div class="nav-parent">
             <a href="#" class="nav-link nav-toggle {{ request()->routeIs('welfare-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-welfare')">
                 <i class="bi bi-heart"></i>
@@ -148,57 +159,83 @@
             </div>
         </div>
         @endif
+        @endif
 
-        <a href="#" class="nav-link">
-            <i class="bi bi-cash-coin"></i>
-            <span>Loans</span>
-        </a>
+        {{-- Loans Section — only show if user has any loan permission --}}
+        @php
+            $hasLoansMenu = auth()->check() && (auth()->user()->can('loan_plan.view') || auth()->user()->can('loan_eligibility.view') || auth()->user()->can('loan_application.view') || auth()->user()->can('loan_approval_level.view'));
+        @endphp
+        @if($hasLoansMenu)
+        <div class="sidebar-section mt-3">Loans</div>
 
-        <a href="#" class="nav-link">
-            <i class="bi bi-calculator"></i>
-            <span>Accounting</span>
-        </a>
+        <div class="nav-parent">
+            <a href="#" class="nav-link nav-toggle {{ request()->routeIs('loan-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-loans')">
+                <i class="bi bi-cash-coin"></i>
+                <span>Loans</span>
+                <i class="bi bi-chevron-down ms-auto toggle-icon"></i>
+            </a>
+            <div class="nav-submenu" id="submenu-loans" style="{{ request()->routeIs('loan-*') ? 'display:block;' : '' }}">
+                @if(auth()->user()->can('loan_plan.view'))
+                <a href="{{ route('loan-plans.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-plans.*') ? 'active' : '' }}">
+                    <span>Loan Plans</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('loan_eligibility.view'))
+                <a href="{{ route('loan-eligibility.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-eligibility.*') ? 'active' : '' }}">
+                    <span>Eligibility Check</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('loan_application.view'))
+                <a href="{{ route('loan-applications.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-applications.*') ? 'active' : '' }}">
+                    <span>Applications</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('loan_approval_level.view'))
+                <a href="{{ route('loan-approval-levels.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-approval-levels.*') ? 'active' : '' }}">
+                    <span>Approval Levels</span>
+                </a>
+                @endif
+            </div>
+        </div>
+        @endif
 
-        {{-- Operations Section --}}
-        <div class="sidebar-section mt-3">Operations</div>
-
-        <a href="#" class="nav-link">
-            <i class="bi bi-calendar-check"></i>
-            <span>Meetings</span>
-        </a>
+        {{-- Reports — only show if user has reports permission --}}
+        @if(auth()->check() && auth()->user()->can('reports.view'))
+        <div class="sidebar-section mt-3">Reports</div>
 
         <a href="#" class="nav-link">
             <i class="bi bi-clipboard-data"></i>
             <span>Reports</span>
         </a>
+        @endif
 
-        {{-- Administration Section --}}
+        {{-- Administration Section — only show if user has admin permissions --}}
+        @php
+            $hasAdminMenu = auth()->check() && (auth()->user()->can('user.view') || auth()->user()->can('role.view') || auth()->user()->can('permission.view') || auth()->user()->can('audit.view'));
+        @endphp
+        @if($hasAdminMenu)
         <div class="sidebar-section mt-3">Administration</div>
 
-        <a href="#" class="nav-link">
-            <i class="bi bi-gear"></i>
-            <span>Settings</span>
-        </a>
-
-        @if(auth()->check() && auth()->user()->can('user.view'))
+        @if(auth()->user()->can('user.view'))
         <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
             <i class="bi bi-people-fill"></i>
             <span>Users</span>
         </a>
         @endif
 
-        @if(auth()->check() && auth()->user()->can('role.view'))
+        @if(auth()->user()->can('role.view'))
         <a href="{{ route('roles.index') }}" class="nav-link {{ request()->routeIs('roles.*') ? 'active' : '' }}">
             <i class="bi bi-shield-lock"></i>
             <span>Roles</span>
         </a>
         @endif
 
-        @if(auth()->check() && auth()->user()->can('permission.view'))
+        @if(auth()->user()->can('permission.view'))
         <a href="{{ route('permissions.index') }}" class="nav-link {{ request()->routeIs('permissions.*') ? 'active' : '' }}">
             <i class="bi bi-key"></i>
             <span>Permissions</span>
         </a>
+        @endif
         @endif
 
     </nav>
