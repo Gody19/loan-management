@@ -56,7 +56,7 @@ class DashboardService
             'widgets' => [
                 'organizations' => [
                     'total' => Organization::count(),
-                    'active' => Organization::where('is_active', true)->count(),
+                    'active' => Organization::active()->count(),
                 ],
                 'branches' => ['total' => Branch::count()],
                 'groups' => ['total' => VicobaGroup::count(), 'active' => VicobaGroup::where('status', 'active')->count()],
