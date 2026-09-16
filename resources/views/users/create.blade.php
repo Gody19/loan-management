@@ -15,8 +15,8 @@
 
 @section('content')
 
-<div class="row">
-    <div class="col-lg-8">
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
         <form method="POST" action="{{ route('users.store') }}" data-validate>
             @csrf
 
