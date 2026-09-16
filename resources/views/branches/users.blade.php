@@ -2,14 +2,15 @@
 
 @section('title', 'Manage Users - ' . $branch->name)
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Branches' => route('branches.index'), $branch->name => route('branches.show', $branch), 'Users' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Manage Users',
         'subtitle' => 'Assign users to ' . $branch->name,
+        'breadcrumb' => [
+            ['label' => 'Branches', 'url' => route('branches.index')],
+            ['label' => $branch->name, 'url' => route('branches.show', $branch)],
+            ['label' => 'Users'],
+        ],
     ])
 @endsection
 

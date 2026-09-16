@@ -2,14 +2,14 @@
 
 @section('title', 'Create VICOBA Group - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'VICOBA Groups' => route('vicoba-groups.index'), 'Create' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Create VICOBA Group',
         'subtitle' => 'Add a new VICOBA group',
+        'breadcrumb' => [
+            ['label' => 'VICOBA Groups', 'url' => route('vicoba-groups.index')],
+            ['label' => 'Create'],
+        ],
     ])
 @endsection
 

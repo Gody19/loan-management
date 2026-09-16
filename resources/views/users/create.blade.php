@@ -2,14 +2,14 @@
 
 @section('title', 'Create User - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Users' => route('users.index'), 'Create' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Create User',
         'subtitle' => 'Add a new system user',
+        'breadcrumb' => [
+            ['label' => 'Users', 'url' => route('users.index')],
+            ['label' => 'Create'],
+        ],
     ])
 @endsection
 

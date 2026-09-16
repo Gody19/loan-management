@@ -2,14 +2,14 @@
 
 @section('title', $branch->name . ' - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Branches' => route('branches.index'), $branch->name => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => $branch->name,
         'subtitle' => 'Branch Details — ' . $branch->organization->name,
+        'breadcrumb' => [
+            ['label' => 'Branches', 'url' => route('branches.index')],
+            ['label' => $branch->name],
+        ],
         'actions' => '<a href="' . route('branches.edit', $branch) . '" class="btn btn-primary vicoba-btn"><i class="bi bi-pencil me-1"></i> Edit</a>',
     ])
 @endsection

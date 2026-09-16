@@ -2,14 +2,13 @@
 
 @section('title', 'Branches - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Branches' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Branches',
         'subtitle' => 'Manage branches',
+        'breadcrumb' => [
+            ['label' => 'Branches'],
+        ],
         'actions' => '<a href="' . route('branches.create') . '" class="btn btn-primary vicoba-btn"><i class="bi bi-plus-lg me-1"></i> Create Branch</a>',
     ])
 @endsection

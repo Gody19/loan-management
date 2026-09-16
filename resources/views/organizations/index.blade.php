@@ -2,14 +2,13 @@
 
 @section('title', 'Organizations - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Organizations' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Organizations',
         'subtitle' => 'Manage organizations',
+        'breadcrumb' => [
+            ['label' => 'Organizations'],
+        ],
         'actions' => '<a href="' . route('organizations.create') . '" class="btn btn-primary vicoba-btn"><i class="bi bi-plus-lg me-1"></i> Create Organization</a>',
     ])
 @endsection

@@ -2,14 +2,13 @@
 
 @section('title', 'Users - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Users' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Users',
         'subtitle' => 'Manage system users and their access',
+        'breadcrumb' => [
+            ['label' => 'Users'],
+        ],
         'actions' => '<a href="' . route('users.create') . '" class="btn btn-primary vicoba-btn"><i class="bi bi-plus-lg me-1"></i> Create User</a>',
     ])
 @endsection

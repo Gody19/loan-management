@@ -2,14 +2,13 @@
 
 @section('title', 'Roles - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Roles' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Roles',
         'subtitle' => 'Manage system roles and their permissions',
+        'breadcrumb' => [
+            ['label' => 'Roles'],
+        ],
         'actions' => '<a href="' . route('roles.create') . '" class="btn btn-primary vicoba-btn"><i class="bi bi-plus-lg me-1"></i> Create Role</a>',
     ])
 @endsection

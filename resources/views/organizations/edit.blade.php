@@ -2,14 +2,15 @@
 
 @section('title', 'Edit Organization - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Organizations' => route('organizations.index'), 'Edit' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Edit Organization',
         'subtitle' => 'Update ' . $organization->name,
+        'breadcrumb' => [
+            ['label' => 'Organizations', 'url' => route('organizations.index')],
+            ['label' => $organization->name, 'url' => route('organizations.show', $organization)],
+            ['label' => 'Edit'],
+        ],
     ])
 @endsection
 

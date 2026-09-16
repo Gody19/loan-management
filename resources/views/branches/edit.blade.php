@@ -2,14 +2,15 @@
 
 @section('title', 'Edit Branch - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Branches' => route('branches.index'), 'Edit' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Edit Branch',
         'subtitle' => 'Update ' . $branch->name,
+        'breadcrumb' => [
+            ['label' => 'Branches', 'url' => route('branches.index')],
+            ['label' => $branch->name, 'url' => route('branches.show', $branch)],
+            ['label' => 'Edit'],
+        ],
     ])
 @endsection
 

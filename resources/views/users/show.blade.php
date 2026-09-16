@@ -2,14 +2,14 @@
 
 @section('title', $user->fullname . ' - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Users' => route('users.index'), $user->fullname => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => $user->fullname,
         'subtitle' => 'User Details',
+        'breadcrumb' => [
+            ['label' => 'Users', 'url' => route('users.index')],
+            ['label' => $user->fullname],
+        ],
         'actions' => '<a href="' . route('users.edit', $user) . '" class="btn btn-primary vicoba-btn"><i class="bi bi-pencil me-1"></i> Edit</a>',
     ])
 @endsection

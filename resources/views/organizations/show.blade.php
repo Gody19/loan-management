@@ -2,10 +2,6 @@
 
 @section('title', $organization->name . ' - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Organizations' => route('organizations.index'), $organization->name => '']])
-@endsection
-
 @section('page-header')
     @php
         $headerActions = '<a href="' . route('organizations.index') . '" class="btn btn-outline-secondary">
@@ -20,6 +16,10 @@
     @include('layouts.components.page-header', [
         'title' => $organization->name,
         'subtitle' => 'Organization Details',
+        'breadcrumb' => [
+            ['label' => 'Organizations', 'url' => route('organizations.index')],
+            ['label' => $organization->name],
+        ],
         'actions' => $headerActions,
     ])
 @endsection

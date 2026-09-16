@@ -2,14 +2,14 @@
 
 @section('title', 'Create Organization - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Organizations' => route('organizations.index'), 'Create' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Create Organization',
         'subtitle' => 'Add a new organization with initial administrator',
+        'breadcrumb' => [
+            ['label' => 'Organizations', 'url' => route('organizations.index')],
+            ['label' => 'Create'],
+        ],
     ])
 @endsection
 

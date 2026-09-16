@@ -2,14 +2,15 @@
 
 @section('title', 'Edit Role - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Roles' => route('roles.index'), 'Edit' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Edit Role',
         'subtitle' => 'Update role: ' . $role->name,
+        'breadcrumb' => [
+            ['label' => 'Roles', 'url' => route('roles.index')],
+            ['label' => $role->name],
+            ['label' => 'Edit'],
+        ],
     ])
 @endsection
 

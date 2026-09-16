@@ -2,14 +2,15 @@
 
 @section('title', 'Edit User - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Users' => route('users.index'), 'Edit' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Edit User',
         'subtitle' => 'Update user information for ' . $user->fullname,
+        'breadcrumb' => [
+            ['label' => 'Users', 'url' => route('users.index')],
+            ['label' => $user->fullname, 'url' => route('users.show', $user)],
+            ['label' => 'Edit'],
+        ],
     ])
 @endsection
 

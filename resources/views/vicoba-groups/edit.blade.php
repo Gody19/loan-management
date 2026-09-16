@@ -2,14 +2,15 @@
 
 @section('title', 'Edit VICOBA Group - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'VICOBA Groups' => route('vicoba-groups.index'), 'Edit' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Edit VICOBA Group',
         'subtitle' => 'Update ' . $group->name,
+        'breadcrumb' => [
+            ['label' => 'VICOBA Groups', 'url' => route('vicoba-groups.index')],
+            ['label' => $group->name, 'url' => route('vicoba-groups.show', $group)],
+            ['label' => 'Edit'],
+        ],
     ])
 @endsection
 

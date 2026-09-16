@@ -2,14 +2,13 @@
 
 @section('title', 'Permissions - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Permissions' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Permissions Matrix',
         'subtitle' => 'Manage permissions for each role',
+        'breadcrumb' => [
+            ['label' => 'Permissions'],
+        ],
     ])
 @endsection
 

@@ -2,14 +2,14 @@
 
 @section('title', 'Create Role - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Roles' => route('roles.index'), 'Create' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Create Role',
         'subtitle' => 'Define a new role with permissions',
+        'breadcrumb' => [
+            ['label' => 'Roles', 'url' => route('roles.index')],
+            ['label' => 'Create'],
+        ],
     ])
 @endsection
 

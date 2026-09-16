@@ -2,14 +2,14 @@
 
 @section('title', 'Create Branch - ' . config('app.name'))
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Branches' => route('branches.index'), 'Create' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Create Branch',
         'subtitle' => 'Add a new branch',
+        'breadcrumb' => [
+            ['label' => 'Branches', 'url' => route('branches.index')],
+            ['label' => 'Create'],
+        ],
     ])
 @endsection
 

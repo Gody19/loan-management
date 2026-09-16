@@ -2,14 +2,15 @@
 
 @section('title', 'Manage Users - ' . $organization->name)
 
-@section('breadcrumb')
-    @include('layouts.components.breadcrumb', ['breadcrumbs' => ['Dashboard' => route('dashboard'), 'Organizations' => route('organizations.index'), $organization->name => route('organizations.show', $organization), 'Users' => '']])
-@endsection
-
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Manage Users',
         'subtitle' => 'Assign users to ' . $organization->name,
+        'breadcrumb' => [
+            ['label' => 'Organizations', 'url' => route('organizations.index')],
+            ['label' => $organization->name, 'url' => route('organizations.show', $organization)],
+            ['label' => 'Users'],
+        ],
     ])
 @endsection
 
