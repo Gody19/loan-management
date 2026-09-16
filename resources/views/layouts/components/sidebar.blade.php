@@ -65,46 +65,88 @@
         {{-- Financial Section --}}
         <div class="sidebar-section mt-3">Finance</div>
 
-        @if(auth()->check() && auth()->user()->can('savings_product.view'))
-        <a href="{{ route('savings-products.index') }}" class="nav-link {{ request()->routeIs('savings-products.*') ? 'active' : '' }}">
-            <i class="bi bi-wallet2"></i>
-            <span>Savings Plans</span>
-        </a>
+        {{-- Savings Sub-menu --}}
+        @if(auth()->check() && (auth()->user()->can('savings_product.view') || auth()->user()->can('savings_account.view') || auth()->user()->can('savings_transaction.view')))
+        <div class="nav-parent">
+            <a href="#" class="nav-link nav-toggle {{ request()->routeIs('savings-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-savings')">
+                <i class="bi bi-wallet2"></i>
+                <span>Savings</span>
+                <i class="bi bi-chevron-down ms-auto toggle-icon"></i>
+            </a>
+            <div class="nav-submenu" id="submenu-savings" style="{{ request()->routeIs('savings-*') ? 'display:block;' : '' }}">
+                @if(auth()->user()->can('savings_product.view'))
+                <a href="{{ route('savings-products.index') }}" class="nav-link sub-link {{ request()->routeIs('savings-products.*') ? 'active' : '' }}">
+                    <span>Savings Plans</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('savings_account.view'))
+                <a href="{{ route('savings-accounts.index') }}" class="nav-link sub-link {{ request()->routeIs('savings-accounts.*') ? 'active' : '' }}">
+                    <span>Savings Accounts</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('savings_transaction.view'))
+                <a href="{{ route('savings-transactions.index') }}" class="nav-link sub-link {{ request()->routeIs('savings-transactions.*') ? 'active' : '' }}">
+                    <span>Savings Transactions</span>
+                </a>
+                @endif
+            </div>
+        </div>
         @endif
 
-        @if(auth()->check() && auth()->user()->can('savings_account.view'))
-        <a href="{{ route('savings-accounts.index') }}" class="nav-link {{ request()->routeIs('savings-accounts.*') ? 'active' : '' }}">
-            <i class="bi bi-piggy-bank"></i>
-            <span>Member Savings Accounts</span>
-        </a>
+        {{-- Shares Sub-menu --}}
+        @if(auth()->check() && (auth()->user()->can('share_product.view') || auth()->user()->can('share_account.view') || auth()->user()->can('share_transaction.view')))
+        <div class="nav-parent">
+            <a href="#" class="nav-link nav-toggle {{ request()->routeIs('share-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-shares')">
+                <i class="bi bi-cash-stack"></i>
+                <span>Shares</span>
+                <i class="bi bi-chevron-down ms-auto toggle-icon"></i>
+            </a>
+            <div class="nav-submenu" id="submenu-shares" style="{{ request()->routeIs('share-*') ? 'display:block;' : '' }}">
+                @if(auth()->user()->can('share_product.view'))
+                <a href="{{ route('share-products.index') }}" class="nav-link sub-link {{ request()->routeIs('share-products.*') ? 'active' : '' }}">
+                    <span>Share Plans</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('share_account.view'))
+                <a href="{{ route('share-accounts.index') }}" class="nav-link sub-link {{ request()->routeIs('share-accounts.*') ? 'active' : '' }}">
+                    <span>Share Accounts</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('share_transaction.view'))
+                <a href="{{ route('share-transactions.index') }}" class="nav-link sub-link {{ request()->routeIs('share-transactions.*') ? 'active' : '' }}">
+                    <span>Share Transactions</span>
+                </a>
+                @endif
+            </div>
+        </div>
         @endif
 
-        @if(auth()->check() && auth()->user()->can('share_product.view'))
-        <a href="{{ route('share-products.index') }}" class="nav-link {{ request()->routeIs('share-products.*') ? 'active' : '' }}">
-            <i class="bi bi-cash-stack"></i>
-            <span>Share Plans</span>
-        </a>
-        @endif
-
-        @if(auth()->check() && auth()->user()->can('share_account.view'))
-        <a href="{{ route('share-accounts.index') }}" class="nav-link {{ request()->routeIs('share-accounts.*') ? 'active' : '' }}">
-            <i class="bi bi-bar-chart-line"></i>
-            <span>Member Share Accounts</span>
-        </a>
-        @endif
-
-        @if(auth()->check() && auth()->user()->can('welfare_fund.view'))
-        <a href="{{ route('welfare-funds.index') }}" class="nav-link {{ request()->routeIs('welfare-funds.*') ? 'active' : '' }}">
-            <i class="bi bi-heart"></i>
-            <span>Welfare Funds</span>
-        </a>
-        @endif
-
-        @if(auth()->check() && auth()->user()->can('welfare_account.view'))
-        <a href="{{ route('welfare-accounts.index') }}" class="nav-link {{ request()->routeIs('welfare-accounts.*') ? 'active' : '' }}">
-            <i class="bi bi-heart-half"></i>
-            <span>Member Welfare Accounts</span>
-        </a>
+        {{-- Welfare Sub-menu --}}
+        @if(auth()->check() && (auth()->user()->can('welfare_fund.view') || auth()->user()->can('welfare_account.view') || auth()->user()->can('welfare_transaction.view')))
+        <div class="nav-parent">
+            <a href="#" class="nav-link nav-toggle {{ request()->routeIs('welfare-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-welfare')">
+                <i class="bi bi-heart"></i>
+                <span>Welfare</span>
+                <i class="bi bi-chevron-down ms-auto toggle-icon"></i>
+            </a>
+            <div class="nav-submenu" id="submenu-welfare" style="{{ request()->routeIs('welfare-*') ? 'display:block;' : '' }}">
+                @if(auth()->user()->can('welfare_fund.view'))
+                <a href="{{ route('welfare-funds.index') }}" class="nav-link sub-link {{ request()->routeIs('welfare-funds.*') ? 'active' : '' }}">
+                    <span>Welfare Funds</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('welfare_account.view'))
+                <a href="{{ route('welfare-accounts.index') }}" class="nav-link sub-link {{ request()->routeIs('welfare-accounts.*') ? 'active' : '' }}">
+                    <span>Welfare Accounts</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('welfare_transaction.view'))
+                <a href="{{ route('welfare-transactions.index') }}" class="nav-link sub-link {{ request()->routeIs('welfare-transactions.*') ? 'active' : '' }}">
+                    <span>Welfare Transactions</span>
+                </a>
+                @endif
+            </div>
+        </div>
         @endif
 
         <a href="#" class="nav-link">
@@ -193,5 +235,13 @@
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
         }
+    }
+
+    function toggleSubmenu(event, id) {
+        event.preventDefault();
+        const submenu = document.getElementById(id);
+        const parent = submenu.parentElement;
+        parent.classList.toggle('open');
+        submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
     }
 </script>

@@ -60,6 +60,38 @@
     font-weight: 600;
 }
 
+/* Sidebar Sub-menu */
+.vicoba-sidebar .nav-parent .nav-toggle {
+    cursor: pointer;
+}
+
+.vicoba-sidebar .nav-parent .toggle-icon {
+    transition: transform 0.2s ease;
+    font-size: 0.75rem;
+}
+
+.vicoba-sidebar .nav-parent.open .toggle-icon {
+    transform: rotate(180deg);
+}
+
+.vicoba-sidebar .nav-submenu {
+    display: none;
+    padding-left: 0.5rem;
+}
+
+.vicoba-sidebar .nav-submenu .sub-link {
+    padding: 0.5rem 1.25rem 0.5rem 2.5rem;
+    font-size: 0.825rem;
+    margin: 0.0625rem 0.75rem;
+}
+
+.vicoba-sidebar .nav-submenu .sub-link.active {
+    color: #ffffff;
+    background: var(--vicoba-primary);
+    font-weight: 500;
+}
+}
+
 /* =====================================================
    MAIN CONTENT AREA
    ===================================================== */

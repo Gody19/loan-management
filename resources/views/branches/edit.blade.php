@@ -17,7 +17,7 @@
 @section('content')
 
 <div class="row justify-content-center">
-    <div class="col-lg-8 col-xl-7">
+    <div class="col-lg-10 col-xl-9">
         <form method="POST" action="{{ route('branches.update', $branch) }}" data-validate>
             @csrf
             @method('PUT')
