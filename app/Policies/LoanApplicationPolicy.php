@@ -17,6 +17,9 @@ class LoanApplicationPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
+        if (!$application->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $application->organization_id)->exists();
     }
 
@@ -29,6 +32,9 @@ class LoanApplicationPolicy
     {
         if ($auth->hasRole('Super Administrator')) {
             return true;
+        }
+        if (!$application->organization_id) {
+            return false;
         }
         return $auth->organizations()->where('organizations.id', $application->organization_id)->exists();
     }

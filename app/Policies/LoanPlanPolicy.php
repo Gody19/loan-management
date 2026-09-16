@@ -18,6 +18,9 @@ class LoanPlanPolicy
             return true;
         }
 
+        if (!$loanPlan->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $loanPlan->organization_id)->exists();
     }
 
@@ -32,6 +35,9 @@ class LoanPlanPolicy
             return true;
         }
 
+        if (!$loanPlan->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $loanPlan->organization_id)->exists();
     }
 
@@ -41,6 +47,9 @@ class LoanPlanPolicy
             return true;
         }
 
+        if (!$loanPlan->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $loanPlan->organization_id)->exists();
     }
 }

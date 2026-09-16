@@ -19,7 +19,7 @@ class WelfareTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $welfareTransaction->organization_id)->exists();
+            return $welfareTransaction->organization_id && $auth->organizations()->where('organizations.id', $welfareTransaction->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $welfareTransaction->branch_id)->exists();
@@ -42,7 +42,7 @@ class WelfareTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $welfareTransaction->organization_id)->exists();
+            return $welfareTransaction->organization_id && $auth->organizations()->where('organizations.id', $welfareTransaction->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $welfareTransaction->branch_id)->exists();

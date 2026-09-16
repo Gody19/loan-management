@@ -17,6 +17,9 @@ class LoanApplicationGuarantorPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
+        if (!$guarantor->application->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $guarantor->application->organization_id)->exists();
     }
 

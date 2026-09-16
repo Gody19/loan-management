@@ -19,7 +19,7 @@ class SavingsAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
+            return $savingsAccount->organization_id && $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();
@@ -37,7 +37,7 @@ class SavingsAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
+            return $savingsAccount->organization_id && $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();
@@ -50,7 +50,7 @@ class SavingsAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
+            return $savingsAccount->organization_id && $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();
@@ -63,7 +63,7 @@ class SavingsAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
+            return $savingsAccount->organization_id && $auth->organizations()->where('organizations.id', $savingsAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $savingsAccount->branch_id)->exists();

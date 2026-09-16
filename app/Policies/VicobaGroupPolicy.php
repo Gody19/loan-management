@@ -24,7 +24,7 @@ class VicobaGroupPolicy
 
         $branch = $group->branch;
 
-        return $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+        return $branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
     }
 
     public function create(User $auth): bool
@@ -44,7 +44,7 @@ class VicobaGroupPolicy
 
         $branch = $group->branch;
 
-        return $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+        return $branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
     }
 
     public function delete(User $auth, VicobaGroup $group): bool
@@ -59,6 +59,6 @@ class VicobaGroupPolicy
 
         $branch = $group->branch;
 
-        return $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+        return $branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
     }
 }

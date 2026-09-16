@@ -19,14 +19,14 @@ class MemberPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
+            return $member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
         }
 
         if ($auth->hasRole('Branch Manager')) {
             return $auth->branches()->where('branches.id', $member->branch_id)->exists();
         }
 
-        return $auth->organizations()->where('organizations.id', $member->organization_id)->exists()
+        return ($member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists())
             || $auth->branches()->where('branches.id', $member->branch_id)->exists();
     }
 
@@ -42,14 +42,14 @@ class MemberPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
+            return $member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
         }
 
         if ($auth->hasRole('Branch Manager')) {
             return $auth->branches()->where('branches.id', $member->branch_id)->exists();
         }
 
-        return $auth->organizations()->where('organizations.id', $member->organization_id)->exists()
+        return ($member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists())
             || $auth->branches()->where('branches.id', $member->branch_id)->exists();
     }
 
@@ -60,7 +60,7 @@ class MemberPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
+            return $member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
         }
 
         return false;

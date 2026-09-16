@@ -19,7 +19,7 @@ class ShareAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+            return $shareAccount->organization_id && $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();
@@ -37,7 +37,7 @@ class ShareAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+            return $shareAccount->organization_id && $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();
@@ -50,7 +50,7 @@ class ShareAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+            return $shareAccount->organization_id && $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();

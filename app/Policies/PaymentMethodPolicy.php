@@ -18,6 +18,9 @@ class PaymentMethodPolicy
             return true;
         }
 
+        if (!$paymentMethod->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $paymentMethod->organization_id)->exists();
     }
 
@@ -32,6 +35,9 @@ class PaymentMethodPolicy
             return true;
         }
 
+        if (!$paymentMethod->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $paymentMethod->organization_id)->exists();
     }
 
@@ -41,6 +47,9 @@ class PaymentMethodPolicy
             return true;
         }
 
+        if (!$paymentMethod->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $paymentMethod->organization_id)->exists();
     }
 }

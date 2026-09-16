@@ -18,6 +18,9 @@ class ShareProductPolicy
             return true;
         }
 
+        if (!$shareProduct->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $shareProduct->organization_id)->exists();
     }
 
@@ -32,6 +35,9 @@ class ShareProductPolicy
             return true;
         }
 
+        if (!$shareProduct->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $shareProduct->organization_id)->exists();
     }
 
@@ -41,6 +47,9 @@ class ShareProductPolicy
             return true;
         }
 
+        if (!$shareProduct->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $shareProduct->organization_id)->exists();
     }
 }

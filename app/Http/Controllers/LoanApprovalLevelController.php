@@ -15,9 +15,14 @@ class LoanApprovalLevelController extends Controller
         $query = LoanApprovalLevel::with('organization');
 
         if (!$request->user()->hasRole('Super Administrator')) {
-            $query->whereHas('organization', function ($q) use ($request) {
-                $q->where('id', $request->user()->organizations()->pluck('organizations.id'));
-            });
+            $orgIds = $request->user()->organizations()->pluck('organizations.id')->toArray();
+            if (!empty($orgIds)) {
+                $query->whereHas('organization', function ($q) use ($orgIds) {
+                    $q->whereIn('id', $orgIds);
+                });
+            } else {
+                $query->whereRaw('1 = 0');
+            }
         }
 
         if ($request->filled('organization_id')) {

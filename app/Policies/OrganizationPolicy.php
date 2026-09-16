@@ -18,6 +18,9 @@ class OrganizationPolicy
             return true;
         }
 
+        if (!$organization->id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $organization->id)->exists();
     }
 
@@ -32,6 +35,9 @@ class OrganizationPolicy
             return true;
         }
 
+        if (!$organization->id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $organization->id)->exists();
     }
 
@@ -41,6 +47,9 @@ class OrganizationPolicy
             return true;
         }
 
+        if (!$organization->id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $organization->id)->exists();
     }
 
@@ -50,6 +59,9 @@ class OrganizationPolicy
             return true;
         }
 
+        if (!$organization->id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $organization->id)->exists();
     }
 }

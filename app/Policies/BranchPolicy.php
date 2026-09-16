@@ -19,7 +19,7 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
     }
 
     public function create(User $auth): bool
@@ -34,7 +34,7 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
     }
 
     public function delete(User $auth, Branch $branch): bool
@@ -44,7 +44,7 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
     }
 
     public function assignUser(User $auth, Branch $branch): bool
@@ -54,6 +54,6 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
     }
 }

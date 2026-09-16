@@ -17,6 +17,9 @@ class LoanApprovalLevelPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
+        if (!$level->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $level->organization_id)->exists();
     }
 

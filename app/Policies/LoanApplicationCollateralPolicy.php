@@ -17,6 +17,9 @@ class LoanApplicationCollateralPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
+        if (!$collateral->application->organization_id) {
+            return false;
+        }
         return $auth->organizations()->where('organizations.id', $collateral->application->organization_id)->exists();
     }
 

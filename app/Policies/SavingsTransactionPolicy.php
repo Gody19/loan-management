@@ -19,7 +19,7 @@ class SavingsTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $savingsTransaction->organization_id)->exists();
+            return $savingsTransaction->organization_id && $auth->organizations()->where('organizations.id', $savingsTransaction->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $savingsTransaction->branch_id)->exists();
@@ -42,7 +42,7 @@ class SavingsTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $auth->organizations()->where('organizations.id', $savingsTransaction->organization_id)->exists();
+            return $savingsTransaction->organization_id && $auth->organizations()->where('organizations.id', $savingsTransaction->organization_id)->exists();
         }
 
         return $auth->branches()->where('branches.id', $savingsTransaction->branch_id)->exists();
