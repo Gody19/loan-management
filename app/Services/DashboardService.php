@@ -48,8 +48,6 @@ class DashboardService
 
     private function superAdminDashboard(): array
     {
-        $orgIds = Organization::pluck('id');
-
         return [
             'dashboard_type' => 'super_admin',
             'title' => 'Platform Dashboard',
@@ -94,13 +92,15 @@ class DashboardService
 
     private function orgAdminDashboard(): array
     {
-        $orgIds = $this->user->organizations()->pluck('organizations.id');
+        $orgIds = $this->user->organizations()->pluck('organizations.id')->toArray();
 
-        $memberQuery = Member::whereIn('organization_id', $orgIds);
-        $savingsQuery = SavingsAccount::whereIn('organization_id', $orgIds);
-        $shareQuery = ShareAccount::whereIn('organization_id', $orgIds);
-        $welfareQuery = WelfareAccount::whereIn('organization_id', $orgIds);
-        $loanQuery = LoanApplication::whereIn('organization_id', $orgIds);
+        $memberQuery = $orgIds ? Member::whereIn('organization_id', $orgIds) : Member::whereRaw('1 = 0');
+        $savingsQuery = $orgIds ? SavingsAccount::whereIn('organization_id', $orgIds) : SavingsAccount::whereRaw('1 = 0');
+        $shareQuery = $orgIds ? ShareAccount::whereIn('organization_id', $orgIds) : ShareAccount::whereRaw('1 = 0');
+        $welfareQuery = $orgIds ? WelfareAccount::whereIn('organization_id', $orgIds) : WelfareAccount::whereRaw('1 = 0');
+        $loanQuery = $orgIds ? LoanApplication::whereIn('organization_id', $orgIds) : LoanApplication::whereRaw('1 = 0');
+
+        $branchIds = $orgIds ? Branch::whereIn('organization_id', $orgIds)->pluck('id')->toArray() : [];
 
         return [
             'dashboard_type' => 'org_admin',
@@ -109,35 +109,35 @@ class DashboardService
             'scope_label' => $this->user->organizations()->pluck('organizations.name')->first() ?? 'Organization',
             'widgets' => [
                 'organization' => [
-                    'branches' => Branch::whereIn('organization_id', $orgIds)->count(),
-                    'groups' => VicobaGroup::whereIn('branch_id', Branch::whereIn('organization_id', $orgIds)->pluck('id'))->count(),
+                    'branches' => $orgIds ? Branch::whereIn('organization_id', $orgIds)->count() : 0,
+                    'groups' => $branchIds ? VicobaGroup::whereIn('branch_id', $branchIds)->count() : 0,
                 ],
                 'members' => [
                     'total' => $memberQuery->count(),
-                    'active' => $memberQuery->where('membership_status', 'active')->count(),
-                    'pending' => $memberQuery->where('membership_status', 'pending')->count(),
-                    'suspended' => $memberQuery->where('membership_status', 'suspended')->count(),
+                    'active' => (clone $memberQuery)->where('membership_status', 'active')->count(),
+                    'pending' => (clone $memberQuery)->where('membership_status', 'pending')->count(),
+                    'suspended' => (clone $memberQuery)->where('membership_status', 'suspended')->count(),
                 ],
                 'savings' => [
                     'accounts' => $savingsQuery->where('status', 'active')->count(),
-                    'total_balance' => $savingsQuery->where('status', 'active')->sum('current_balance'),
+                    'total_balance' => (clone $savingsQuery)->where('status', 'active')->sum('current_balance'),
                 ],
                 'shares' => [
                     'accounts' => $shareQuery->where('status', 'active')->count(),
-                    'total_shares' => $shareQuery->where('status', 'active')->sum('total_shares'),
-                    'total_value' => $shareQuery->where('status', 'active')->sum('total_value'),
+                    'total_shares' => (clone $shareQuery)->where('status', 'active')->sum('total_shares'),
+                    'total_value' => (clone $shareQuery)->where('status', 'active')->sum('total_value'),
                 ],
                 'welfare' => [
                     'accounts' => $welfareQuery->where('status', 'active')->count(),
-                    'total_balance' => $welfareQuery->where('status', 'active')->sum('current_balance'),
+                    'total_balance' => (clone $welfareQuery)->where('status', 'active')->sum('current_balance'),
                 ],
                 'loans' => [
-                    'plans' => LoanPlan::whereIn('organization_id', $orgIds)->count(),
+                    'plans' => $orgIds ? LoanPlan::whereIn('organization_id', $orgIds)->count() : 0,
                     'applications' => $loanQuery->count(),
-                    'pending' => $loanQuery->where('status', 'submitted')->count(),
-                    'under_review' => $loanQuery->where('status', 'under_review')->count(),
-                    'approved' => $loanQuery->where('status', 'approved')->count(),
-                    'rejected' => $loanQuery->where('status', 'rejected')->count(),
+                    'pending' => (clone $loanQuery)->where('status', 'submitted')->count(),
+                    'under_review' => (clone $loanQuery)->where('status', 'under_review')->count(),
+                    'approved' => (clone $loanQuery)->where('status', 'approved')->count(),
+                    'rejected' => (clone $loanQuery)->where('status', 'rejected')->count(),
                 ],
             ],
             'recent_activity' => $this->getRecentActivity($orgIds),
@@ -146,13 +146,13 @@ class DashboardService
 
     private function branchManagerDashboard(): array
     {
-        $branchIds = $this->user->branches()->pluck('branches.id');
+        $branchIds = $this->user->branches()->pluck('branches.id')->toArray();
 
-        $memberQuery = Member::whereIn('branch_id', $branchIds);
-        $savingsQuery = SavingsAccount::whereIn('branch_id', $branchIds);
-        $shareQuery = ShareAccount::whereIn('branch_id', $branchIds);
-        $welfareQuery = WelfareAccount::whereIn('branch_id', $branchIds);
-        $loanQuery = LoanApplication::whereIn('branch_id', $branchIds);
+        $memberQuery = $branchIds ? Member::whereIn('branch_id', $branchIds) : Member::whereRaw('1 = 0');
+        $savingsQuery = $branchIds ? SavingsAccount::whereIn('branch_id', $branchIds) : SavingsAccount::whereRaw('1 = 0');
+        $shareQuery = $branchIds ? ShareAccount::whereIn('branch_id', $branchIds) : ShareAccount::whereRaw('1 = 0');
+        $welfareQuery = $branchIds ? WelfareAccount::whereIn('branch_id', $branchIds) : WelfareAccount::whereRaw('1 = 0');
+        $loanQuery = $branchIds ? LoanApplication::whereIn('branch_id', $branchIds) : LoanApplication::whereRaw('1 = 0');
 
         return [
             'dashboard_type' => 'branch_manager',
@@ -161,48 +161,51 @@ class DashboardService
             'scope_label' => 'Branch: ' . ($this->user->branches()->pluck('branches.name')->first() ?? 'Unassigned'),
             'widgets' => [
                 'branch' => [
-                    'groups' => VicobaGroup::whereIn('branch_id', $branchIds)->count(),
+                    'groups' => $branchIds ? VicobaGroup::whereIn('branch_id', $branchIds)->count() : 0,
                 ],
                 'members' => [
                     'total' => $memberQuery->count(),
-                    'active' => $memberQuery->where('membership_status', 'active')->count(),
-                    'pending' => $memberQuery->where('membership_status', 'pending')->count(),
+                    'active' => (clone $memberQuery)->where('membership_status', 'active')->count(),
+                    'pending' => (clone $memberQuery)->where('membership_status', 'pending')->count(),
                 ],
                 'savings' => [
                     'accounts' => $savingsQuery->where('status', 'active')->count(),
-                    'total_balance' => $savingsQuery->where('status', 'active')->sum('current_balance'),
+                    'total_balance' => (clone $savingsQuery)->where('status', 'active')->sum('current_balance'),
                 ],
                 'shares' => [
                     'total_shares' => $shareQuery->where('status', 'active')->sum('total_shares'),
-                    'total_value' => $shareQuery->where('status', 'active')->sum('total_value'),
+                    'total_value' => (clone $shareQuery)->where('status', 'active')->sum('total_value'),
                 ],
                 'welfare' => [
                     'total_balance' => $welfareQuery->where('status', 'active')->sum('current_balance'),
                 ],
                 'loans' => [
                     'applications' => $loanQuery->count(),
-                    'pending' => $loanQuery->where('status', 'submitted')->count(),
-                    'under_review' => $loanQuery->where('status', 'under_review')->count(),
-                    'approved' => $loanQuery->where('status', 'approved')->count(),
+                    'pending' => (clone $loanQuery)->where('status', 'submitted')->count(),
+                    'under_review' => (clone $loanQuery)->where('status', 'under_review')->count(),
+                    'approved' => (clone $loanQuery)->where('status', 'approved')->count(),
                 ],
             ],
-            'recent_activity' => $this->getRecentActivity(null, $branchIds),
+            'recent_activity' => $this->getRecentActivity([], $branchIds),
         ];
     }
 
     private function staffDashboard(): array
     {
-        $orgIds = $this->user->organizations()->pluck('organizations.id');
-        $branchIds = $this->user->branches()->pluck('branches.id');
-        $hasOrg = $orgIds->isNotEmpty();
-        $hasBranch = $branchIds->isNotEmpty();
+        $orgIds = $this->user->organizations()->pluck('organizations.id')->toArray();
+        $branchIds = $this->user->branches()->pluck('branches.id')->toArray();
+        $hasOrg = !empty($orgIds);
+        $hasBranch = !empty($branchIds);
 
         $widgets = [];
 
         if ($this->user->can('member.view')) {
             $q = Member::query();
-            if ($hasBranch) $q->whereIn('branch_id', $branchIds);
-            elseif ($hasOrg) $q->whereIn('organization_id', $orgIds);
+            if ($hasBranch) {
+                $q->whereIn('branch_id', $branchIds);
+            } elseif ($hasOrg) {
+                $q->whereIn('organization_id', $orgIds);
+            }
 
             $widgets['members'] = [
                 'total' => $q->count(),
@@ -212,8 +215,11 @@ class DashboardService
 
         if ($this->user->can('savings_account.view')) {
             $q = SavingsAccount::query();
-            if ($hasBranch) $q->whereIn('branch_id', $branchIds);
-            elseif ($hasOrg) $q->whereIn('organization_id', $orgIds);
+            if ($hasBranch) {
+                $q->whereIn('branch_id', $branchIds);
+            } elseif ($hasOrg) {
+                $q->whereIn('organization_id', $orgIds);
+            }
 
             $widgets['savings'] = [
                 'accounts' => $q->where('status', 'active')->count(),
@@ -223,8 +229,11 @@ class DashboardService
 
         if ($this->user->can('share_account.view')) {
             $q = ShareAccount::query();
-            if ($hasBranch) $q->whereIn('branch_id', $branchIds);
-            elseif ($hasOrg) $q->whereIn('organization_id', $orgIds);
+            if ($hasBranch) {
+                $q->whereIn('branch_id', $branchIds);
+            } elseif ($hasOrg) {
+                $q->whereIn('organization_id', $orgIds);
+            }
 
             $widgets['shares'] = [
                 'total_shares' => $q->where('status', 'active')->sum('total_shares'),
@@ -234,8 +243,11 @@ class DashboardService
 
         if ($this->user->can('welfare_account.view')) {
             $q = WelfareAccount::query();
-            if ($hasBranch) $q->whereIn('branch_id', $branchIds);
-            elseif ($hasOrg) $q->whereIn('organization_id', $orgIds);
+            if ($hasBranch) {
+                $q->whereIn('branch_id', $branchIds);
+            } elseif ($hasOrg) {
+                $q->whereIn('organization_id', $orgIds);
+            }
 
             $widgets['welfare'] = [
                 'total_balance' => $q->where('status', 'active')->sum('current_balance'),
@@ -244,8 +256,11 @@ class DashboardService
 
         if ($this->user->can('loan_application.view')) {
             $q = LoanApplication::query();
-            if ($hasBranch) $q->whereIn('branch_id', $branchIds);
-            elseif ($hasOrg) $q->whereIn('organization_id', $orgIds);
+            if ($hasBranch) {
+                $q->whereIn('branch_id', $branchIds);
+            } elseif ($hasOrg) {
+                $q->whereIn('organization_id', $orgIds);
+            }
 
             $widgets['loans'] = [
                 'applications' => $q->count(),
@@ -323,11 +338,8 @@ class DashboardService
         ];
     }
 
-    private function getRecentActivity($orgIds = null, $branchIds = null): \Illuminate\Support\Collection
+    private function getRecentActivity(?array $orgIds = null, ?array $branchIds = null): \Illuminate\Support\Collection
     {
-        $orgArray = $orgIds instanceof \Illuminate\Support\Collection ? $orgIds->toArray() : (is_array($orgIds) ? $orgIds : null);
-        $branchArray = $branchIds instanceof \Illuminate\Support\Collection ? $branchIds->toArray() : (is_array($branchIds) ? $branchIds : null);
-
         $recentSavings = SavingsTransaction::with('account.member')
             ->where('status', 'completed');
         $recentShares = ShareTransaction::with('account.member')
@@ -335,14 +347,14 @@ class DashboardService
         $recentWelfare = WelfareTransaction::with('account.member')
             ->where('status', 'completed');
 
-        if ($branchArray) {
-            $recentSavings->whereHas('account', fn ($q) => $q->whereIn('branch_id', $branchArray));
-            $recentShares->whereHas('account', fn ($q) => $q->whereIn('branch_id', $branchArray));
-            $recentWelfare->whereHas('account', fn ($q) => $q->whereIn('branch_id', $branchArray));
-        } elseif ($orgArray) {
-            $recentSavings->whereHas('account', fn ($q) => $q->whereIn('organization_id', $orgArray));
-            $recentShares->whereHas('account', fn ($q) => $q->whereIn('organization_id', $orgArray));
-            $recentWelfare->whereHas('account', fn ($q) => $q->whereIn('organization_id', $orgArray));
+        if ($branchIds) {
+            $recentSavings->whereHas('account', fn ($q) => $q->whereIn('branch_id', $branchIds));
+            $recentShares->whereHas('account', fn ($q) => $q->whereIn('branch_id', $branchIds));
+            $recentWelfare->whereHas('account', fn ($q) => $q->whereIn('branch_id', $branchIds));
+        } elseif ($orgIds) {
+            $recentSavings->whereHas('account', fn ($q) => $q->whereIn('organization_id', $orgIds));
+            $recentShares->whereHas('account', fn ($q) => $q->whereIn('organization_id', $orgIds));
+            $recentWelfare->whereHas('account', fn ($q) => $q->whereIn('organization_id', $orgIds));
         }
 
         return $recentSavings->latest()->take(5)->get()
