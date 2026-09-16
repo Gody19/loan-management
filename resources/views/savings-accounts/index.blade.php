@@ -56,7 +56,7 @@
                     <tr>
                         <th>Account No</th>
                         <th>Member</th>
-                        <th>Product</th>
+                        <th>Plan</th>
                         <th>Balance</th>
                         <th>Status</th>
                         <th class="text-end">Actions</th>

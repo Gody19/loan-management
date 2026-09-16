@@ -1,13 +1,13 @@
 @extends('layouts.app')
 
-@section('title', 'Edit Savings Product')
+@section('title', 'Edit Savings Plan')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Edit Savings Product',
+        'title' => 'Edit Savings Plan',
         'subtitle' => 'Update ' . $product->name . ' (' . $product->code . ')',
         'actions' => '<a href="' . route('savings-products.show', $product) . '" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back to Product
+            <i class="bi bi-arrow-left me-1"></i> Back to Plan
         </a>'
     ])
 @endsection
@@ -23,7 +23,7 @@
             {{-- Product Details --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
-                    <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Product Details</h6>
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Plan Details</h6>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -129,7 +129,7 @@
             <div class="d-flex justify-content-end gap-2">
                 <a href="{{ route('savings-products.show', $product) }}" class="btn btn-outline-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary px-4">
-                    <i class="bi bi-check-lg me-1"></i> Update Product
+                    <i class="bi bi-check-lg me-1"></i> Update Plan
                 </button>
             </div>
 

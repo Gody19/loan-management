@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Savings Product')
+@section('title', 'Savings Plan')
 
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => $product->name,
-        'subtitle' => 'Product Code: ' . $product->code . ' | ' . ucfirst($product->status),
+        'subtitle' => 'Plan Code: ' . $product->code . ' | ' . ucfirst($product->status),
         'actions' => '<a href="' . route('savings-products.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>
@@ -19,7 +19,7 @@
 <div class="row justify-content-center">
     <div class="col-lg-10">
 
-        {{-- Product Summary Card --}}
+        {{-- Plan Summary Card --}}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
                 <div class="d-flex align-items-center">
@@ -47,7 +47,7 @@
             <div class="col-md-6">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
-                        <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Product Details</h6>
+                        <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Plan Details</h6>
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless mb-0">
@@ -96,7 +96,7 @@
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white border-bottom">
-                        <h6 class="mb-0 fw-semibold"><i class="bi bi-wallet2 me-2"></i>Accounts Using This Product</h6>
+                        <h6 class="mb-0 fw-semibold"><i class="bi bi-wallet2 me-2"></i>Accounts Using This Plan</h6>
                     </div>
                     <div class="card-body">
                         @if($product->accounts->count())
@@ -135,7 +135,7 @@
                         @else
                             <div class="text-center py-4 text-muted">
                                 <i class="bi bi-wallet2 fs-1 d-block mb-2"></i>
-                                No accounts using this product yet.
+                                No accounts using this plan yet.
                             </div>
                         @endif
                     </div>

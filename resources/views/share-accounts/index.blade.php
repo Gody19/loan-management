@@ -31,7 +31,7 @@
                 </div>
                 <div class="col-lg-2">
                     <select name="share_product_id" class="form-select">
-                        <option value="">All Products</option>
+                        <option value="">All Plans</option>
                         @foreach($products as $product)
                             <option value="{{ $product->id }}" {{ request('share_product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }}</option>
                         @endforeach
@@ -62,7 +62,7 @@
                     <tr>
                         <th>Account No.</th>
                         <th>Member</th>
-                        <th>Product</th>
+                        <th>Plan</th>
                         <th class="text-center">Shares</th>
                         <th class="text-end">Value</th>
                         <th>Status</th>

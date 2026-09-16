@@ -64,7 +64,7 @@
                         <table class="table table-borderless mb-0">
                             <tr><td class="text-muted" style="width:45%">Account Number</td><td class="fw-medium">{{ $account->account_number }}</td></tr>
                             <tr><td class="text-muted">Member</td><td class="fw-medium">{{ $account->member->full_name ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">Product</td><td class="fw-medium">{{ $account->savingsProduct->name ?? '—' }}</td></tr>
+                            <tr><td class="text-muted">Plan</td><td class="fw-medium">{{ $account->savingsProduct->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Organization</td><td class="fw-medium">{{ $account->organization->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Branch</td><td class="fw-medium">{{ $account->branch->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Group</td><td class="fw-medium">{{ $account->vicobaGroup->name ?? '—' }}</td></tr>

@@ -74,7 +74,7 @@
                         <div class="fw-medium">{{ $account->member->full_name ?? '—' }}</div>
                     </div>
                     <div class="col-md-4">
-                        <div class="text-muted small">Share Product</div>
+                        <div class="text-muted small">Share Plan</div>
                         <div class="fw-medium">{{ $account->product->name ?? '—' }}</div>
                     </div>
                     <div class="col-md-4">

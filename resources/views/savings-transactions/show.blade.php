@@ -72,7 +72,7 @@
                         <table class="table table-borderless mb-0">
                             <tr><td class="text-muted" style="width:45%">Account Number</td><td class="fw-medium">{{ $transaction->savingsAccount->account_number ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Member</td><td class="fw-medium">{{ $transaction->savingsAccount->member->full_name ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">Product</td><td class="fw-medium">{{ $transaction->savingsAccount->savingsProduct->name ?? '—' }}</td></tr>
+                            <tr><td class="text-muted">Plan</td><td class="fw-medium">{{ $transaction->savingsAccount->savingsProduct->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Balance Before</td><td class="fw-medium">{{ number_format($transaction->balance_before, 2) }}</td></tr>
                             <tr><td class="text-muted">Balance After</td><td class="fw-bold text-primary">{{ number_format($transaction->balance_after, 2) }}</td></tr>
                             <tr><td class="text-muted">Transaction Date</td><td class="fw-medium">{{ $transaction->transaction_date?->format('d M Y H:i') ?? '—' }}</td></tr>

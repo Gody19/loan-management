@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Create Savings Product')
+@section('title', 'Create Savings Plan')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Create Savings Product',
-        'subtitle' => 'Add a new savings product',
+        'title' => 'Create Savings Plan',
+        'subtitle' => 'Add a new savings plan',
         'actions' => '<a href="' . route('savings-products.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back to List
         </a>'
@@ -22,7 +22,7 @@
             {{-- Product Details --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
-                    <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Product Details</h6>
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Plan Details</h6>
                 </div>
                 <div class="card-body">
                     <div class="row g-3">
@@ -128,7 +128,7 @@
             <div class="d-flex justify-content-end gap-2">
                 <a href="{{ route('savings-products.index') }}" class="btn btn-outline-secondary">Cancel</a>
                 <button type="submit" class="btn btn-primary px-4">
-                    <i class="bi bi-check-lg me-1"></i> Create Product
+                    <i class="bi bi-check-lg me-1"></i> Create Plan
                 </button>
             </div>
 

@@ -37,9 +37,9 @@
                             @error('member_id') <span class="text-danger small">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Savings Product <span class="text-danger">*</span></label>
+                            <label class="form-label">Savings Plan <span class="text-danger">*</span></label>
                             <select name="savings_product_id" id="savings_product_id" class="form-select" required>
-                                <option value="">Select Product</option>
+                                <option value="">Select Plan</option>
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}" data-org="{{ $product->organization_id }}" {{ old('savings_product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }} ({{ $product->code }})</option>
                                 @endforeach

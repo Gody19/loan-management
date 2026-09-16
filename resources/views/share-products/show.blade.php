@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Share Product Details')
+@section('title', 'Share Plan Details')
 
 @section('page-header')
     @include('layouts.components.page-header', [
@@ -56,7 +56,7 @@
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Product Information</h6>
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Plan Information</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
@@ -137,7 +137,7 @@
                 @else
                     <div class="text-center py-4 text-muted">
                         <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-                        No accounts for this product yet.
+                        No accounts for this plan yet.
                     </div>
                 @endif
             </div>

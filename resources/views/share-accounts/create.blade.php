@@ -36,9 +36,9 @@
                             @error('member_id') <span class="text-danger small">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Share Product <span class="text-danger">*</span></label>
+                            <label class="form-label">Share Plan <span class="text-danger">*</span></label>
                             <select name="share_product_id" class="form-select" required>
-                                <option value="">Select Product</option>
+                                <option value="">Select Plan</option>
                                 @foreach($products as $product)
                                     <option value="{{ $product->id }}" {{ old('share_product_id') == $product->id ? 'selected' : '' }}>{{ $product->name }} ({{ number_format($product->share_price, 2) }}/share)</option>
                                 @endforeach
