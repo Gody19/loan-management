@@ -33,16 +33,45 @@ class OrganizationController extends Controller
     {
         $this->authorize('create', Organization::class);
 
-        return view('organizations.create');
+        $users = User::active()->get();
+
+        return view('organizations.create', compact('users'));
     }
 
     public function store(StoreOrganizationRequest $request): RedirectResponse
     {
         $this->authorize('create', Organization::class);
 
-        $organization = $this->organizationService->create($request->validated());
+        $adminType = $request->input('admin_type');
 
-        app(AuditService::class)->log('organization.created', $organization, [], $organization->toArray());
+        $organization = $this->organizationService->createWithAdmin(
+            $request->only(['name', 'registration_number', 'phone', 'email', 'address', 'region', 'district', 'status']),
+            $adminType === 'create' ? $request->only(['admin_name', 'admin_email', 'admin_phone', 'admin_password']) : null,
+            $adminType === 'assign' ? $request->input('admin_user_id') : null,
+        );
+
+        app(AuditService::class)->log(
+            'organization_created',
+            $organization,
+            [],
+            $organization->toArray()
+        );
+
+        if ($adminType === 'create') {
+            app(AuditService::class)->log(
+                'organization_admin_created',
+                $organization,
+                ['user_email' => $request->input('admin_email')],
+                []
+            );
+        } elseif ($adminType === 'assign') {
+            app(AuditService::class)->log(
+                'organization_admin_assigned',
+                $organization,
+                ['user_id' => $request->input('admin_user_id')],
+                []
+            );
+        }
 
         return redirect()->route('organizations.index')
             ->with('success', 'Organization created successfully.');
@@ -52,9 +81,16 @@ class OrganizationController extends Controller
     {
         $this->authorize('view', $organization);
 
-        $organization->load('branches', 'users');
+        $organization->load([
+            'branches',
+            'vicobaGroups',
+            'members' => fn ($q) => $q->limit(10),
+        ]);
 
-        return view('organizations.show', compact('organization'));
+        $administrators = $this->organizationService->getAdministrators($organization)->get();
+        $users = User::active()->get();
+
+        return view('organizations.show', compact('organization', 'administrators', 'users'));
     }
 
     public function edit(Organization $organization): View
@@ -70,7 +106,7 @@ class OrganizationController extends Controller
 
         $this->organizationService->update($organization, $request->validated());
 
-        app(AuditService::class)->log('organization.updated', $organization);
+        app(AuditService::class)->log('organization_updated', $organization);
 
         return redirect()->route('organizations.index')
             ->with('success', 'Organization updated successfully.');
@@ -121,5 +157,51 @@ class OrganizationController extends Controller
         $organization->users()->detach($request->user_id);
 
         return back()->with('success', 'User removed from organization.');
+    }
+
+    /**
+     * Assign an existing user as Organization Administrator.
+     */
+    public function assignAdmin(Request $request, Organization $organization): RedirectResponse
+    {
+        $this->authorize('update', $organization);
+
+        $request->validate([
+            'admin_user_id' => ['required', 'exists:users,id'],
+        ]);
+
+        $this->organizationService->assignAdmin($organization, $request->input('admin_user_id'));
+
+        app(AuditService::class)->log(
+            'organization_admin_assigned',
+            $organization,
+            ['user_id' => $request->input('admin_user_id')],
+            []
+        );
+
+        return back()->with('success', 'Administrator assigned successfully.');
+    }
+
+    /**
+     * Remove an administrator from an organization.
+     */
+    public function removeAdmin(Request $request, Organization $organization, User $user): RedirectResponse
+    {
+        $this->authorize('update', $organization);
+
+        try {
+            $this->organizationService->removeAdmin($organization, $user->id);
+
+            app(AuditService::class)->log(
+                'organization_admin_removed',
+                $organization,
+                ['user_id' => $user->id],
+                []
+            );
+
+            return back()->with('success', 'Administrator removed successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 }
