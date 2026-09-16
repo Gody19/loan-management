@@ -6,9 +6,11 @@ use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreShareAccountRequest;
 use App\Http\Requests\StoreSharePurchaseRequest;
 use App\Http\Requests\StoreShareRedemptionRequest;
+use App\Models\Branch;
 use App\Models\Member;
 use App\Models\Organization;
 use App\Models\ShareAccount;
+use App\Models\VicobaGroup;
 use App\Models\ShareProduct;
 use App\Services\ShareTransactionService;
 use Illuminate\Http\Request;
@@ -63,8 +65,10 @@ class ShareAccountController extends Controller
         $members = Member::active()->get();
         $products = ShareProduct::active()->get();
         $organizations = Organization::active()->get();
+        $branches = Branch::active()->get();
+        $groups = VicobaGroup::active()->get();
 
-        return view('share-accounts.create', compact('members', 'products', 'organizations'));
+        return view('share-accounts.create', compact('members', 'products', 'organizations', 'branches', 'groups'));
     }
 
     public function store(StoreShareAccountRequest $request)

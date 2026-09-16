@@ -104,6 +104,10 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('organizations.remove-user');
     Route::get('/organizations/{organization}/users', [OrganizationController::class, 'users'])
         ->name('organizations.users');
+    Route::post('/organizations/{organization}/assign-admin', [OrganizationController::class, 'assignAdmin'])
+        ->name('organizations.assign-admin');
+    Route::delete('/organizations/{organization}/remove-admin/{user}', [OrganizationController::class, 'removeAdmin'])
+        ->name('organizations.remove-admin');
 
     // Branch Management
     Route::resource('branches', BranchController::class);

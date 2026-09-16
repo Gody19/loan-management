@@ -12,13 +12,13 @@ class HandleAuthorizationFailure
     {
         $response = $next($request);
 
-        if ($response->getStatusCode() === 403 && $request->expectsJson()) {
-            return response()->json([
-                'message' => 'Access Denied! You don\'t have permission for this action.',
-            ], 403);
-        }
+        if ($response->getStatusCode() === 403 && ! app()->runningInConsole() && ! app()->runningUnitTests()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'message' => 'Access Denied! You don\'t have permission for this action.',
+                ], 403);
+            }
 
-        if ($response->getStatusCode() === 403) {
             return redirect()->route('dashboard')
                 ->with('error', 'Access Denied! You don\'t have permission for this action.');
         }

@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\Gender;
 use App\Enums\MaritalStatus;
 use App\Enums\MemberStatus;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -192,5 +193,10 @@ class Member extends Model
                 ->orWhere('email', 'LIKE', "%{$search}%")
                 ->orWhere('national_id', 'LIKE', "%{$search}%");
         });
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('membership_status', MemberStatus::Active);
     }
 }

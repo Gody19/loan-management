@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreWelfareBenefitRequest;
 use App\Http\Requests\StoreWelfareContributionRequest;
+use App\Models\Branch;
 use App\Models\Member;
 use App\Models\Organization;
+use App\Models\VicobaGroup;
 use App\Models\WelfareAccount;
 use App\Models\WelfareFund;
 use App\Services\WelfareTransactionService;
@@ -62,8 +64,10 @@ class WelfareAccountController extends Controller
         $members = Member::active()->get();
         $funds = WelfareFund::active()->get();
         $organizations = Organization::active()->get();
+        $branches = Branch::active()->get();
+        $groups = VicobaGroup::active()->get();
 
-        return view('welfare-accounts.create', compact('members', 'funds', 'organizations'));
+        return view('welfare-accounts.create', compact('members', 'funds', 'organizations', 'branches', 'groups'));
     }
 
     public function store(Request $request)
