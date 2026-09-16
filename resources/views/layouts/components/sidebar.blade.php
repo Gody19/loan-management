@@ -163,18 +163,18 @@
 
         {{-- Loans Section — only show if user has any loan permission --}}
         @php
-            $hasLoansMenu = auth()->check() && (auth()->user()->can('loan_plan.view') || auth()->user()->can('loan_eligibility.view') || auth()->user()->can('loan_application.view') || auth()->user()->can('loan_approval_level.view'));
+            $hasLoansMenu = auth()->check() && (auth()->user()->can('loan_plan.view') || auth()->user()->can('loan_eligibility.view') || auth()->user()->can('loan_application.view') || auth()->user()->can('loan_approval_level.view') || auth()->user()->can('loans.view'));
         @endphp
         @if($hasLoansMenu)
         <div class="sidebar-section mt-3">Loans</div>
 
         <div class="nav-parent">
-            <a href="#" class="nav-link nav-toggle {{ request()->routeIs('loan-*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-loans')">
+            <a href="#" class="nav-link nav-toggle {{ request()->routeIs('loan-*') || request()->routeIs('loans.*') ? 'active' : '' }}" onclick="toggleSubmenu(event, 'submenu-loans')">
                 <i class="bi bi-cash-coin"></i>
                 <span>Loans</span>
                 <i class="bi bi-chevron-down ms-auto toggle-icon"></i>
             </a>
-            <div class="nav-submenu" id="submenu-loans" style="{{ request()->routeIs('loan-*') ? 'display:block;' : '' }}">
+            <div class="nav-submenu" id="submenu-loans" style="{{ request()->routeIs('loan-*') || request()->routeIs('loans.*') ? 'display:block;' : '' }}">
                 @if(auth()->user()->can('loan_plan.view'))
                 <a href="{{ route('loan-plans.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-plans.*') ? 'active' : '' }}">
                     <span>Loan Plans</span>
@@ -193,6 +193,14 @@
                 @if(auth()->user()->can('loan_approval_level.view'))
                 <a href="{{ route('loan-approval-levels.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-approval-levels.*') ? 'active' : '' }}">
                     <span>Approval Levels</span>
+                </a>
+                @endif
+                @if(auth()->user()->can('loans.view'))
+                <a href="{{ route('loans.index') }}" class="nav-link sub-link {{ request()->routeIs('loans.*') ? 'active' : '' }}">
+                    <span>Loan Accounts</span>
+                </a>
+                <a href="{{ route('loan-disbursements.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-disbursements.*') ? 'active' : '' }}">
+                    <span>Disbursements</span>
                 </a>
                 @endif
             </div>

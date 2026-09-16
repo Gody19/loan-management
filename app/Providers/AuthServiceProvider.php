@@ -22,6 +22,8 @@ use App\Models\LoanApplication;
 use App\Models\LoanApplicationGuarantor;
 use App\Models\LoanApplicationCollateral;
 use App\Models\LoanApprovalLevel;
+use App\Models\Loan;
+use App\Models\LoanDisbursement;
 use App\Policies\BranchPolicy;
 use App\Policies\MemberPolicy;
 use App\Policies\OrganizationPolicy;
@@ -43,6 +45,8 @@ use App\Policies\LoanApplicationPolicy;
 use App\Policies\LoanApplicationGuarantorPolicy;
 use App\Policies\LoanApplicationCollateralPolicy;
 use App\Policies\LoanApprovalLevelPolicy;
+use App\Policies\LoanPolicy;
+use App\Policies\LoanDisbursementPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role;
@@ -76,6 +80,8 @@ class AuthServiceProvider extends ServiceProvider
         LoanApplicationGuarantor::class => LoanApplicationGuarantorPolicy::class,
         LoanApplicationCollateral::class => LoanApplicationCollateralPolicy::class,
         LoanApprovalLevel::class => LoanApprovalLevelPolicy::class,
+        Loan::class => LoanPolicy::class,
+        LoanDisbursement::class => LoanDisbursementPolicy::class,
     ];
 
     /**

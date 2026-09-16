@@ -28,6 +28,8 @@ use App\Http\Controllers\LoanApplicationController;
 use App\Http\Controllers\LoanApplicationGuarantorController;
 use App\Http\Controllers\LoanApplicationCollateralController;
 use App\Http\Controllers\LoanApprovalLevelController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\LoanDisbursementController;
 use App\Http\Controllers\WelfareTransactionController;
 use Illuminate\Support\Facades\Route;
 
@@ -247,6 +249,22 @@ Route::middleware(['auth', 'suspended'])->group(function () {
 
     // Loan Approval Levels
     Route::resource('loan-approval-levels', LoanApprovalLevelController::class);
+
+    // Financial Management - Loans
+    Route::resource('loans', LoanController::class)->only(['index', 'show']);
+    Route::post('/loans/from-application/{loanApplication}', [LoanController::class, 'createFromApplication'])
+        ->name('loans.create-from-application');
+    Route::post('/loans/{loan}/cancel', [LoanController::class, 'cancel'])
+        ->name('loans.cancel');
+    Route::get('/loans/{loan}/schedule', [LoanController::class, 'schedule'])
+        ->name('loans.schedule');
+
+    // Loan Disbursements
+    Route::resource('loan-disbursements', LoanDisbursementController::class)->only(['index', 'store', 'show']);
+    Route::post('/loan-disbursements/{disbursement}/confirm', [LoanDisbursementController::class, 'confirm'])
+        ->name('loan-disbursements.confirm');
+    Route::post('/loan-disbursements/{disbursement}/reject', [LoanDisbursementController::class, 'reject'])
+        ->name('loan-disbursements.reject');
 
     // Member Financial Summary
     Route::get('/members/{member}/statement', [\App\Http\Controllers\MemberController::class, 'statement'])
