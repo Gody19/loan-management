@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Savings Accounts')
+@section('title', 'Member Savings Accounts')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Savings Accounts',
+        'title' => 'Member Savings Accounts',
         'subtitle' => 'Manage member savings accounts',
         'actions' => '<a href="' . route('savings-accounts.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Open Account

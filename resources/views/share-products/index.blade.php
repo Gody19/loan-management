@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Share Products')
+@section('title', 'Share Plans')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Share Products',
-        'subtitle' => 'Manage share products and pricing',
+        'title' => 'Share Plans',
+        'subtitle' => 'Manage share plans and pricing',
         'actions' => '<a href="' . route('share-products.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Add Product
         </a>'

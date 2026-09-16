@@ -372,7 +372,7 @@
                     <div class="col-lg-6">
                         <div class="card border-0 shadow-sm">
                             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-semibold"><i class="bi bi-wallet2 me-2"></i>Savings Accounts</h6>
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-wallet2 me-2"></i>Member Savings Accounts</h6>
                                 <a href="{{ route('members.statement', ['member' => $member, 'type' => 'savings']) }}" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                             <div class="card-body">
@@ -403,7 +403,7 @@
                     <div class="col-lg-6">
                         <div class="card border-0 shadow-sm">
                             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-semibold"><i class="bi bi-bar-chart-line me-2"></i>Share Accounts</h6>
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-bar-chart-line me-2"></i>Member Share Accounts</h6>
                                 <a href="{{ route('members.statement', ['member' => $member, 'type' => 'shares']) }}" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                             <div class="card-body">
@@ -434,7 +434,7 @@
                     <div class="col-lg-6">
                         <div class="card border-0 shadow-sm">
                             <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-semibold"><i class="bi bi-heart me-2"></i>Welfare Accounts</h6>
+                                <h6 class="mb-0 fw-semibold"><i class="bi bi-heart me-2"></i>Member Welfare Accounts</h6>
                                 <a href="{{ route('members.statement', ['member' => $member, 'type' => 'welfare']) }}" class="btn btn-sm btn-outline-primary">View All</a>
                             </div>
                             <div class="card-body">

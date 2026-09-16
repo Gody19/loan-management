@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Welfare Accounts')
+@section('title', 'Member Welfare Accounts')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Welfare Accounts',
+        'title' => 'Member Welfare Accounts',
         'subtitle' => 'Manage member welfare accounts',
         'actions' => '<a href="' . route('welfare-accounts.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Open Account

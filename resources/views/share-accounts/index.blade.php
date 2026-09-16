@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
-@section('title', 'Share Accounts')
+@section('title', 'Member Share Accounts')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Share Accounts',
+        'title' => 'Member Share Accounts',
         'subtitle' => 'Manage member share accounts',
         'actions' => '<a href="' . route('share-accounts.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Open Account

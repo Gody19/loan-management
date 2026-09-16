@@ -229,10 +229,10 @@
                         <i class="bi bi-person-plus me-2"></i> Register New Member
                     </a>
                     <a href="{{ route('savings-products.index') }}" class="btn btn-outline-success text-start vicoba-btn">
-                        <i class="bi bi-wallet2 me-2"></i> View Savings Products
+                        <i class="bi bi-wallet2 me-2"></i> View Savings Plans
                     </a>
                     <a href="{{ route('share-products.index') }}" class="btn btn-outline-warning text-start vicoba-btn">
-                        <i class="bi bi-cash-stack me-2"></i> View Share Products
+                        <i class="bi bi-cash-stack me-2"></i> View Share Plans
                     </a>
                     <a href="{{ route('welfare-funds.index') }}" class="btn btn-outline-info text-start vicoba-btn">
                         <i class="bi bi-heart me-2"></i> View Welfare Funds

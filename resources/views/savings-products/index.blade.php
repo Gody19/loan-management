@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('title', 'Savings Products')
+@section('title', 'Savings Plans')
 
 @section('page-header')
     @include('layouts.components.page-header', [
-        'title' => 'Savings Products',
-        'subtitle' => 'Manage savings product offerings',
+        'title' => 'Savings Plans',
+        'subtitle' => 'Manage savings plan offerings',
         'actions' => '<a href="' . route('savings-products.create') . '" class="btn btn-primary">
             <i class="bi bi-plus-lg me-1"></i> Add Product
         </a>'

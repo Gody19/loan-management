@@ -68,28 +68,28 @@
         @if(auth()->check() && auth()->user()->can('savings_product.view'))
         <a href="{{ route('savings-products.index') }}" class="nav-link {{ request()->routeIs('savings-products.*') ? 'active' : '' }}">
             <i class="bi bi-wallet2"></i>
-            <span>Savings Products</span>
+            <span>Savings Plans</span>
         </a>
         @endif
 
         @if(auth()->check() && auth()->user()->can('savings_account.view'))
         <a href="{{ route('savings-accounts.index') }}" class="nav-link {{ request()->routeIs('savings-accounts.*') ? 'active' : '' }}">
             <i class="bi bi-piggy-bank"></i>
-            <span>Savings Accounts</span>
+            <span>Member Savings Accounts</span>
         </a>
         @endif
 
         @if(auth()->check() && auth()->user()->can('share_product.view'))
         <a href="{{ route('share-products.index') }}" class="nav-link {{ request()->routeIs('share-products.*') ? 'active' : '' }}">
             <i class="bi bi-cash-stack"></i>
-            <span>Share Products</span>
+            <span>Share Plans</span>
         </a>
         @endif
 
         @if(auth()->check() && auth()->user()->can('share_account.view'))
         <a href="{{ route('share-accounts.index') }}" class="nav-link {{ request()->routeIs('share-accounts.*') ? 'active' : '' }}">
             <i class="bi bi-bar-chart-line"></i>
-            <span>Share Accounts</span>
+            <span>Member Share Accounts</span>
         </a>
         @endif
 
@@ -103,7 +103,7 @@
         @if(auth()->check() && auth()->user()->can('welfare_account.view'))
         <a href="{{ route('welfare-accounts.index') }}" class="nav-link {{ request()->routeIs('welfare-accounts.*') ? 'active' : '' }}">
             <i class="bi bi-heart-half"></i>
-            <span>Welfare Accounts</span>
+            <span>Member Welfare Accounts</span>
         </a>
         @endif
 
