@@ -1,7 +1,7 @@
 {{-- Breadcrumb --}}
+@if(isset($breadcrumbs) && count($breadcrumbs))
 <nav aria-label="breadcrumb">
     <ol class="breadcrumb vicoba-breadcrumb">
-        <li class="breadcrumb-item"><a href="{{ route('dashboard') }}" style="text-decoration: none;">Dashboard</a></li>
         @foreach($breadcrumbs as $item)
             @php
                 $label = is_array($item) ? ($item['label'] ?? '') : $item;
@@ -10,8 +10,9 @@
             @if($loop->last && !$url)
                 <li class="breadcrumb-item active" aria-current="page">{{ $label }}</li>
             @else
-                <li class="breadcrumb-item"><a href="{{ $url }}" style="text-decoration: none;">{{ $label }}</a></li>
+                <li class="breadcrumb-item"><a href="{{ $url }}">{{ $label }}</a></li>
             @endif
         @endforeach
     </ol>
 </nav>
+@endif
