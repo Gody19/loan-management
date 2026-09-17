@@ -83,9 +83,17 @@ class OrganizationController extends Controller
 
         $organization->load([
             'branches',
-            'vicobaGroups',
             'members' => fn ($q) => $q->limit(10),
         ]);
+
+        // Load VICOBA groups scoped to this organization's branches only
+        $branchIds = $organization->branches->pluck('id')->toArray();
+        $organization->setRelation(
+            'vicobaGroups',
+            empty($branchIds)
+                ? collect()
+                : \App\Models\VicobaGroup::whereIn('branch_id', $branchIds)->get()
+        );
 
         $administrators = $this->organizationService->getAdministrators($organization)->get();
         $users = User::active()->get();

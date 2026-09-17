@@ -99,11 +99,26 @@ class UserService
     }
 
     /**
-     * Get filtered query for users.
+     * Get filtered query for users, scoped to the given user's organizations.
      */
-    public function getFilteredQuery(array $filters): Builder
+    public function getFilteredQuery(array $filters, ?User $authUser = null): Builder
     {
         $query = User::query();
+
+        $authUser = $authUser ?? auth()->user();
+
+        // Tenant scoping: non-Super Admin users only see users in their organizations
+        if ($authUser && ! $authUser->hasRole('Super Administrator')) {
+            $orgIds = $authUser->organizations()->pluck('organizations.id')->toArray();
+
+            if (empty($orgIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereHas('organizations', function ($q) use ($orgIds) {
+                    $q->whereIn('organizations.id', $orgIds);
+                });
+            }
+        }
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];

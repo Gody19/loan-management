@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanApprovalLevel;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanApprovalLevelPolicy
 {
@@ -17,10 +18,10 @@ class LoanApprovalLevelPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$level->organization_id) {
+        if (! $level->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $level->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($level->organization_id, $auth);
     }
 
     public function create(User $auth): bool

@@ -3,34 +3,54 @@
 @section('title', 'Forgot Password')
 
 @section('content')
-<h5 class="fw-semibold mb-2">Reset Password</h5>
-<p class="text-muted mb-4" style="font-size: 0.85rem;">
-    Enter your email address and we'll send you a link to reset your password.
-</p>
+<div class="auth-form">
 
-<form method="POST" action="{{ route('password.email') }}" data-validate>
-    @csrf
+    <h2 class="auth-form-title">Forgot Password?</h2>
+    <p class="auth-form-subtitle">Enter your email and we'll send you a reset link</p>
 
-    {{-- Email --}}
-    <div class="mb-4">
-        <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
-        <input type="email" class="form-control @error('email') is-invalid @enderror"
-               id="email" name="email" value="{{ old('email') }}"
-               placeholder="Enter your email" autofocus>
-        @error('email')
-            <div class="invalid-feedback">{{ $message }}</div>
-        @enderror
+    <form method="POST" action="{{ route('password.email') }}" data-validate id="forgotForm">
+        @csrf
+
+        {{-- Email --}}
+        <div class="mb-4">
+            <label for="email" class="form-label">Email address</label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-end-0" style="border-radius: 0.5rem 0 0 0.5rem;">
+                    <i class="bi bi-envelope text-muted"></i>
+                </span>
+                <input type="email" class="form-control border-start-0 @error('email') is-invalid @enderror"
+                       id="email" name="email" value="{{ old('email') }}"
+                       placeholder="you@example.com" autofocus>
+                @error('email')
+                    <div class="invalid-feedback">{{ $message }}</div>
+                @enderror
+            </div>
+        </div>
+
+        {{-- Submit --}}
+        <button type="submit" class="auth-submit-btn" id="submitBtn">
+            <span class="btn-text">
+                <i class="bi bi-envelope me-1"></i> Send Reset Link
+            </span>
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+        </button>
+    </form>
+
+    <div class="text-center mt-3">
+        <a href="{{ route('login') }}" style="font-size: 0.85rem; color: #0d6efd; text-decoration: none; font-weight: 500;">
+            <i class="bi bi-arrow-left me-1"></i> Back to Login
+        </a>
     </div>
 
-    {{-- Submit --}}
-    <button type="submit" class="btn btn-primary w-100 vicoba-btn">
-        <i class="bi bi-envelope me-1"></i> Send Reset Link
-    </button>
-</form>
-
-<div class="text-center mt-3">
-    <a href="{{ route('login') }}" class="text-decoration-none" style="font-size: 0.85rem;">
-        <i class="bi bi-arrow-left me-1"></i> Back to Login
-    </a>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    document.getElementById('forgotForm').addEventListener('submit', function() {
+        const btn = document.getElementById('submitBtn');
+        btn.classList.add('loading');
+        btn.disabled = true;
+    });
+</script>
+@endpush

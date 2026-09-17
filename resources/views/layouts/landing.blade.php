@@ -187,6 +187,17 @@
             .hero-section { padding: 4rem 0 3rem; }
             .hero-section h1 { font-size: 2rem; }
         }
+        .accordion-button:not(.collapsed) {
+            background-color: rgba(13, 110, 253, 0.08);
+            color: #0d6efd;
+        }
+        .accordion-button:focus {
+            box-shadow: none;
+            border-color: rgba(13, 110, 253, 0.25);
+        }
+        .accordion-button::after {
+            filter: none;
+        }
     </style>
 
     @stack('styles')
@@ -195,6 +206,9 @@
 
     {{-- Content --}}
     @yield('content')
+
+    {{-- Bootstrap JS --}}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     {{-- SweetAlert2 --}}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -232,6 +246,27 @@
             });
         </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global form loading spinner
+            document.querySelectorAll('form').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    var submitBtn = form.querySelector('[type="submit"]');
+                    if (submitBtn && !submitBtn.classList.contains('no-spinner')) {
+                        if (!submitBtn.querySelector('.spinner-border')) {
+                            var spinner = document.createElement('span');
+                            spinner.className = 'spinner-border spinner-border-sm me-1';
+                            spinner.setAttribute('role', 'status');
+                            submitBtn.appendChild(spinner);
+                        }
+                        submitBtn.classList.add('btn-loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+        });
+    </script>
 
     @stack('scripts')
 </body>

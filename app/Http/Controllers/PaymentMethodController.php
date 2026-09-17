@@ -6,6 +6,7 @@ use App\Http\Requests\StorePaymentMethodRequest;
 use App\Models\Organization;
 use App\Models\PaymentMethod;
 use App\Services\AuditService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class PaymentMethodController extends Controller
@@ -18,16 +19,7 @@ class PaymentMethodController extends Controller
 
         $query = PaymentMethod::with('organization');
 
-        if (! $request->user()->hasRole('Super Administrator')) {
-            $orgIds = $request->user()->organizations()->pluck('organizations.id')->toArray();
-            if (!empty($orgIds)) {
-                $query->whereHas('organization', function ($q) use ($orgIds) {
-                    $q->whereIn('id', $orgIds);
-                });
-            } else {
-                $query->whereRaw('1 = 0');
-            }
-        }
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -39,7 +31,7 @@ class PaymentMethodController extends Controller
         if ($request->filled('status')) $query->where('status', $request->status);
 
         $paymentMethods = $query->latest()->paginate(15)->withQueryString();
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
 
         return view('payment-methods.index', compact('paymentMethods', 'organizations'));
     }
@@ -47,12 +39,16 @@ class PaymentMethodController extends Controller
     public function create()
     {
         $this->authorize('create', PaymentMethod::class);
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         return view('payment-methods.create', compact('organizations'));
     }
 
     public function store(StorePaymentMethodRequest $request)
     {
+        $this->authorize('create', PaymentMethod::class);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
+
         $paymentMethod = PaymentMethod::create($request->validated());
         $this->audit->log('payment_method.created', $paymentMethod, [], $paymentMethod->toArray());
         return redirect()->route('payment-methods.index')->with('success', 'Payment method created.');
@@ -67,12 +63,13 @@ class PaymentMethodController extends Controller
     public function edit(PaymentMethod $paymentMethod)
     {
         $this->authorize('update', $paymentMethod);
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         return view('payment-methods.edit', ['paymentMethod' => $paymentMethod, 'organizations' => $organizations]);
     }
 
     public function update(StorePaymentMethodRequest $request, PaymentMethod $paymentMethod)
     {
+        $this->authorize('update', $paymentMethod);
         $old = $paymentMethod->only(array_keys($request->validated()));
         $paymentMethod->update($request->validated());
         $this->audit->log('payment_method.updated', $paymentMethod, $old, $paymentMethod->toArray());

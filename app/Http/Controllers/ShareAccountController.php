@@ -12,6 +12,7 @@ use App\Models\Organization;
 use App\Models\ShareAccount;
 use App\Models\VicobaGroup;
 use App\Models\ShareProduct;
+use App\Services\OrganizationContext;
 use App\Services\ShareTransactionService;
 use Illuminate\Http\Request;
 
@@ -26,6 +27,8 @@ class ShareAccountController extends Controller
         $this->authorize('viewAny', ShareAccount::class);
 
         $query = ShareAccount::with(['member', 'product']);
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -51,7 +54,7 @@ class ShareAccountController extends Controller
 
         $accounts = $query->latest()->paginate(15)->withQueryString();
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
         $products = ShareProduct::active()->get();
         $members = Member::active()->get();
 
@@ -64,7 +67,7 @@ class ShareAccountController extends Controller
 
         $members = Member::active()->get();
         $products = ShareProduct::active()->get();
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         $branches = Branch::active()->get();
         $groups = VicobaGroup::active()->get();
 

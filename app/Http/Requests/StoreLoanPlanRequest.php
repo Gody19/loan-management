@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Enums\InterestMethod;
 use App\Enums\LoanPurpose;
 use App\Enums\RepaymentFrequency;
+use App\Services\OrganizationContext;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreLoanPlanRequest extends FormRequest

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreShareProductRequest;
 use App\Models\Organization;
 use App\Models\ShareProduct;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class ShareProductController extends Controller
@@ -14,6 +15,8 @@ class ShareProductController extends Controller
         $this->authorize('viewAny', ShareProduct::class);
 
         $query = ShareProduct::query();
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -30,7 +33,7 @@ class ShareProductController extends Controller
             $query->where('organization_id', $request->organization_id);
         }
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
         $products = $query->latest()->paginate(15)->withQueryString();
 
         return view('share-products.index', compact('products', 'organizations'));
@@ -40,7 +43,7 @@ class ShareProductController extends Controller
     {
         $this->authorize('create', ShareProduct::class);
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('share-products.create', compact('organizations'));
     }
@@ -48,6 +51,8 @@ class ShareProductController extends Controller
     public function store(StoreShareProductRequest $request)
     {
         $this->authorize('create', ShareProduct::class);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
 
         $product = ShareProduct::create($request->validated());
 
@@ -68,7 +73,7 @@ class ShareProductController extends Controller
     {
         $this->authorize('update', $shareProduct);
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('share-products.edit', ['product' => $shareProduct, 'organizations' => $organizations]);
     }

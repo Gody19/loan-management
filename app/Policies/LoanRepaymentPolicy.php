@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanRepayment;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanRepaymentPolicy
 {
@@ -17,10 +18,10 @@ class LoanRepaymentPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$repayment->organization_id) {
+        if (! $repayment->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $repayment->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($repayment->organization_id, $auth);
     }
 
     public function create(User $auth): bool

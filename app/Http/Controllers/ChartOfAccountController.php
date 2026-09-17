@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\AccountType;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccount as ChartOfAccountModel;
 use App\Services\ChartOfAccountsService;
 use App\Services\AccountingConfigurationService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
 
 class ChartOfAccountController extends Controller
 {
@@ -18,6 +19,8 @@ class ChartOfAccountController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $type = $request->filled('type') ? AccountType::from($request->type) : null;
 
@@ -30,6 +33,8 @@ class ChartOfAccountController extends Controller
 
     public function create()
     {
+        $this->authorize('create', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $parentAccounts = $this->chartService->getAccounts($organization->id);
         $accountTypes = AccountType::cases();
@@ -39,6 +44,8 @@ class ChartOfAccountController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
 
         $validated = $request->validate([
@@ -66,6 +73,8 @@ class ChartOfAccountController extends Controller
 
     public function show(int $id)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $account = $this->chartService->getAccount($organization->id, $id);
 
@@ -74,10 +83,12 @@ class ChartOfAccountController extends Controller
 
     public function edit(int $id)
     {
+        $this->authorize('update', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $account = $this->chartService->getAccount($organization->id, $id);
         $parentAccounts = $this->chartService->getAccounts($organization->id)
-            ->filter(fn($a) => $a->id !== $id);
+            ->filter(fn ($a) => $a->id !== $id);
         $accountTypes = AccountType::cases();
 
         return view('accounting.accounts.edit', compact('organization', 'account', 'parentAccounts', 'accountTypes'));
@@ -85,6 +96,8 @@ class ChartOfAccountController extends Controller
 
     public function update(Request $request, int $id)
     {
+        $this->authorize('update', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $account = $this->chartService->getAccount($organization->id, $id);
 
@@ -104,6 +117,8 @@ class ChartOfAccountController extends Controller
 
     public function destroy(int $id)
     {
+        $this->authorize('delete', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $account = $this->chartService->getAccount($organization->id, $id);
 
@@ -115,6 +130,8 @@ class ChartOfAccountController extends Controller
 
     public function toggle(int $id)
     {
+        $this->authorize('update', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
         $account = $this->chartService->getAccount($organization->id, $id);
 
@@ -132,11 +149,13 @@ class ChartOfAccountController extends Controller
 
     protected function resolveOrganization()
     {
-        $orgId = session('organization_id') ?? auth()->user()->organizations()->first()?->id;
+        $orgId = session('organization_id') ?? OrganizationContext::getFirstOrganization()?->id;
 
-        if (!$orgId) {
+        if (! $orgId) {
             abort(403, 'No organization selected.');
         }
+
+        OrganizationContext::authorizeOrganization($orgId);
 
         return \App\Models\Organization::findOrFail($orgId);
     }

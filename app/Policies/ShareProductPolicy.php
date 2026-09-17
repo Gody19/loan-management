@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\ShareProduct;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class ShareProductPolicy
 {
@@ -18,10 +19,10 @@ class ShareProductPolicy
             return true;
         }
 
-        if (!$shareProduct->organization_id) {
+        if (! $shareProduct->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $shareProduct->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($shareProduct->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -35,10 +36,10 @@ class ShareProductPolicy
             return true;
         }
 
-        if (!$shareProduct->organization_id) {
+        if (! $shareProduct->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $shareProduct->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($shareProduct->organization_id, $auth);
     }
 
     public function delete(User $auth, ShareProduct $shareProduct): bool
@@ -47,9 +48,9 @@ class ShareProductPolicy
             return true;
         }
 
-        if (!$shareProduct->organization_id) {
+        if (! $shareProduct->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $shareProduct->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($shareProduct->organization_id, $auth);
     }
 }

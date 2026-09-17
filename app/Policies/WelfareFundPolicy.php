@@ -2,8 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\WelfareFund;
+use App\Models\User;
+use App\Services\OrganizationContext;
 
 class WelfareFundPolicy
 {
@@ -18,10 +19,10 @@ class WelfareFundPolicy
             return true;
         }
 
-        if (!$welfareFund->organization_id) {
+        if (! $welfareFund->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $welfareFund->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($welfareFund->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -35,10 +36,10 @@ class WelfareFundPolicy
             return true;
         }
 
-        if (!$welfareFund->organization_id) {
+        if (! $welfareFund->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $welfareFund->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($welfareFund->organization_id, $auth);
     }
 
     public function delete(User $auth, WelfareFund $welfareFund): bool
@@ -47,9 +48,9 @@ class WelfareFundPolicy
             return true;
         }
 
-        if (!$welfareFund->organization_id) {
+        if (! $welfareFund->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $welfareFund->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($welfareFund->organization_id, $auth);
     }
 }

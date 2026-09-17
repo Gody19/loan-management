@@ -183,6 +183,38 @@
     </div>
 </section>
 
+{{-- Stats Section --}}
+<section class="py-5" style="background: linear-gradient(135deg, #0d6efd 0%, #084298 100%); color: #fff;">
+    <div class="container">
+        <div class="row g-4 text-center">
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <h2 class="display-5 fw-bold mb-1">11+</h2>
+                    <p class="mb-0 opacity-75" style="font-size: 0.9rem;">User Roles</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <h2 class="display-5 fw-bold mb-1">6</h2>
+                    <p class="mb-0 opacity-75" style="font-size: 0.9rem;">Financial Modules</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <h2 class="display-5 fw-bold mb-1">5</h2>
+                    <p class="mb-0 opacity-75" style="font-size: 0.9rem;">Financial Reports</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="p-3">
+                    <h2 class="display-5 fw-bold mb-1">100%</h2>
+                    <p class="mb-0 opacity-75" style="font-size: 0.9rem;">Audit Trail</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
 {{-- How It Works --}}
 <section class="py-5 bg-light" id="how-it-works">
     <div class="container">
@@ -413,6 +445,142 @@
                     <div>
                         <h5 class="fw-bold mb-1">Controlled Accounting</h5>
                         <p class="text-muted mb-0" style="font-size: 0.9rem;">Posted accounting records are protected from direct editing and use reversal workflows.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- Testimonials --}}
+<section class="py-5" id="testimonials">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-heading display-6 fw-bold mb-3">Trusted by Organizations</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">VICOBA groups and microfinance organizations rely on FinancePro to manage their daily operations.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="bi bi-person-fill text-primary fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0">John M.</h6>
+                            <small class="text-muted">Organization Administrator</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0" style="font-size: 0.9rem; line-height: 1.6;">
+                        "FinancePro has transformed how we manage our VICOBA groups. Members can track their savings and loan status, and our reporting has never been easier."
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="bi bi-person-fill text-success fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0">Grace K.</h6>
+                            <small class="text-muted">Branch Manager</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0" style="font-size: 0.9rem; line-height: 1.6;">
+                        "Managing multiple branches was a challenge before. Now I can see real-time data across all our groups and make better decisions for our organization."
+                    </p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="bi bi-person-fill text-warning fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0">David T.</h6>
+                            <small class="text-muted">Credit Officer</small>
+                        </div>
+                    </div>
+                    <p class="text-muted mb-0" style="font-size: 0.9rem; line-height: 1.6;">
+                        "The loan management system is excellent. Repayment tracking, schedules and collection reports save me hours of work every week."
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- FAQ Section --}}
+<section class="py-5 bg-light" id="faq">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="section-heading display-6 fw-bold mb-3">Frequently Asked Questions</h2>
+            <p class="text-muted mx-auto" style="max-width: 600px;">Find answers to common questions about the platform.</p>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="accordion" id="faqAccordion">
+                    <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                Who can use FinancePro?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted" style="font-size: 0.9rem;">
+                                FinancePro is designed for VICOBA organizations, microfinance institutions, cooperatives, savings groups and any organization that manages group-based financial operations. It supports organizations of all sizes, from small community groups to large multi-branch organizations.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                How does organization registration work?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted" style="font-size: 0.9rem;">
+                                Click "Register Your Organization" and fill in your organization details and administrator account. Once registered, you can log in as the administrator and begin setting up branches, groups, members and financial activities for your organization.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                Is my organization's data secure?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted" style="font-size: 0.9rem;">
+                                Yes. Each organization's data is completely isolated from others. The platform uses role-based access control to ensure users only see functionality relevant to their roles. All financial operations are recorded with full audit trails.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                What financial features are included?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted" style="font-size: 0.9rem;">
+                                FinancePro includes savings management, share management, welfare funds, loan management with repayment schedules, collections, and full double-entry accounting with general ledger, trial balance, balance sheet and income statement reports.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item border-0 mb-3 shadow-sm rounded-3 overflow-hidden">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed fw-semibold" type="button" data-bs-toggle="collapse" data-bs-target="#faq5">
+                                Can I manage multiple VICOBA groups?
+                            </button>
+                        </h2>
+                        <div id="faq5" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body text-muted" style="font-size: 0.9rem;">
+                                Absolutely. The platform supports multi-branch organizations with multiple VICOBA groups under each branch. You can manage groups, assign members, track financial activities and generate reports at the group, branch or organization level.
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

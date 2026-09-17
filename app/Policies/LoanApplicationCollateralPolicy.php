@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanApplicationCollateral;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanApplicationCollateralPolicy
 {
@@ -17,10 +18,10 @@ class LoanApplicationCollateralPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$collateral->application->organization_id) {
+        if (! $collateral->application->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $collateral->application->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($collateral->application->organization_id, $auth);
     }
 
     public function manage(User $auth, LoanApplicationCollateral $collateral): bool

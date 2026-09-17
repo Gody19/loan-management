@@ -377,3 +377,33 @@
     height: 0;
     display: none;
 }
+
+/* =====================================================
+   GLOBAL FORM LOADING SPINNER
+   ===================================================== */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-loading .spinner-border {
+    display: inline-block;
+}
+
+.btn-loading .btn-text {
+    visibility: hidden;
+    width: 0;
+    overflow: hidden;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    border-radius: inherit;
+    cursor: not-allowed;
+}

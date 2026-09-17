@@ -25,7 +25,7 @@ class LoanController extends Controller
             $query = Loan::with(['member', 'loanPlan', 'branch']);
         } else {
             $orgIds = $user->organizations()->pluck('organizations.id')->toArray();
-            if (!empty($orgIds)) {
+            if (! empty($orgIds)) {
                 $query = Loan::whereIn('organization_id', $orgIds)
                     ->with(['member', 'loanPlan', 'branch']);
             } else {
@@ -70,7 +70,9 @@ class LoanController extends Controller
     {
         $this->authorize('create', Loan::class);
 
-        if (!$loanApplication->status || $loanApplication->status->value !== 'approved') {
+        $this->authorize('view', $loanApplication);
+
+        if (! $loanApplication->status || $loanApplication->status->value !== 'approved') {
             abort(422, 'Only approved applications can be converted to loans.');
         }
 
@@ -83,7 +85,7 @@ class LoanController extends Controller
         try {
             $loan = $this->loanService->createLoanFromApplication($loanApplication);
             return redirect()->route('loans.show', $loan)
-                ->with('success', 'Loan ' . $loan->loan_number . ' created from application.');
+                ->with('success', 'Loan '.$loan->loan_number.' created from application.');
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }

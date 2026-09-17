@@ -6,6 +6,7 @@ use App\Http\Requests\StoreSavingsProductRequest;
 use App\Models\Organization;
 use App\Models\SavingsProduct;
 use App\Services\AuditService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class SavingsProductController extends Controller
@@ -17,6 +18,9 @@ class SavingsProductController extends Controller
         $this->authorize('viewAny', SavingsProduct::class);
 
         $query = SavingsProduct::with('organization');
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
+
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('name', 'LIKE', "%{$request->search}%")
@@ -27,7 +31,7 @@ class SavingsProductController extends Controller
         if ($request->filled('status')) $query->where('status', $request->status);
 
         $products = $query->latest()->paginate(15)->withQueryString();
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
 
         return view('savings-products.index', compact('products', 'organizations'));
     }
@@ -35,12 +39,16 @@ class SavingsProductController extends Controller
     public function create()
     {
         $this->authorize('create', SavingsProduct::class);
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         return view('savings-products.create', compact('organizations'));
     }
 
     public function store(StoreSavingsProductRequest $request)
     {
+        $this->authorize('create', SavingsProduct::class);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
+
         $product = SavingsProduct::create($request->validated());
         $this->audit->log('savings_product.created', $product, [], $product->toArray());
         return redirect()->route('savings-products.index')->with('success', 'Savings product created.');
@@ -56,12 +64,13 @@ class SavingsProductController extends Controller
     public function edit(SavingsProduct $savingsProduct)
     {
         $this->authorize('update', $savingsProduct);
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         return view('savings-products.edit', ['product' => $savingsProduct, 'organizations' => $organizations]);
     }
 
     public function update(StoreSavingsProductRequest $request, SavingsProduct $savingsProduct)
     {
+        $this->authorize('update', $savingsProduct);
         $old = $savingsProduct->only(array_keys($request->validated()));
         $savingsProduct->update($request->validated());
         $this->audit->log('savings_product.updated', $savingsProduct, $old, $savingsProduct->toArray());

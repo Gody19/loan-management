@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\ShareTransaction;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class ShareTransactionPolicy
 {
@@ -19,7 +20,7 @@ class ShareTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $shareTransaction->organization_id && $auth->organizations()->where('organizations.id', $shareTransaction->organization_id)->exists();
+            return $shareTransaction->organization_id && OrganizationContext::userBelongsToOrganization($shareTransaction->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $shareTransaction->branch_id)->exists();
@@ -42,7 +43,7 @@ class ShareTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $shareTransaction->organization_id && $auth->organizations()->where('organizations.id', $shareTransaction->organization_id)->exists();
+            return $shareTransaction->organization_id && OrganizationContext::userBelongsToOrganization($shareTransaction->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $shareTransaction->branch_id)->exists();

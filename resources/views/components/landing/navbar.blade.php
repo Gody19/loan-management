@@ -18,6 +18,8 @@
                 <a href="#features" class="text-dark text-decoration-none fw-medium" style="font-size: 0.9rem;">Features</a>
                 <a href="#how-it-works" class="text-dark text-decoration-none fw-medium" style="font-size: 0.9rem;">How It Works</a>
                 <a href="#about" class="text-dark text-decoration-none fw-medium" style="font-size: 0.9rem;">About</a>
+                <a href="#testimonials" class="text-dark text-decoration-none fw-medium" style="font-size: 0.9rem;">Testimonials</a>
+                <a href="#faq" class="text-dark text-decoration-none fw-medium" style="font-size: 0.9rem;">FAQ</a>
                 <a href="#contact" class="text-dark text-decoration-none fw-medium" style="font-size: 0.9rem;">Contact</a>
             </div>
 
@@ -39,6 +41,8 @@
                 <a href="#features" class="d-block py-2 text-dark text-decoration-none" onclick="closeMobileNav()">Features</a>
                 <a href="#how-it-works" class="d-block py-2 text-dark text-decoration-none" onclick="closeMobileNav()">How It Works</a>
                 <a href="#about" class="d-block py-2 text-dark text-decoration-none" onclick="closeMobileNav()">About</a>
+                <a href="#testimonials" class="d-block py-2 text-dark text-decoration-none" onclick="closeMobileNav()">Testimonials</a>
+                <a href="#faq" class="d-block py-2 text-dark text-decoration-none" onclick="closeMobileNav()">FAQ</a>
                 <a href="#contact" class="d-block py-2 text-dark text-decoration-none" onclick="closeMobileNav()">Contact</a>
                 <hr class="my-2">
                 <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 mb-2">Login</a>

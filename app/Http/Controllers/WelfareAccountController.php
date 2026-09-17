@@ -11,6 +11,7 @@ use App\Models\Organization;
 use App\Models\VicobaGroup;
 use App\Models\WelfareAccount;
 use App\Models\WelfareFund;
+use App\Services\OrganizationContext;
 use App\Services\WelfareTransactionService;
 use Illuminate\Http\Request;
 
@@ -25,6 +26,8 @@ class WelfareAccountController extends Controller
         $this->authorize('viewAny', WelfareAccount::class);
 
         $query = WelfareAccount::with(['member', 'fund']);
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -50,7 +53,7 @@ class WelfareAccountController extends Controller
 
         $accounts = $query->latest()->paginate(15)->withQueryString();
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
         $funds = WelfareFund::active()->get();
         $members = Member::active()->get();
 
@@ -63,7 +66,7 @@ class WelfareAccountController extends Controller
 
         $members = Member::active()->get();
         $funds = WelfareFund::active()->get();
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         $branches = Branch::active()->get();
         $groups = VicobaGroup::active()->get();
 
@@ -81,6 +84,8 @@ class WelfareAccountController extends Controller
             'branch_id' => ['required', 'exists:branches,id'],
             'vicoba_group_id' => ['required', 'exists:vicoba_groups,id'],
         ]);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
 
         $account = WelfareAccount::create([
             'member_id' => $request->member_id,

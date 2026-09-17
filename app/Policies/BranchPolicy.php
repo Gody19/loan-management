@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Branch;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class BranchPolicy
 {
@@ -19,7 +20,7 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
+            || ($branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth));
     }
 
     public function create(User $auth): bool
@@ -34,7 +35,7 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
+            || ($branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth));
     }
 
     public function delete(User $auth, Branch $branch): bool
@@ -44,7 +45,7 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
+            || ($branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth));
     }
 
     public function assignUser(User $auth, Branch $branch): bool
@@ -54,6 +55,6 @@ class BranchPolicy
         }
 
         return $auth->branches()->where('branches.id', $branch->id)->exists()
-            || ($branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists());
+            || ($branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth));
     }
 }

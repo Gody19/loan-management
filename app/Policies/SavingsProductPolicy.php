@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\SavingsProduct;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class SavingsProductPolicy
 {
@@ -18,10 +19,10 @@ class SavingsProductPolicy
             return true;
         }
 
-        if (!$savingsProduct->organization_id) {
+        if (! $savingsProduct->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $savingsProduct->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($savingsProduct->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -35,10 +36,10 @@ class SavingsProductPolicy
             return true;
         }
 
-        if (!$savingsProduct->organization_id) {
+        if (! $savingsProduct->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $savingsProduct->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($savingsProduct->organization_id, $auth);
     }
 
     public function delete(User $auth, SavingsProduct $savingsProduct): bool
@@ -47,9 +48,9 @@ class SavingsProductPolicy
             return true;
         }
 
-        if (!$savingsProduct->organization_id) {
+        if (! $savingsProduct->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $savingsProduct->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($savingsProduct->organization_id, $auth);
     }
 }

@@ -13,6 +13,7 @@ use App\Models\VicobaGroup;
 use App\Models\PaymentMethod;
 use App\Models\SavingsAccount;
 use App\Models\SavingsProduct;
+use App\Services\OrganizationContext;
 use App\Services\SavingsAccountNumberGenerator;
 use App\Services\SavingsTransactionService;
 use Illuminate\Http\Request;
@@ -29,6 +30,9 @@ class SavingsAccountController extends Controller
         $this->authorize('viewAny', SavingsAccount::class);
 
         $query = SavingsAccount::with(['member', 'product', 'organization']);
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
+
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('account_number', 'LIKE', "%{$request->search}%")
@@ -41,7 +45,8 @@ class SavingsAccountController extends Controller
         if ($request->filled('status')) $query->where('status', $request->status);
 
         $accounts = $query->latest()->paginate(15)->withQueryString();
-        $organizations = Organization::active()->get();
+
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
 
         return view('savings-accounts.index', compact('accounts', 'organizations'));
     }
@@ -51,7 +56,7 @@ class SavingsAccountController extends Controller
         $this->authorize('create', SavingsAccount::class);
         $members = Member::active()->get();
         $products = SavingsProduct::where('status', 'active')->get();
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
         $branches = Branch::active()->get();
         $groups = VicobaGroup::where('status', 'active')->get();
 

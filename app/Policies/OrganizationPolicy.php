@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Organization;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class OrganizationPolicy
 {
@@ -18,10 +19,10 @@ class OrganizationPolicy
             return true;
         }
 
-        if (!$organization->id) {
+        if (! $organization->id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $organization->id)->exists();
+        return OrganizationContext::userBelongsToOrganization($organization->id, $auth);
     }
 
     public function create(User $auth): bool
@@ -35,10 +36,10 @@ class OrganizationPolicy
             return true;
         }
 
-        if (!$organization->id) {
+        if (! $organization->id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $organization->id)->exists();
+        return OrganizationContext::userBelongsToOrganization($organization->id, $auth);
     }
 
     public function delete(User $auth, Organization $organization): bool
@@ -47,10 +48,10 @@ class OrganizationPolicy
             return true;
         }
 
-        if (!$organization->id) {
+        if (! $organization->id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $organization->id)->exists();
+        return OrganizationContext::userBelongsToOrganization($organization->id, $auth);
     }
 
     public function assignUser(User $auth, Organization $organization): bool
@@ -59,9 +60,9 @@ class OrganizationPolicy
             return true;
         }
 
-        if (!$organization->id) {
+        if (! $organization->id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $organization->id)->exists();
+        return OrganizationContext::userBelongsToOrganization($organization->id, $auth);
     }
 }

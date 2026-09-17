@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanDisbursement;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanDisbursementPolicy
 {
@@ -17,10 +18,10 @@ class LoanDisbursementPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$disbursement->organization_id) {
+        if (! $disbursement->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $disbursement->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($disbursement->organization_id, $auth);
     }
 
     public function confirm(User $auth, LoanDisbursement $disbursement): bool

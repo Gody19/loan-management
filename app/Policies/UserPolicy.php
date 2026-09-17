@@ -3,11 +3,13 @@
 namespace App\Policies;
 
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class UserPolicy
 {
     /**
      * Determine whether the user can view any models.
+     * Scoped to user's organizations — Super Admin sees all.
      */
     public function viewAny(User $auth): bool
     {
@@ -16,10 +18,20 @@ class UserPolicy
 
     /**
      * Determine whether the user can view the model.
+     * Users can only view users within their organization(s).
      */
     public function view(User $auth, User $user): bool
     {
-        return $auth->can('user.view');
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        // Users can view their own profile
+        if ($auth->id === $user->id) {
+            return true;
+        }
+
+        return OrganizationContext::userBelongsToAnyOf($user, $auth);
     }
 
     /**
@@ -32,10 +44,20 @@ class UserPolicy
 
     /**
      * Determine whether the user can update the model.
+     * Users can only update users within their organization(s).
      */
     public function update(User $auth, User $user): bool
     {
-        return $auth->can('user.update');
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        // Users can update their own profile
+        if ($auth->id === $user->id) {
+            return true;
+        }
+
+        return OrganizationContext::userBelongsToAnyOf($user, $auth);
     }
 
     /**
@@ -43,7 +65,11 @@ class UserPolicy
      */
     public function delete(User $auth, User $user): bool
     {
-        return $auth->can('user.delete');
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        return false;
     }
 
     /**

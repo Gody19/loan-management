@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\SavingsTransaction;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class SavingsTransactionPolicy
 {
@@ -19,7 +20,7 @@ class SavingsTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $savingsTransaction->organization_id && $auth->organizations()->where('organizations.id', $savingsTransaction->organization_id)->exists();
+            return $savingsTransaction->organization_id && OrganizationContext::userBelongsToOrganization($savingsTransaction->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $savingsTransaction->branch_id)->exists();
@@ -42,7 +43,7 @@ class SavingsTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $savingsTransaction->organization_id && $auth->organizations()->where('organizations.id', $savingsTransaction->organization_id)->exists();
+            return $savingsTransaction->organization_id && OrganizationContext::userBelongsToOrganization($savingsTransaction->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $savingsTransaction->branch_id)->exists();

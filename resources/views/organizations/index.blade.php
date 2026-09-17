@@ -9,7 +9,9 @@
         'breadcrumb' => [
             ['label' => 'Organizations'],
         ],
-        'actions' => '<a href="' . route('organizations.create') . '" class="btn btn-primary vicoba-btn"><i class="bi bi-plus-lg me-1"></i> Create Organization</a>',
+        'actions' => auth()->user()->hasRole('Super Administrator')
+            ? '<a href="' . route('organizations.create') . '" class="btn btn-primary vicoba-btn"><i class="bi bi-plus-lg me-1"></i> Create Organization</a>'
+            : '',
     ])
 @endsection
 
@@ -80,20 +82,22 @@
                                     <a href="{{ route('organizations.show', $org) }}" class="btn btn-outline-primary" title="View">
                                         <i class="bi bi-eye"></i>
                                     </a>
-                                    <a href="{{ route('organizations.edit', $org) }}" class="btn btn-outline-warning" title="Edit">
-                                        <i class="bi bi-pencil"></i>
-                                    </a>
-                                    <a href="{{ route('organizations.users', $org) }}" class="btn btn-outline-info" title="Users">
-                                        <i class="bi bi-people"></i>
-                                    </a>
-                                    <form action="{{ route('organizations.destroy', $org) }}" method="POST" class="d-inline"
-                                          data-confirm="Are you sure you want to delete this organization?">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-outline-danger" title="Delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </form>
+                                    @if(auth()->user()->hasRole('Super Administrator'))
+                                        <a href="{{ route('organizations.edit', $org) }}" class="btn btn-outline-warning" title="Edit">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a href="{{ route('organizations.users', $org) }}" class="btn btn-outline-info" title="Users">
+                                            <i class="bi bi-people"></i>
+                                        </a>
+                                        <form action="{{ route('organizations.destroy', $org) }}" method="POST" class="d-inline"
+                                              data-confirm="Are you sure you want to delete this organization?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

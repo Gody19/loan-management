@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\ShareAccount;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class ShareAccountPolicy
 {
@@ -19,7 +20,7 @@ class ShareAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $shareAccount->organization_id && $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+            return $shareAccount->organization_id && OrganizationContext::userBelongsToOrganization($shareAccount->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();
@@ -37,7 +38,7 @@ class ShareAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $shareAccount->organization_id && $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+            return $shareAccount->organization_id && OrganizationContext::userBelongsToOrganization($shareAccount->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();
@@ -50,7 +51,7 @@ class ShareAccountPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $shareAccount->organization_id && $auth->organizations()->where('organizations.id', $shareAccount->organization_id)->exists();
+            return $shareAccount->organization_id && OrganizationContext::userBelongsToOrganization($shareAccount->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $shareAccount->branch_id)->exists();

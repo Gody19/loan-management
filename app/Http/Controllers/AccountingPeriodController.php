@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\AccountingPeriod;
+use App\Models\AccountingPeriod as AccountingPeriodModel;
 use App\Services\AccountingPeriodService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class AccountingPeriodController extends Controller
@@ -14,6 +16,8 @@ class AccountingPeriodController extends Controller
 
     public function index()
     {
+        $this->authorize('viewAny', AccountingPeriodModel::class);
+
         $organization = $this->resolveOrganization();
         $periods = $this->periodService->getPeriods($organization->id);
 
@@ -22,6 +26,8 @@ class AccountingPeriodController extends Controller
 
     public function create()
     {
+        $this->authorize('create', AccountingPeriodModel::class);
+
         $organization = $this->resolveOrganization();
 
         return view('accounting.periods.create', compact('organization'));
@@ -29,6 +35,8 @@ class AccountingPeriodController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', AccountingPeriodModel::class);
+
         $organization = $this->resolveOrganization();
 
         $validated = $request->validate([
@@ -51,6 +59,8 @@ class AccountingPeriodController extends Controller
 
     public function show(int $id)
     {
+        $this->authorize('viewAny', AccountingPeriodModel::class);
+
         $organization = $this->resolveOrganization();
         $period = AccountingPeriod::where('id', $id)
             ->where('organization_id', $organization->id)
@@ -63,6 +73,8 @@ class AccountingPeriodController extends Controller
 
     public function close(int $id)
     {
+        $this->authorize('update', AccountingPeriodModel::class);
+
         $organization = $this->resolveOrganization();
         $period = AccountingPeriod::where('id', $id)
             ->where('organization_id', $organization->id)
@@ -72,5 +84,18 @@ class AccountingPeriodController extends Controller
 
         return redirect()->route('accounting.periods.index')
             ->with('success', "Period '{$period->name}' has been closed.");
+    }
+
+    protected function resolveOrganization()
+    {
+        $orgId = session('organization_id') ?? OrganizationContext::getFirstOrganization()?->id;
+
+        if (! $orgId) {
+            abort(403, 'No organization selected.');
+        }
+
+        OrganizationContext::authorizeOrganization($orgId);
+
+        return \App\Models\Organization::findOrFail($orgId);
     }
 }

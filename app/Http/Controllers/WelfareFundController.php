@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreWelfareFundRequest;
 use App\Models\Organization;
 use App\Models\WelfareFund;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class WelfareFundController extends Controller
@@ -14,6 +15,8 @@ class WelfareFundController extends Controller
         $this->authorize('viewAny', WelfareFund::class);
 
         $query = WelfareFund::query();
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -30,7 +33,7 @@ class WelfareFundController extends Controller
             $query->where('organization_id', $request->organization_id);
         }
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
         $funds = $query->latest()->paginate(15)->withQueryString();
 
         return view('welfare-funds.index', compact('funds', 'organizations'));
@@ -40,7 +43,7 @@ class WelfareFundController extends Controller
     {
         $this->authorize('create', WelfareFund::class);
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('welfare-funds.create', compact('organizations'));
     }
@@ -48,6 +51,8 @@ class WelfareFundController extends Controller
     public function store(StoreWelfareFundRequest $request)
     {
         $this->authorize('create', WelfareFund::class);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
 
         $fund = WelfareFund::create($request->validated());
 
@@ -68,7 +73,7 @@ class WelfareFundController extends Controller
     {
         $this->authorize('update', $welfareFund);
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('welfare-funds.edit', ['fund' => $welfareFund, 'organizations' => $organizations]);
     }

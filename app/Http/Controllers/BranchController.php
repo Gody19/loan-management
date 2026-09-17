@@ -8,6 +8,7 @@ use App\Models\Organization;
 use App\Models\User;
 use App\Services\AuditService;
 use App\Services\BranchService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,11 +23,15 @@ class BranchController extends Controller
     {
         $this->authorize('viewAny', Branch::class);
 
-        $branches = $this->branchService->getFilteredQuery(
+        $query = $this->branchService->getFilteredQuery(
             $request->only(['search', 'status', 'organization_id'])
-        )->latest()->paginate(15)->withQueryString();
+        );
 
-        $organizations = Organization::active()->get();
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
+
+        $branches = $query->latest()->paginate(15)->withQueryString();
+
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
 
         return view('branches.index', compact('branches', 'organizations'));
     }
@@ -35,7 +40,7 @@ class BranchController extends Controller
     {
         $this->authorize('create', Branch::class);
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('branches.create', compact('organizations'));
     }
@@ -43,6 +48,8 @@ class BranchController extends Controller
     public function store(StoreBranchRequest $request): RedirectResponse
     {
         $this->authorize('create', Branch::class);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
 
         $branch = $this->branchService->create($request->validated());
 
@@ -65,7 +72,7 @@ class BranchController extends Controller
     {
         $this->authorize('update', $branch);
 
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('branches.edit', compact('branch', 'organizations'));
     }

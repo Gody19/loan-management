@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\AccountingConfigurationService;
 use App\Services\ChartOfAccountsService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class AccountingConfigurationController extends Controller
@@ -40,11 +41,13 @@ class AccountingConfigurationController extends Controller
 
     protected function resolveOrganization()
     {
-        $orgId = session('organization_id') ?? auth()->user()->organizations()->first()?->id;
+        $orgId = session('organization_id') ?? OrganizationContext::getFirstOrganization()?->id;
 
-        if (!$orgId) {
+        if (! $orgId) {
             abort(403, 'No organization selected.');
         }
+
+        OrganizationContext::authorizeOrganization($orgId);
 
         return \App\Models\Organization::findOrFail($orgId);
     }

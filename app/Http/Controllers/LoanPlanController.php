@@ -6,6 +6,7 @@ use App\Http\Requests\StoreLoanPlanRequest;
 use App\Models\LoanPlan;
 use App\Models\Organization;
 use App\Services\AuditService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class LoanPlanController extends Controller
@@ -18,16 +19,7 @@ class LoanPlanController extends Controller
 
         $query = LoanPlan::with('organization');
 
-        if (! $request->user()->hasRole('Super Administrator')) {
-            $orgIds = $request->user()->organizations()->pluck('organizations.id')->toArray();
-            if (!empty($orgIds)) {
-                $query->whereHas('organization', function ($q) use ($orgIds) {
-                    $q->whereIn('id', $orgIds);
-                });
-            } else {
-                $query->whereRaw('1 = 0');
-            }
-        }
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -49,7 +41,7 @@ class LoanPlanController extends Controller
         }
 
         $loanPlans = $query->latest()->paginate(15)->withQueryString();
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations($request->user())->active()->get();
 
         return view('loan-plans.index', compact('loanPlans', 'organizations'));
     }
@@ -57,13 +49,17 @@ class LoanPlanController extends Controller
     public function create()
     {
         $this->authorize('create', LoanPlan::class);
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('loan-plans.create', compact('organizations'));
     }
 
     public function store(StoreLoanPlanRequest $request)
     {
+        $this->authorize('create', LoanPlan::class);
+
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
+
         $loanPlan = LoanPlan::create($request->validated());
         $this->audit->log('loan_plan.created', $loanPlan, [], $loanPlan->toArray());
 
@@ -81,7 +77,7 @@ class LoanPlanController extends Controller
     public function edit(LoanPlan $loanPlan)
     {
         $this->authorize('update', $loanPlan);
-        $organizations = Organization::active()->get();
+        $organizations = OrganizationContext::scopedOrganizations()->active()->get();
 
         return view('loan-plans.edit', ['loanPlan' => $loanPlan, 'organizations' => $organizations]);
     }

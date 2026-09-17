@@ -8,7 +8,9 @@ use App\Services\BalanceSheetService;
 use App\Services\IncomeStatementService;
 use App\Services\CashBankLedgerService;
 use App\Services\ChartOfAccountsService;
+use App\Services\OrganizationContext;
 use App\Models\ChartOfAccount;
+use App\Models\ChartOfAccount as ChartOfAccountModel;
 use Illuminate\Http\Request;
 
 class AccountingReportController extends Controller
@@ -24,6 +26,8 @@ class AccountingReportController extends Controller
 
     public function generalLedger(Request $request)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
 
         $data = $this->ledgerService->getLedger(
@@ -42,6 +46,8 @@ class AccountingReportController extends Controller
 
     public function trialBalance(Request $request)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
 
         $data = $this->trialBalanceService->generate(
@@ -56,6 +62,8 @@ class AccountingReportController extends Controller
 
     public function balanceSheet(Request $request)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
 
         $data = $this->balanceSheetService->generate(
@@ -68,6 +76,8 @@ class AccountingReportController extends Controller
 
     public function incomeStatement(Request $request)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
 
         $data = $this->incomeStatementService->generate(
@@ -82,6 +92,8 @@ class AccountingReportController extends Controller
 
     public function cashLedger(Request $request)
     {
+        $this->authorize('viewAny', ChartOfAccountModel::class);
+
         $organization = $this->resolveOrganization();
 
         $assetAccounts = ChartOfAccount::where('organization_id', $organization->id)
@@ -105,11 +117,13 @@ class AccountingReportController extends Controller
 
     protected function resolveOrganization()
     {
-        $orgId = session('organization_id') ?? auth()->user()->organizations()->first()?->id;
+        $orgId = session('organization_id') ?? OrganizationContext::getFirstOrganization()?->id;
 
-        if (!$orgId) {
+        if (! $orgId) {
             abort(403, 'No organization selected.');
         }
+
+        OrganizationContext::authorizeOrganization($orgId);
 
         return \App\Models\Organization::findOrFail($orgId);
     }

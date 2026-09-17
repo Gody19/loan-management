@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\Member;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class MemberPolicy
 {
@@ -19,14 +20,14 @@ class MemberPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
+            return $member->organization_id && OrganizationContext::userBelongsToOrganization($member->organization_id, $auth);
         }
 
         if ($auth->hasRole('Branch Manager')) {
             return $auth->branches()->where('branches.id', $member->branch_id)->exists();
         }
 
-        return ($member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists())
+        return ($member->organization_id && OrganizationContext::userBelongsToOrganization($member->organization_id, $auth))
             || $auth->branches()->where('branches.id', $member->branch_id)->exists();
     }
 
@@ -42,14 +43,14 @@ class MemberPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
+            return $member->organization_id && OrganizationContext::userBelongsToOrganization($member->organization_id, $auth);
         }
 
         if ($auth->hasRole('Branch Manager')) {
             return $auth->branches()->where('branches.id', $member->branch_id)->exists();
         }
 
-        return ($member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists())
+        return ($member->organization_id && OrganizationContext::userBelongsToOrganization($member->organization_id, $auth))
             || $auth->branches()->where('branches.id', $member->branch_id)->exists();
     }
 
@@ -60,7 +61,7 @@ class MemberPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $member->organization_id && $auth->organizations()->where('organizations.id', $member->organization_id)->exists();
+            return $member->organization_id && OrganizationContext::userBelongsToOrganization($member->organization_id, $auth);
         }
 
         return false;

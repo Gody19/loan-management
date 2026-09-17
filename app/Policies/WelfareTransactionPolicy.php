@@ -2,8 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\WelfareTransaction;
+use App\Models\User;
+use App\Services\OrganizationContext;
 
 class WelfareTransactionPolicy
 {
@@ -19,7 +20,7 @@ class WelfareTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $welfareTransaction->organization_id && $auth->organizations()->where('organizations.id', $welfareTransaction->organization_id)->exists();
+            return $welfareTransaction->organization_id && OrganizationContext::userBelongsToOrganization($welfareTransaction->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $welfareTransaction->branch_id)->exists();
@@ -42,7 +43,7 @@ class WelfareTransactionPolicy
         }
 
         if ($auth->hasRole('Organization Administrator')) {
-            return $welfareTransaction->organization_id && $auth->organizations()->where('organizations.id', $welfareTransaction->organization_id)->exists();
+            return $welfareTransaction->organization_id && OrganizationContext::userBelongsToOrganization($welfareTransaction->organization_id, $auth);
         }
 
         return $auth->branches()->where('branches.id', $welfareTransaction->branch_id)->exists();

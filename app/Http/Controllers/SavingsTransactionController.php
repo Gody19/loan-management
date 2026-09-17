@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SavingsTransaction;
+use App\Services\OrganizationContext;
 use App\Services\ReceiptService;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,9 @@ class SavingsTransactionController extends Controller
         $this->authorize('viewAny', SavingsTransaction::class);
 
         $query = SavingsTransaction::with(['account', 'member', 'paymentMethod', 'creator']);
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
+
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
                 $q->where('transaction_number', 'LIKE', "%{$request->search}%")

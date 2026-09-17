@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShareTransaction;
+use App\Services\OrganizationContext;
 use App\Services\ReceiptService;
 use Illuminate\Http\Request;
 
@@ -15,6 +16,8 @@ class ShareTransactionController extends Controller
         $this->authorize('viewAny', ShareTransaction::class);
 
         $query = ShareTransaction::with(['account.member', 'account.product', 'creator']);
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {

@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanApplicationGuarantor;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanApplicationGuarantorPolicy
 {
@@ -17,10 +18,10 @@ class LoanApplicationGuarantorPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$guarantor->application->organization_id) {
+        if (! $guarantor->application->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $guarantor->application->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($guarantor->application->organization_id, $auth);
     }
 
     public function respond(User $auth, LoanApplicationGuarantor $guarantor): bool

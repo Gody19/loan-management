@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanPlan;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanPlanPolicy
 {
@@ -18,10 +19,10 @@ class LoanPlanPolicy
             return true;
         }
 
-        if (!$loanPlan->organization_id) {
+        if (! $loanPlan->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $loanPlan->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($loanPlan->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -35,10 +36,10 @@ class LoanPlanPolicy
             return true;
         }
 
-        if (!$loanPlan->organization_id) {
+        if (! $loanPlan->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $loanPlan->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($loanPlan->organization_id, $auth);
     }
 
     public function delete(User $auth, LoanPlan $loanPlan): bool
@@ -47,9 +48,9 @@ class LoanPlanPolicy
             return true;
         }
 
-        if (!$loanPlan->organization_id) {
+        if (! $loanPlan->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $loanPlan->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($loanPlan->organization_id, $auth);
     }
 }

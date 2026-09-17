@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WelfareTransaction;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class WelfareTransactionController extends Controller
@@ -12,6 +13,8 @@ class WelfareTransactionController extends Controller
         $this->authorize('viewAny', WelfareTransaction::class);
 
         $query = WelfareTransaction::with(['account.member', 'account.fund', 'creator']);
+
+        OrganizationContext::scopeToUserOrganizations($query, $request->user());
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {

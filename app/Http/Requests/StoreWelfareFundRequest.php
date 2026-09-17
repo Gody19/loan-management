@@ -2,13 +2,18 @@
 
 namespace App\Http\Requests;
 
+use App\Services\OrganizationContext;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreWelfareFundRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        if (! $this->organization_id) {
+            return false;
+        }
+
+        return OrganizationContext::userBelongsToOrganization((int) $this->organization_id);
     }
 
     public function rules(): array

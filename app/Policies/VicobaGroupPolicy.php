@@ -2,8 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\User;
 use App\Models\VicobaGroup;
+use App\Models\User;
+use App\Services\OrganizationContext;
 
 class VicobaGroupPolicy
 {
@@ -24,7 +25,7 @@ class VicobaGroupPolicy
 
         $branch = $group->branch;
 
-        return $branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+        return $branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -44,7 +45,7 @@ class VicobaGroupPolicy
 
         $branch = $group->branch;
 
-        return $branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+        return $branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth);
     }
 
     public function delete(User $auth, VicobaGroup $group): bool
@@ -59,6 +60,6 @@ class VicobaGroupPolicy
 
         $branch = $group->branch;
 
-        return $branch->organization_id && $auth->organizations()->where('organizations.id', $branch->organization_id)->exists();
+        return $branch->organization_id && OrganizationContext::userBelongsToOrganization($branch->organization_id, $auth);
     }
 }

@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\JournalEntryStatus;
 use App\Models\JournalEntry;
+use App\Models\JournalEntry as JournalEntryModel;
 use App\Services\JournalPostingService;
 use App\Services\JournalReversalService;
 use App\Services\ChartOfAccountsService;
+use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
 
 class JournalEntryController extends Controller
@@ -19,6 +21,8 @@ class JournalEntryController extends Controller
 
     public function index(Request $request)
     {
+        $this->authorize('viewAny', JournalEntryModel::class);
+
         $organization = $this->resolveOrganization();
 
         $query = $this->postingService->getEntries(
@@ -37,6 +41,8 @@ class JournalEntryController extends Controller
 
     public function create()
     {
+        $this->authorize('create', JournalEntryModel::class);
+
         $organization = $this->resolveOrganization();
         $accounts = $this->chartService->getAccounts($organization->id);
 
@@ -45,6 +51,8 @@ class JournalEntryController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create', JournalEntryModel::class);
+
         $organization = $this->resolveOrganization();
 
         $validated = $request->validate([
@@ -74,6 +82,8 @@ class JournalEntryController extends Controller
 
     public function show(int $id)
     {
+        $this->authorize('viewAny', JournalEntryModel::class);
+
         $organization = $this->resolveOrganization();
         $entry = $this->postingService->getEntry($organization->id, $id);
 
@@ -82,6 +92,8 @@ class JournalEntryController extends Controller
 
     public function post(int $id)
     {
+        $this->authorize('update', JournalEntryModel::class);
+
         $organization = $this->resolveOrganization();
         $entry = $this->postingService->getEntry($organization->id, $id);
 
@@ -93,6 +105,8 @@ class JournalEntryController extends Controller
 
     public function reverse(Request $request, int $id)
     {
+        $this->authorize('update', JournalEntryModel::class);
+
         $organization = $this->resolveOrganization();
         $entry = $this->postingService->getEntry($organization->id, $id);
 
@@ -104,5 +118,18 @@ class JournalEntryController extends Controller
 
         return redirect()->route('accounting.journals.show', $id)
             ->with('success', 'Journal entry reversed successfully.');
+    }
+
+    protected function resolveOrganization()
+    {
+        $orgId = session('organization_id') ?? OrganizationContext::getFirstOrganization()?->id;
+
+        if (! $orgId) {
+            abort(403, 'No organization selected.');
+        }
+
+        OrganizationContext::authorizeOrganization($orgId);
+
+        return \App\Models\Organization::findOrFail($orgId);
     }
 }

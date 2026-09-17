@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\PaymentMethod;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class PaymentMethodPolicy
 {
@@ -18,10 +19,10 @@ class PaymentMethodPolicy
             return true;
         }
 
-        if (!$paymentMethod->organization_id) {
+        if (! $paymentMethod->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $paymentMethod->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($paymentMethod->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -35,10 +36,10 @@ class PaymentMethodPolicy
             return true;
         }
 
-        if (!$paymentMethod->organization_id) {
+        if (! $paymentMethod->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $paymentMethod->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($paymentMethod->organization_id, $auth);
     }
 
     public function delete(User $auth, PaymentMethod $paymentMethod): bool
@@ -47,9 +48,9 @@ class PaymentMethodPolicy
             return true;
         }
 
-        if (!$paymentMethod->organization_id) {
+        if (! $paymentMethod->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $paymentMethod->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($paymentMethod->organization_id, $auth);
     }
 }

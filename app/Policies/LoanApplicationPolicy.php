@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Models\LoanApplication;
 use App\Models\User;
+use App\Services\OrganizationContext;
 
 class LoanApplicationPolicy
 {
@@ -17,10 +18,10 @@ class LoanApplicationPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$application->organization_id) {
+        if (! $application->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $application->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($application->organization_id, $auth);
     }
 
     public function create(User $auth): bool
@@ -33,10 +34,10 @@ class LoanApplicationPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
-        if (!$application->organization_id) {
+        if (! $application->organization_id) {
             return false;
         }
-        return $auth->organizations()->where('organizations.id', $application->organization_id)->exists();
+        return OrganizationContext::userBelongsToOrganization($application->organization_id, $auth);
     }
 
     public function submit(User $auth, LoanApplication $application): bool

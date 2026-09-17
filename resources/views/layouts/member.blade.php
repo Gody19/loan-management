@@ -125,6 +125,27 @@
         </script>
     @endif
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Global form loading spinner
+            document.querySelectorAll('form').forEach(function(form) {
+                form.addEventListener('submit', function(e) {
+                    var submitBtn = form.querySelector('[type="submit"]');
+                    if (submitBtn && !submitBtn.classList.contains('no-spinner')) {
+                        if (!submitBtn.querySelector('.spinner-border')) {
+                            var spinner = document.createElement('span');
+                            spinner.className = 'spinner-border spinner-border-sm me-1';
+                            spinner.setAttribute('role', 'status');
+                            submitBtn.appendChild(spinner);
+                        }
+                        submitBtn.classList.add('btn-loading');
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+        });
+    </script>
+
     @stack('scripts')
 
 </body>
