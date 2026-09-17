@@ -15,6 +15,7 @@ class WelfareTransactionService
     public function __construct(
         private TransactionNumberGenerator $numberGenerator,
         private AuditService $auditService,
+        private AccountingEventService $accountingService,
     ) {}
 
     public function contribute(WelfareAccount $account, array $data): WelfareTransaction
@@ -74,6 +75,8 @@ class WelfareTransactionService
                 'balance_before' => $balanceBefore,
                 'balance_after' => $balanceAfter,
             ]);
+
+            $this->accountingService->recordWelfareContribution($transaction);
 
             return $transaction;
         });
@@ -142,6 +145,8 @@ class WelfareTransactionService
                 'balance_after' => $balanceAfter,
             ]);
 
+            $this->accountingService->recordWelfareBenefit($transaction);
+
             return $transaction;
         });
     }
@@ -199,6 +204,13 @@ class WelfareTransactionService
                 'balance_after' => $balanceAfter,
                 'reason' => $reason,
             ]);
+
+            $this->accountingService->reverseSourceJournal(
+                WelfareTransaction::class,
+                $transaction->id,
+                $reason,
+                auth()->id(),
+            );
 
             return $reversal;
         });

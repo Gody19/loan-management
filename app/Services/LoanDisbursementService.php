@@ -17,6 +17,7 @@ class LoanDisbursementService
         private readonly LoanNumberGenerator $loanNumberGenerator,
         private readonly DisbursementNumberGenerator $disbursementNumberGenerator,
         private readonly AuditService $auditService,
+        private readonly AccountingEventService $accountingService,
     ) {}
 
     public function createLoanFromApplication(LoanApplication $application): Loan
@@ -136,6 +137,8 @@ class LoanDisbursementService
             ], [
                 'status' => LoanStatus::Active->value,
             ]);
+
+            $this->accountingService->recordLoanDisbursement($disbursement->fresh('loan'));
 
             return $disbursement->fresh();
         });

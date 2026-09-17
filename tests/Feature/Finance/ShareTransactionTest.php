@@ -13,10 +13,11 @@ use App\Models\User;
 use App\Models\VicobaGroup;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\HasAccountingSetup;
 
 class ShareTransactionTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAccountingSetup;
 
     private User $admin;
     private Organization $organization;
@@ -39,6 +40,8 @@ class ShareTransactionTest extends TestCase
         $this->product = ShareProduct::factory()->create(['organization_id' => $this->organization->id]);
         $this->paymentMethod = PaymentMethod::factory()->create(['organization_id' => $this->organization->id]);
 
+        $this->admin->organizations()->attach($this->organization->id);
+
         $member = Member::factory()->create(['organization_id' => $this->organization->id, 'branch_id' => $this->branch->id]);
         $this->account = ShareAccount::createQuietly([
             'member_id' => $member->id,
@@ -52,6 +55,8 @@ class ShareTransactionTest extends TestCase
             'status' => 'active',
             'created_by' => $this->admin->id,
         ]);
+
+        $this->setUpAccountingFor($this->admin, $this->organization);
     }
 
     public function test_share_account_can_be_created(): void

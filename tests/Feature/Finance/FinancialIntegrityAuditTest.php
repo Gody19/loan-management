@@ -22,10 +22,11 @@ use App\Models\WelfareTransaction;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Tests\Traits\HasAccountingSetup;
 
 class FinancialIntegrityAuditTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAccountingSetup;
 
     private User $admin;
     private Organization $orgA;
@@ -64,6 +65,10 @@ class FinancialIntegrityAuditTest extends TestCase
         $this->welfareFundB = WelfareFund::factory()->create(['organization_id' => $this->orgB->id]);
         $this->paymentMethodA = PaymentMethod::factory()->create(['organization_id' => $this->orgA->id, 'status' => 'active']);
         $this->paymentMethodB = PaymentMethod::factory()->create(['organization_id' => $this->orgB->id, 'status' => 'active']);
+
+        $this->admin->organizations()->attach([$this->orgA->id, $this->orgB->id]);
+        $this->setUpAccountingFor($this->admin, $this->orgA);
+        $this->setUpAccountingFor($this->admin, $this->orgB);
     }
 
     private function createSavingsAccount(Organization $org, Branch $branch, VicobaGroup $group, SavingsProduct $product, User $user): SavingsAccount

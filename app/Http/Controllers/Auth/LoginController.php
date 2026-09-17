@@ -38,6 +38,15 @@ class LoginController extends Controller
 
         $user = Auth::user();
 
+        // Check if user is deactivated
+        if (! $user->is_active) {
+            Auth::logout();
+
+            return back()->withErrors([
+                'email' => 'Your account has been deactivated. Please contact support.',
+            ])->onlyInput('email');
+        }
+
         // Check if user is suspended
         if ($user->status === UserStatus::Suspended) {
             Auth::logout();

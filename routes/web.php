@@ -8,6 +8,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDocumentController;
 use App\Http\Controllers\MemberNextOfKinController;
+use App\Http\Controllers\MemberPortalController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\PermissionController;
@@ -30,7 +31,15 @@ use App\Http\Controllers\LoanApplicationCollateralController;
 use App\Http\Controllers\LoanApprovalLevelController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LoanDisbursementController;
+use App\Http\Controllers\LoanRepaymentController;
+use App\Http\Controllers\LoanCollectionController;
 use App\Http\Controllers\WelfareTransactionController;
+use App\Http\Controllers\ChartOfAccountController;
+use App\Http\Controllers\AccountingPeriodController;
+use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\AccountingReportController;
+use App\Http\Controllers\AccountingConfigurationController;
+use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -44,13 +53,14 @@ use Illuminate\Support\Facades\Route;
 | Public Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect()->route('dashboard');
-    }
+Route::get('/', [LandingPageController::class, 'index'])
+    ->name('home');
 
-    return redirect()->route('login');
-});
+Route::get('/register-organization', [LandingPageController::class, 'showRegistration'])
+    ->name('register-organization');
+
+Route::post('/register-organization', [LandingPageController::class, 'storeRegistration'])
+    ->name('register-organization.store');
 
 /*
 |--------------------------------------------------------------------------
@@ -98,6 +108,18 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
+
+    // Member Portal
+    Route::prefix('member')->name('member.')->middleware('member')->group(function () {
+        Route::get('/dashboard', [MemberPortalController::class, 'dashboard'])
+            ->name('dashboard');
+        Route::get('/profile', [MemberPortalController::class, 'profile'])
+            ->name('profile');
+        Route::get('/profile/edit', [MemberPortalController::class, 'editProfile'])
+            ->name('profile.edit');
+        Route::put('/profile', [MemberPortalController::class, 'updateProfile'])
+            ->name('profile.update');
+    });
 
     // User Management
     Route::resource('users', UserController::class);
@@ -266,9 +288,45 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::post('/loan-disbursements/{disbursement}/reject', [LoanDisbursementController::class, 'reject'])
         ->name('loan-disbursements.reject');
 
+    // Loan Repayments
+    Route::get('/loans/{loan}/repayments', [LoanRepaymentController::class, 'index'])
+        ->name('loan-repayments.index');
+    Route::get('/loans/{loan}/repayments/create', [LoanRepaymentController::class, 'create'])
+        ->name('loan-repayments.create');
+    Route::post('/loans/{loan}/repayments', [LoanRepaymentController::class, 'store'])
+        ->name('loan-repayments.store');
+    Route::get('/loan-repayments/{loanRepayment}', [LoanRepaymentController::class, 'show'])
+        ->name('loan-repayments.show');
+    Route::post('/loan-repayments/{loanRepayment}/reverse', [LoanRepaymentController::class, 'reverse'])
+        ->name('loan-repayments.reverse');
+
+    // Loan Collections & Delinquency
+    Route::get('/loan-collections', [LoanCollectionController::class, 'index'])
+        ->name('loan-collections.index');
+    Route::get('/loans/{loan}/statement', [LoanCollectionController::class, 'statement'])
+        ->name('loans.statement');
+
     // Member Financial Summary
     Route::get('/members/{member}/statement', [\App\Http\Controllers\MemberController::class, 'statement'])
         ->name('members.statement');
+
+    // Accounting
+    Route::prefix('accounting')->name('accounting.')->group(function () {
+        Route::resource('accounts', ChartOfAccountController::class);
+        Route::post('accounts/{id}/toggle', [ChartOfAccountController::class, 'toggle'])->name('accounts.toggle');
+        Route::resource('periods', AccountingPeriodController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('periods/{id}/close', [AccountingPeriodController::class, 'close'])->name('periods.close');
+        Route::resource('journals', JournalEntryController::class)->only(['index', 'create', 'store', 'show']);
+        Route::post('journals/{id}/post', [JournalEntryController::class, 'post'])->name('journals.post');
+        Route::post('journals/{id}/reverse', [JournalEntryController::class, 'reverse'])->name('journals.reverse');
+        Route::get('reports/general-ledger', [AccountingReportController::class, 'generalLedger'])->name('reports.general-ledger');
+        Route::get('reports/trial-balance', [AccountingReportController::class, 'trialBalance'])->name('reports.trial-balance');
+        Route::get('reports/balance-sheet', [AccountingReportController::class, 'balanceSheet'])->name('reports.balance-sheet');
+        Route::get('reports/income-statement', [AccountingReportController::class, 'incomeStatement'])->name('reports.income-statement');
+        Route::get('reports/cash-ledger', [AccountingReportController::class, 'cashLedger'])->name('reports.cash-ledger');
+        Route::get('configuration', [AccountingConfigurationController::class, 'index'])->name('configuration.index');
+        Route::put('configuration', [AccountingConfigurationController::class, 'update'])->name('configuration.update');
+    });
 
     // Permission Management
     Route::get('/permissions', [PermissionController::class, 'index'])

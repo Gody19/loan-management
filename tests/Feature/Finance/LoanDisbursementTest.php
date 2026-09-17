@@ -26,10 +26,11 @@ use App\Services\ReducingBalanceInterestCalculator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use Tests\Traits\HasAccountingSetup;
 
 class LoanDisbursementTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAccountingSetup;
 
     private User $admin;
     private Organization $organization;
@@ -47,6 +48,7 @@ class LoanDisbursementTest extends TestCase
         $this->admin = User::where('email', 'admin@financepro.co.tz')->first();
         $this->organization = Organization::factory()->create();
         $this->branch = Branch::factory()->create(['organization_id' => $this->organization->id]);
+        $this->admin->organizations()->attach($this->organization->id);
         $this->member = Member::factory()->create([
             'organization_id' => $this->organization->id,
             'branch_id' => $this->branch->id,
@@ -82,6 +84,8 @@ class LoanDisbursementTest extends TestCase
             'grace_period' => 7,
             'status' => 'active',
         ]);
+
+        $this->setUpAccountingFor($this->admin, $this->organization);
     }
 
     // ========================================

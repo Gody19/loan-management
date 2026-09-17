@@ -12,13 +12,68 @@
     z-index: 1000;
     transition: all 0.3s ease;
     background: linear-gradient(180deg, #1a1f36 0%, #0f1225 100%);
-    overflow-y: auto;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .vicoba-sidebar.collapsed {
     width: var(--sidebar-collapsed-width);
+}
+
+/* Collapsed sidebar: hide text labels, keep icons */
+.vicoba-sidebar.collapsed .nav-link span,
+.vicoba-sidebar.collapsed .sidebar-brand,
+.vicoba-sidebar.collapsed .sidebar-section,
+.vicoba-sidebar.collapsed .nav-submenu,
+.vicoba-sidebar.collapsed .toggle-icon,
+.vicoba-sidebar.collapsed .mt-auto .flex-grow-1 {
+    opacity: 0;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: opacity 0.2s ease;
+}
+
+.vicoba-sidebar.collapsed .nav-link {
+    justify-content: center;
+    padding: 0.625rem;
+    margin: 0.125rem 0.375rem;
+}
+
+.vicoba-sidebar.collapsed .nav-link i {
+    margin: 0;
+}
+
+/* Hover-expand: sidebar expands on hover when collapsed */
+.vicoba-sidebar.collapsed:hover {
+    width: var(--sidebar-width);
+}
+
+.vicoba-sidebar.collapsed:hover .nav-link span,
+.vicoba-sidebar.collapsed:hover .sidebar-brand,
+.vicoba-sidebar.collapsed:hover .sidebar-section,
+.vicoba-sidebar.collapsed:hover .toggle-icon,
+.vicoba-sidebar.collapsed:hover .mt-auto .flex-grow-1 {
+    opacity: 1;
+    width: auto;
+    transition: opacity 0.2s ease 0.1s;
+}
+
+.vicoba-sidebar.collapsed:hover .nav-submenu {
+    display: none;
+}
+
+.vicoba-sidebar.collapsed:hover .nav-parent.open .nav-submenu {
+    display: block;
+    opacity: 1;
+    width: auto;
+}
+
+.vicoba-sidebar.collapsed:hover .nav-link {
+    justify-content: flex-start;
+    padding: 0.625rem 1.25rem;
+    margin: 0.125rem 0.75rem;
 }
 
 .vicoba-sidebar .nav-link {
@@ -90,7 +145,6 @@
     background: var(--vicoba-primary);
     font-weight: 500;
 }
-}
 
 /* =====================================================
    MAIN CONTENT AREA
@@ -99,7 +153,7 @@
     margin-left: var(--sidebar-width);
     min-height: 100vh;
     background-color: #f8f9fa;
-    transition: all 0.3s ease;
+    transition: margin-left 0.3s ease;
     display: flex;
     flex-direction: column;
 }
@@ -307,17 +361,19 @@
 }
 
 /* =====================================================
-   SCROLLBAR
+   SCROLLBAR — hidden but scrollable
    ===================================================== */
-.vicoba-sidebar::-webkit-scrollbar {
-    width: 4px;
+
+/* Keep the navigation scrollable without rendering a scrollbar. */
+.no-scrollbar {
+    overflow-y: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
 }
 
-.vicoba-sidebar::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 2px;
-}
-
-.vicoba-sidebar::-webkit-scrollbar-track {
-    background: transparent;
+.no-scrollbar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }

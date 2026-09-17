@@ -15,6 +15,7 @@ class SavingsTransactionService
     public function __construct(
         private TransactionNumberGenerator $numberGenerator,
         private AuditService $auditService,
+        private AccountingEventService $accountingService,
     ) {}
 
     public function deposit(SavingsAccount $account, array $data): SavingsTransaction
@@ -75,6 +76,8 @@ class SavingsTransactionService
                 'balance_before' => $balanceBefore,
                 'balance_after' => $balanceAfter,
             ]);
+
+            $this->accountingService->recordSavingsDeposit($transaction);
 
             return $transaction;
         });
@@ -157,6 +160,8 @@ class SavingsTransactionService
                 'balance_after' => $balanceAfter,
             ]);
 
+            $this->accountingService->recordSavingsWithdrawal($transaction);
+
             return $transaction;
         });
     }
@@ -215,6 +220,13 @@ class SavingsTransactionService
                 'balance_after' => $balanceAfter,
                 'reason' => $reason,
             ]);
+
+            $this->accountingService->reverseSourceJournal(
+                SavingsTransaction::class,
+                $transaction->id,
+                $reason,
+                auth()->id(),
+            );
 
             return $reversal;
         });

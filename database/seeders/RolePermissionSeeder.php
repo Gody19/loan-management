@@ -50,6 +50,7 @@ class RolePermissionSeeder extends Seeder
             'loan_application',
             'loan_approval_level',
             'loans',
+            'loan-repayments',
             'accounting',
             'meetings',
             'reports',
@@ -66,6 +67,9 @@ class RolePermissionSeeder extends Seeder
             'approve',
             'export',
             'import',
+            'post',
+            'reverse',
+            'manage',
         ];
 
         foreach ($modules as $module) {
@@ -97,7 +101,7 @@ class RolePermissionSeeder extends Seeder
                 'shares', 'share_product', 'share_account', 'share_transaction',
                 'welfare_fund', 'welfare_account', 'welfare_transaction', 'payment_method',
                 'loan_plan', 'loan_eligibility', 'loan_application', 'loan_approval_level',
-                'loans', 'accounting', 'meetings', 'reports', 'settings',
+                'loans', 'loan-repayments', 'accounting', 'meetings', 'reports', 'settings',
                 'user', 'role',
             ])
         ));
@@ -110,13 +114,13 @@ class RolePermissionSeeder extends Seeder
             'shares', 'share_account', 'share_transaction',
             'welfare_account', 'welfare_transaction',
             'loan_plan', 'loan_eligibility', 'loan_application',
-            'loans', 'meetings', 'reports',
+            'loans', 'loan-repayments', 'meetings', 'reports',
         ])
         ));
 
         // Loan Officer
         $loanOfficer = Role::firstOrCreate(['name' => 'Loan Officer', 'guard_name' => 'web']);
-        $loanOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings_account.view', 'shares.view', 'share_account.view', 'loan_plan.view', 'loan_eligibility.view', 'loan_application.view', 'loan_application.create', 'loan_application.update', 'loans.view', 'loans.create', 'loans.update', 'reports.view'])
+        $loanOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings_account.view', 'shares.view', 'share_account.view', 'loan_plan.view', 'loan_eligibility.view', 'loan_application.view', 'loan_application.create', 'loan_application.update', 'loans.view', 'loans.create', 'loans.update', 'loan-repayments.view', 'loan-repayments.create', 'reports.view'])
         ));
 
         // Credit Officer
@@ -146,7 +150,7 @@ class RolePermissionSeeder extends Seeder
 
         // Collection Officer
         $collectionOfficer = Role::firstOrCreate(['name' => 'Collection Officer', 'guard_name' => 'web']);
-        $collectionOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings.create', 'loans.view', 'reports.view'])
+        $collectionOfficer->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'member.view', 'savings.view', 'savings.create', 'loans.view', 'loan-repayments.view', 'loan-repayments.create', 'reports.view'])
         ));
 
         // Auditor
@@ -156,7 +160,7 @@ class RolePermissionSeeder extends Seeder
 
         // VICOBA Member
         $member = Role::firstOrCreate(['name' => 'VICOBA Member', 'guard_name' => 'web']);
-        $member->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'savings.view', 'shares.view', 'loan_application.view', 'loans.view'])
+        $member->syncPermissions($allPermissions->filter(fn ($p) => in_array($p->name, ['dashboard.view', 'savings.view', 'shares.view', 'loan_application.view', 'loans.view', 'loan-repayments.view'])
         ));
 
         /*

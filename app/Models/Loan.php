@@ -83,6 +83,11 @@ class Loan extends Model
         return $this->hasMany(LoanDisbursement::class);
     }
 
+    public function repayments(): HasMany
+    {
+        return $this->hasMany(LoanRepayment::class);
+    }
+
     public function latestDisbursement(): HasOne
     {
         return $this->hasOne(LoanDisbursement::class)->latestOfMany();

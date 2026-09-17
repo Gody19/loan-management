@@ -1,10 +1,10 @@
 {{-- Sidebar Navigation --}}
 <aside class="vicoba-sidebar" id="sidebar">
 
-    {{-- Sidebar Header --}}
-    <div class="d-flex align-items-center justify-content-between px-3 py-3 border-bottom border-secondary border-opacity-25">
-        <a href="{{ route('dashboard') }}" class="d-flex align-items-center text-decoration-none">
-            <div class="bg-primary rounded-2 d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px;">
+    {{-- Sidebar Header — fixed --}}
+    <div class="flex items-center justify-between px-3 py-3 border-b border-white/10 shrink-0">
+        <a href="{{ route('dashboard') }}" class="flex items-center no-underline">
+            <div class="bg-primary rounded-lg flex items-center justify-center me-2" style="width: 36px; height: 36px;">
                 <i class="bi bi-grid-1x2-fill text-white fs-5"></i>
             </div>
             <div class="sidebar-brand">
@@ -17,8 +17,8 @@
         </button>
     </div>
 
-    {{-- Navigation --}}
-    <nav class="mt-2 flex-grow-1 overflow-auto">
+    {{-- Scrollable nav area — no visible scrollbar --}}
+    <div class="flex-1 overflow-y-auto no-scrollbar py-2 aside-content">
 
         {{-- Main Section --}}
         <div class="sidebar-section">Main</div>
@@ -28,7 +28,7 @@
             <span>Dashboard</span>
         </a>
 
-        {{-- Organization Section — only show if user has any org/branch/group permission --}}
+        {{-- Organization Section --}}
         @php
             $hasOrgSection = auth()->check() && (auth()->user()->can('organization.view') || auth()->user()->can('branch.view') || auth()->user()->can('group.view'));
         @endphp
@@ -57,7 +57,7 @@
         @endif
         @endif
 
-        {{-- Members Section — only show if user has any member permission --}}
+        {{-- Members Section --}}
         @if(auth()->check() && auth()->user()->can('member.view'))
         <div class="sidebar-section mt-3">Members</div>
 
@@ -67,7 +67,7 @@
         </a>
         @endif
 
-        {{-- Financial Section — only show if user has any finance permission --}}
+        {{-- Financial Section --}}
         @php
             $hasSavingsMenu = auth()->check() && (auth()->user()->can('savings_product.view') || auth()->user()->can('savings_account.view') || auth()->user()->can('savings_transaction.view'));
             $hasSharesMenu = auth()->check() && (auth()->user()->can('share_product.view') || auth()->user()->can('share_account.view') || auth()->user()->can('share_transaction.view'));
@@ -161,7 +161,7 @@
         @endif
         @endif
 
-        {{-- Loans Section — only show if user has any loan permission --}}
+        {{-- Loans Section --}}
         @php
             $hasLoansMenu = auth()->check() && (auth()->user()->can('loan_plan.view') || auth()->user()->can('loan_eligibility.view') || auth()->user()->can('loan_application.view') || auth()->user()->can('loan_approval_level.view') || auth()->user()->can('loans.view'));
         @endphp
@@ -203,11 +203,16 @@
                     <span>Disbursements</span>
                 </a>
                 @endif
+                @if(auth()->user()->can('loan-repayments.view'))
+                <a href="{{ route('loan-collections.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-collections.*') ? 'active' : '' }}">
+                    <span>Collections & Delinquency</span>
+                </a>
+                @endif
             </div>
         </div>
         @endif
 
-        {{-- Reports — only show if user has reports permission --}}
+        {{-- Reports --}}
         @if(auth()->check() && auth()->user()->can('reports.view'))
         <div class="sidebar-section mt-3">Reports</div>
 
@@ -217,7 +222,75 @@
         </a>
         @endif
 
-        {{-- Administration Section — only show if user has admin permissions --}}
+        {{-- Accounting --}}
+        @php
+            $hasAccountingMenu = auth()->check() && auth()->user()->can('accounting.view');
+        @endphp
+        @if($hasAccountingMenu)
+        <div class="sidebar-section mt-3">Accounting</div>
+
+        <div class="nav-item">
+            <a class="nav-link {{ request()->routeIs('accounting.accounts.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#accountingAccounts">
+                <i class="bi bi-journal-bookmark"></i>
+                <span>Chart of Accounts</span>
+            </a>
+            <div class="collapse {{ request()->routeIs('accounting.accounts.*') ? 'show' : '' }}" id="accountingAccounts">
+                <div class="no-scrollbar">
+                    <a href="{{ route('accounting.accounts.index') }}" class="nav-link sub-link {{ request()->routeIs('accounting.accounts.index') ? 'active' : '' }}">All Accounts</a>
+                    <a href="{{ route('accounting.accounts.create') }}" class="nav-link sub-link {{ request()->routeIs('accounting.accounts.create') ? 'active' : '' }}">New Account</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-item">
+            <a class="nav-link {{ request()->routeIs('accounting.periods.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#accountingPeriods">
+                <i class="bi bi-calendar3"></i>
+                <span>Accounting Periods</span>
+            </a>
+            <div class="collapse {{ request()->routeIs('accounting.periods.*') ? 'show' : '' }}" id="accountingPeriods">
+                <div class="no-scrollbar">
+                    <a href="{{ route('accounting.periods.index') }}" class="nav-link sub-link {{ request()->routeIs('accounting.periods.index') ? 'active' : '' }}">All Periods</a>
+                    <a href="{{ route('accounting.periods.create') }}" class="nav-link sub-link {{ request()->routeIs('accounting.periods.create') ? 'active' : '' }}">New Period</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-item">
+            <a class="nav-link {{ request()->routeIs('accounting.journals.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#accountingJournals">
+                <i class="bi bi-journal-text"></i>
+                <span>Journal Entries</span>
+            </a>
+            <div class="collapse {{ request()->routeIs('accounting.journals.*') ? 'show' : '' }}" id="accountingJournals">
+                <div class="no-scrollbar">
+                    <a href="{{ route('accounting.journals.index') }}" class="nav-link sub-link {{ request()->routeIs('accounting.journals.index') ? 'active' : '' }}">All Journals</a>
+                    <a href="{{ route('accounting.journals.create') }}" class="nav-link sub-link {{ request()->routeIs('accounting.journals.create') ? 'active' : '' }}">New Journal</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-item">
+            <a class="nav-link {{ request()->routeIs('accounting.reports.*') ? 'active' : '' }}" data-bs-toggle="collapse" href="#accountingReports">
+                <i class="bi bi-bar-chart-line"></i>
+                <span>Financial Reports</span>
+            </a>
+            <div class="collapse {{ request()->routeIs('accounting.reports.*') ? 'show' : '' }}" id="accountingReports">
+                <div class="no-scrollbar">
+                    <a href="{{ route('accounting.reports.general-ledger') }}" class="nav-link sub-link {{ request()->routeIs('accounting.reports.general-ledger') ? 'active' : '' }}">General Ledger</a>
+                    <a href="{{ route('accounting.reports.trial-balance') }}" class="nav-link sub-link {{ request()->routeIs('accounting.reports.trial-balance') ? 'active' : '' }}">Trial Balance</a>
+                    <a href="{{ route('accounting.reports.balance-sheet') }}" class="nav-link sub-link {{ request()->routeIs('accounting.reports.balance-sheet') ? 'active' : '' }}">Balance Sheet</a>
+                    <a href="{{ route('accounting.reports.income-statement') }}" class="nav-link sub-link {{ request()->routeIs('accounting.reports.income-statement') ? 'active' : '' }}">Income Statement</a>
+                    <a href="{{ route('accounting.reports.cash-ledger') }}" class="nav-link sub-link {{ request()->routeIs('accounting.reports.cash-ledger') ? 'active' : '' }}">Cash/Bank Ledger</a>
+                </div>
+            </div>
+        </div>
+
+        <a href="{{ route('accounting.configuration.index') }}" class="nav-link {{ request()->routeIs('accounting.configuration.*') ? 'active' : '' }}">
+            <i class="bi bi-gear"></i>
+            <span>Configuration</span>
+        </a>
+        @endif
+
+        {{-- Administration Section --}}
         @php
             $hasAdminMenu = auth()->check() && (auth()->user()->can('user.view') || auth()->user()->can('role.view') || auth()->user()->can('permission.view') || auth()->user()->can('audit.view'));
         @endphp
@@ -246,12 +319,12 @@
         @endif
         @endif
 
-    </nav>
+    </div>
 
-    {{-- Sidebar Footer --}}
-    <div class="mt-auto p-3 border-top border-secondary border-opacity-25">
-        <div class="d-flex align-items-center">
-            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+    {{-- Sidebar Footer — fixed --}}
+    <div class="shrink-0 p-3 border-t border-white/10">
+        <div class="flex items-center">
+            <div class="bg-primary rounded-circle flex items-center justify-center me-2" style="width: 32px; height: 32px;">
                 <span class="text-white fw-semibold" style="font-size: 0.75rem;">
                     {{ substr(auth()->user()->fullname ?? 'U', 0, 1) }}
                 </span>

@@ -15,6 +15,7 @@ class ShareTransactionService
     public function __construct(
         private TransactionNumberGenerator $numberGenerator,
         private AuditService $auditService,
+        private AccountingEventService $accountingService,
     ) {}
 
     public function purchase(ShareAccount $account, array $data): ShareTransaction
@@ -102,6 +103,8 @@ class ShareTransactionService
                 'total_shares_before' => $sharesBefore,
                 'total_shares_after' => $sharesAfter,
             ]);
+
+            $this->accountingService->recordSharePurchase($transaction);
 
             return $transaction;
         });
@@ -192,6 +195,8 @@ class ShareTransactionService
                 'total_shares_after' => $sharesAfter,
             ]);
 
+            $this->accountingService->recordShareRedemption($transaction);
+
             return $transaction;
         });
     }
@@ -262,6 +267,13 @@ class ShareTransactionService
                 'total_shares_after' => max(0, $sharesAfter),
                 'reason' => $reason,
             ]);
+
+            $this->accountingService->reverseSourceJournal(
+                ShareTransaction::class,
+                $transaction->id,
+                $reason,
+                auth()->id(),
+            );
 
             return $reversal;
         });

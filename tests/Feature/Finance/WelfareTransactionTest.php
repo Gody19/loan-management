@@ -13,10 +13,11 @@ use App\Models\WelfareAccount;
 use App\Models\WelfareFund;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Tests\Traits\HasAccountingSetup;
 
 class WelfareTransactionTest extends TestCase
 {
-    use RefreshDatabase;
+    use RefreshDatabase, HasAccountingSetup;
 
     private User $admin;
     private Organization $organization;
@@ -39,6 +40,8 @@ class WelfareTransactionTest extends TestCase
         $this->fund = WelfareFund::factory()->create(['organization_id' => $this->organization->id]);
         $this->paymentMethod = PaymentMethod::factory()->create(['organization_id' => $this->organization->id]);
 
+        $this->admin->organizations()->attach($this->organization->id);
+
         $member = Member::factory()->create(['organization_id' => $this->organization->id, 'branch_id' => $this->branch->id]);
         $this->account = WelfareAccount::createQuietly([
             'member_id' => $member->id,
@@ -51,6 +54,8 @@ class WelfareTransactionTest extends TestCase
             'status' => 'active',
             'created_by' => $this->admin->id,
         ]);
+
+        $this->setUpAccountingFor($this->admin, $this->organization);
     }
 
     public function test_welfare_account_can_be_created(): void
