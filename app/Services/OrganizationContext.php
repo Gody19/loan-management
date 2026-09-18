@@ -89,7 +89,13 @@ class OrganizationContext
             return null;
         }
 
-        return $user->organizations()->first();
+        $org = $user->organizations()->first();
+
+        if (! $org && $user->hasRole('Super Administrator')) {
+            $org = Organization::first();
+        }
+
+        return $org;
     }
 
     /**
