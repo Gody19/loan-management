@@ -36,24 +36,37 @@
             <span>My Profile</span>
         </a>
 
-        <a href="{{ route('member.dashboard') }}#savings" class="nav-link {{ request()->query('tab') === 'savings' ? 'active' : '' }}">
+        <a href="{{ route('member.savings') }}" class="nav-link {{ request()->routeIs('member.savings') ? 'active' : '' }}">
             <i class="bi bi-wallet2"></i>
             <span>My Savings</span>
         </a>
 
-        <a href="{{ route('member.dashboard') }}#shares" class="nav-link {{ request()->query('tab') === 'shares' ? 'active' : '' }}">
+        <a href="{{ route('member.shares') }}" class="nav-link {{ request()->routeIs('member.shares') ? 'active' : '' }}">
             <i class="bi bi-cash-stack"></i>
             <span>My Shares</span>
         </a>
 
-        <a href="{{ route('member.dashboard') }}#welfare" class="nav-link {{ request()->query('tab') === 'welfare' ? 'active' : '' }}">
+        <a href="{{ route('member.welfare') }}" class="nav-link {{ request()->routeIs('member.welfare') ? 'active' : '' }}">
             <i class="bi bi-heart"></i>
             <span>My Welfare</span>
         </a>
 
-        <a href="{{ route('member.dashboard') }}#loans" class="nav-link {{ request()->query('tab') === 'loans' ? 'active' : '' }}">
+        <a href="{{ route('member.loans') }}" class="nav-link {{ request()->routeIs('member.loans') ? 'active' : '' }}">
             <i class="bi bi-cash-coin"></i>
             <span>My Loans</span>
+        </a>
+
+        {{-- Activity --}}
+        <div class="sidebar-section mt-3">Activity</div>
+
+        <a href="{{ route('member.transactions') }}" class="nav-link {{ request()->routeIs('member.transactions') ? 'active' : '' }}">
+            <i class="bi bi-list-ul"></i>
+            <span>My Transactions</span>
+        </a>
+
+        <a href="{{ route('member.notifications') }}" class="nav-link {{ request()->routeIs('member.notifications') ? 'active' : '' }}">
+            <i class="bi bi-bell"></i>
+            <span>Notifications</span>
         </a>
 
     </div>

@@ -137,6 +137,11 @@ class Member extends Model
         return $this->hasMany(WelfareAccount::class);
     }
 
+    public function welfareBenefitRequests(): HasMany
+    {
+        return $this->hasMany(WelfareBenefitRequest::class);
+    }
+
     public function loans(): HasMany
     {
         return $this->hasMany(Loan::class);
@@ -145,6 +150,11 @@ class Member extends Model
     public function loanApplications(): HasMany
     {
         return $this->hasMany(LoanApplication::class);
+    }
+
+    public function repayments(): HasMany
+    {
+        return $this->hasMany(LoanRepayment::class);
     }
 
     // Helpers

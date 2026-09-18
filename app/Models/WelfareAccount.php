@@ -72,6 +72,11 @@ class WelfareAccount extends Model
         return $this->hasMany(WelfareTransaction::class, 'welfare_account_id');
     }
 
+    public function benefitRequests(): HasMany
+    {
+        return $this->hasMany(WelfareBenefitRequest::class, 'welfare_account_id');
+    }
+
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

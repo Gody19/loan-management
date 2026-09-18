@@ -16,6 +16,8 @@ class AccountingConfigurationController extends Controller
 
     public function index()
     {
+        $this->authorize('accounting.manage');
+
         $organization = $this->resolveOrganization();
         $mappings = $this->configService->getAllMappings($organization->id);
 
@@ -24,6 +26,8 @@ class AccountingConfigurationController extends Controller
 
     public function update(Request $request)
     {
+        $this->authorize('accounting.manage');
+
         $organization = $this->resolveOrganization();
 
         $validated = $request->validate([

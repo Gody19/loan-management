@@ -49,6 +49,12 @@ use App\Policies\LoanApprovalLevelPolicy;
 use App\Policies\LoanPolicy;
 use App\Policies\LoanDisbursementPolicy;
 use App\Policies\LoanRepaymentPolicy;
+use App\Policies\ChartOfAccountPolicy;
+use App\Policies\AccountingPeriodPolicy;
+use App\Policies\JournalEntryPolicy;
+use App\Models\ChartOfAccount;
+use App\Models\AccountingPeriod;
+use App\Models\JournalEntry;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Spatie\Permission\Models\Role;
@@ -85,6 +91,9 @@ class AuthServiceProvider extends ServiceProvider
         Loan::class => LoanPolicy::class,
         LoanDisbursement::class => LoanDisbursementPolicy::class,
         LoanRepayment::class => LoanRepaymentPolicy::class,
+        ChartOfAccount::class => ChartOfAccountPolicy::class,
+        AccountingPeriod::class => AccountingPeriodPolicy::class,
+        JournalEntry::class => JournalEntryPolicy::class,
     ];
 
     /**

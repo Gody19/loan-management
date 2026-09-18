@@ -6,6 +6,7 @@ use App\Http\Requests\StoreVicobaGroupRequest;
 use App\Models\Branch;
 use App\Models\VicobaGroup;
 use App\Services\AuditService;
+use App\Services\OrganizationContext;
 use App\Services\VicobaGroupService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -22,10 +23,13 @@ class VicobaGroupController extends Controller
         $this->authorize('viewAny', VicobaGroup::class);
 
         $groups = $this->groupService->getFilteredQuery(
-            $request->only(['search', 'status', 'branch_id'])
+            $request->only(['search', 'status', 'branch_id']),
+            $request->user(),
         )->latest()->paginate(15)->withQueryString();
 
-        $branches = Branch::active()->with('organization')->get();
+        $branches = OrganizationContext::scopedOrganizations($request->user())
+            ->get()
+            ->flatMap(fn ($org) => $org->branches()->active()->get());
 
         return view('vicoba-groups.index', compact('groups', 'branches'));
     }
@@ -34,7 +38,9 @@ class VicobaGroupController extends Controller
     {
         $this->authorize('create', VicobaGroup::class);
 
-        $branches = Branch::active()->with('organization')->get();
+        $branches = OrganizationContext::scopedOrganizations()
+            ->get()
+            ->flatMap(fn ($org) => $org->branches()->active()->get());
 
         return view('vicoba-groups.create', compact('branches'));
     }
@@ -64,7 +70,9 @@ class VicobaGroupController extends Controller
     {
         $this->authorize('update', $vicoba_group);
 
-        $branches = Branch::active()->with('organization')->get();
+        $branches = OrganizationContext::scopedOrganizations()
+            ->get()
+            ->flatMap(fn ($org) => $org->branches()->active()->get());
 
         return view('vicoba-groups.edit', ['group' => $vicoba_group, 'branches' => $branches]);
     }

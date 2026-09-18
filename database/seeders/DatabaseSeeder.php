@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,
             VicobaGroupSeeder::class,
             MemberSeeder::class,
+            FinancialSeeder::class,
         ]);
     }
 }

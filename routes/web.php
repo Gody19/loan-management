@@ -117,8 +117,32 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('profile');
         Route::get('/profile/edit', [MemberPortalController::class, 'editProfile'])
             ->name('profile.edit');
-        Route::put('/profile', [MemberPortalController::class, 'updateProfile'])
+        Route::post('/profile/update', [MemberPortalController::class, 'updateProfile'])
             ->name('profile.update');
+        Route::get('/savings', [MemberPortalController::class, 'savings'])
+            ->name('savings');
+        Route::post('/savings/deposit', [MemberPortalController::class, 'depositSavings'])
+            ->name('savings.deposit');
+        Route::post('/savings/withdraw', [MemberPortalController::class, 'withdrawSavings'])
+            ->name('savings.withdraw');
+        Route::get('/shares', [MemberPortalController::class, 'shares'])
+            ->name('shares');
+        Route::post('/shares/purchase', [MemberPortalController::class, 'purchaseShares'])
+            ->name('shares.purchase');
+        Route::post('/shares/redeem', [MemberPortalController::class, 'redeemShares'])
+            ->name('shares.redeem');
+        Route::get('/welfare', [MemberPortalController::class, 'welfare'])
+            ->name('welfare');
+        Route::post('/welfare/contribute', [MemberPortalController::class, 'contributeWelfare'])
+            ->name('welfare.contribute');
+        Route::post('/welfare/benefit-request', [MemberPortalController::class, 'requestBenefit'])
+            ->name('welfare.benefit-request');
+        Route::get('/loans', [MemberPortalController::class, 'loans'])
+            ->name('loans');
+        Route::get('/transactions', [MemberPortalController::class, 'transactions'])
+            ->name('transactions');
+        Route::get('/notifications', [MemberPortalController::class, 'notifications'])
+            ->name('notifications');
     });
 
     // User Management

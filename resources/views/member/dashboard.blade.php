@@ -119,7 +119,7 @@
                         <td>{{ $account->product->name ?? '-' }}</td>
                         <td class="text-end fw-medium">TSh {{ number_format($account->current_balance, 2) }}</td>
                         <td>
-                            <span class="badge bg-{{ $account->status->value === 'Active' ? 'success' : 'secondary' }}">
+                            <span class="badge bg-{{ $account->status->value === 'active' ? 'success' : 'secondary' }}">
                                 {{ $account->status->label() }}
                             </span>
                         </td>
@@ -158,7 +158,7 @@
                         <td class="text-end">{{ number_format($account->total_shares, 0) }}</td>
                         <td class="text-end fw-medium">TSh {{ number_format($account->total_value, 2) }}</td>
                         <td>
-                            <span class="badge bg-{{ $account->status->value === 'Active' ? 'success' : 'secondary' }}">
+                            <span class="badge bg-{{ $account->status->value === 'active' ? 'success' : 'secondary' }}">
                                 {{ $account->status->label() }}
                             </span>
                         </td>
@@ -195,7 +195,7 @@
                         <td>{{ $account->fund->name ?? '-' }}</td>
                         <td class="text-end fw-medium">TSh {{ number_format($account->current_balance, 2) }}</td>
                         <td>
-                            <span class="badge bg-{{ $account->status->value === 'Active' ? 'success' : 'secondary' }}">
+                            <span class="badge bg-{{ $account->status->value === 'active' ? 'success' : 'secondary' }}">
                                 {{ $account->status->label() }}
                             </span>
                         </td>

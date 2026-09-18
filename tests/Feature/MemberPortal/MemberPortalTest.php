@@ -295,7 +295,7 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->put(route('member.profile.update'), [
+        $response = $this->post(route('member.profile.update'), [
             'phone' => '0712345678',
             'email' => 'updated@example.com',
             'occupation' => 'Teacher',
@@ -318,7 +318,7 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->put(route('member.profile.update'), [
+        $response = $this->post(route('member.profile.update'), [
             'phone' => '',
         ]);
 
@@ -331,7 +331,7 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->put(route('member.profile.update'), [
+        $response = $this->post(route('member.profile.update'), [
             'phone' => '0712345678',
             'email' => 'not-an-email',
         ]);
@@ -345,7 +345,7 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->put(route('member.profile.update'), [
+        $this->post(route('member.profile.update'), [
             'phone' => '0712345678',
         ]);
 
@@ -367,7 +367,7 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $response = $this->put(route('member.profile.update'), [
+        $response = $this->post(route('member.profile.update'), [
             'phone' => '0712345678',
         ]);
 
@@ -634,7 +634,7 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->put(route('member.profile.update'), [
+        $this->post(route('member.profile.update'), [
             'phone' => '0712345678',
             'membership_status' => 'exited',
         ]);
@@ -651,12 +651,569 @@ class MemberPortalTest extends TestCase
 
         $this->actingAs($user);
 
-        $this->put(route('member.profile.update'), [
+        $this->post(route('member.profile.update'), [
             'phone' => '0712345678',
             'first_name' => 'Hacked',
         ]);
 
         $member->refresh();
         $this->assertEquals($originalFirstName, $member->first_name);
+    }
+
+    // ==================== Savings Page Tests ====================
+
+    public function test_member_can_access_savings_page(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        SavingsAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'current_balance' => 150000,
+            'status' => SavingsAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.savings'));
+
+        $response->assertStatus(200);
+        $response->assertSee('My Savings');
+        $response->assertSee('150,000');
+    }
+
+    public function test_savings_page_shows_only_own_accounts(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        SavingsAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'current_balance' => 50000,
+            'status' => SavingsAccountStatus::Active,
+        ]);
+
+        $otherUser = User::factory()->create(['status' => UserStatus::Active, 'is_active' => true]);
+        $otherMember = Member::factory()->create([
+            'user_id' => $otherUser->id,
+            'membership_status' => MemberStatus::Active,
+        ]);
+
+        SavingsAccount::factory()->create([
+            'member_id' => $otherMember->id,
+            'organization_id' => $otherMember->organization_id,
+            'branch_id' => $otherMember->branch_id,
+            'vicoba_group_id' => $otherMember->vicoba_group_id,
+            'current_balance' => 999999,
+            'status' => SavingsAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.savings'));
+
+        $response->assertStatus(200);
+        $response->assertSee('50,000');
+        $response->assertDontSee('999,999');
+    }
+
+    // ==================== Shares Page Tests ====================
+
+    public function test_member_can_access_shares_page(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        ShareAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'total_shares' => 200,
+            'total_value' => 1000000,
+            'status' => ShareAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.shares'));
+
+        $response->assertStatus(200);
+        $response->assertSee('My Shares');
+        $response->assertSee('200');
+        $response->assertSee('1,000,000');
+    }
+
+    public function test_shares_page_shows_only_own_accounts(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        ShareAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'total_shares' => 50,
+            'total_value' => 250000,
+            'status' => ShareAccountStatus::Active,
+        ]);
+
+        $otherUser = User::factory()->create(['status' => UserStatus::Active, 'is_active' => true]);
+        $otherMember = Member::factory()->create([
+            'user_id' => $otherUser->id,
+            'membership_status' => MemberStatus::Active,
+        ]);
+
+        ShareAccount::factory()->create([
+            'member_id' => $otherMember->id,
+            'organization_id' => $otherMember->organization_id,
+            'branch_id' => $otherMember->branch_id,
+            'vicoba_group_id' => $otherMember->vicoba_group_id,
+            'total_shares' => 8888,
+            'total_value' => 999999,
+            'status' => ShareAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.shares'));
+
+        $response->assertStatus(200);
+        $response->assertSee('50');
+        $response->assertDontSee('8,888');
+        $response->assertDontSee('999,999');
+    }
+
+    // ==================== Welfare Page Tests ====================
+
+    public function test_member_can_access_welfare_page(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        WelfareAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'current_balance' => 75000,
+            'status' => WelfareAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.welfare'));
+
+        $response->assertStatus(200);
+        $response->assertSee('My Welfare');
+        $response->assertSee('75,000');
+    }
+
+    public function test_welfare_page_shows_only_own_accounts(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        WelfareAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'current_balance' => 30000,
+            'status' => WelfareAccountStatus::Active,
+        ]);
+
+        $otherUser = User::factory()->create(['status' => UserStatus::Active, 'is_active' => true]);
+        $otherMember = Member::factory()->create([
+            'user_id' => $otherUser->id,
+            'membership_status' => MemberStatus::Active,
+        ]);
+
+        WelfareAccount::factory()->create([
+            'member_id' => $otherMember->id,
+            'organization_id' => $otherMember->organization_id,
+            'branch_id' => $otherMember->branch_id,
+            'vicoba_group_id' => $otherMember->vicoba_group_id,
+            'current_balance' => 777777,
+            'status' => WelfareAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.welfare'));
+
+        $response->assertStatus(200);
+        $response->assertSee('30,000');
+        $response->assertDontSee('777,777');
+    }
+
+    // ==================== Transactions Page Tests ====================
+
+    public function test_member_can_access_transactions_page(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.transactions'));
+
+        $response->assertStatus(200);
+        $response->assertSee('My Transactions');
+    }
+
+    public function test_transactions_page_shows_only_own_data(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+
+        SavingsAccount::factory()->create([
+            'member_id' => $member->id,
+            'organization_id' => $member->organization_id,
+            'branch_id' => $member->branch_id,
+            'vicoba_group_id' => $member->vicoba_group_id,
+            'current_balance' => 50000,
+            'status' => SavingsAccountStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.transactions'));
+
+        $response->assertStatus(200);
+        $response->assertSee('My Transactions');
+    }
+
+    // ==================== Notifications Page Tests ====================
+
+    public function test_member_can_access_notifications_page(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.notifications'));
+
+        $response->assertStatus(200);
+        $response->assertSee('Notifications');
+    }
+
+    public function test_notifications_page_shows_empty_state(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.notifications'));
+
+        $response->assertStatus(200);
+        $response->assertSee('No notifications yet');
+    }
+
+    // ==================== Cross-Member Isolation Tests ====================
+
+    public function test_member_a_cannot_see_member_b_savings(): void
+    {
+        ['user' => $userA, 'member' => $memberA] = $this->createMemberWithUser();
+
+        ['user' => $userB, 'member' => $memberB] = $this->createMemberWithUser();
+
+        SavingsAccount::factory()->create([
+            'member_id' => $memberB->id,
+            'organization_id' => $memberB->organization_id,
+            'branch_id' => $memberB->branch_id,
+            'vicoba_group_id' => $memberB->vicoba_group_id,
+            'current_balance' => 888888,
+            'status' => SavingsAccountStatus::Active,
+        ]);
+
+        $this->actingAs($userA);
+
+        $response = $this->get(route('member.savings'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('888,888');
+    }
+
+    public function test_member_a_cannot_see_member_b_shares(): void
+    {
+        ['user' => $userA] = $this->createMemberWithUser();
+        ['user' => $userB, 'member' => $memberB] = $this->createMemberWithUser();
+
+        ShareAccount::factory()->create([
+            'member_id' => $memberB->id,
+            'organization_id' => $memberB->organization_id,
+            'branch_id' => $memberB->branch_id,
+            'vicoba_group_id' => $memberB->vicoba_group_id,
+            'total_shares' => 9999,
+            'total_value' => 999999,
+            'status' => ShareAccountStatus::Active,
+        ]);
+
+        $this->actingAs($userA);
+
+        $response = $this->get(route('member.shares'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('9,999');
+        $response->assertDontSee('999,999');
+    }
+
+    public function test_member_a_cannot_see_member_b_welfare(): void
+    {
+        ['user' => $userA] = $this->createMemberWithUser();
+        ['user' => $userB, 'member' => $memberB] = $this->createMemberWithUser();
+
+        WelfareAccount::factory()->create([
+            'member_id' => $memberB->id,
+            'organization_id' => $memberB->organization_id,
+            'branch_id' => $memberB->branch_id,
+            'vicoba_group_id' => $memberB->vicoba_group_id,
+            'current_balance' => 777777,
+            'status' => WelfareAccountStatus::Active,
+        ]);
+
+        $this->actingAs($userA);
+
+        $response = $this->get(route('member.welfare'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('777,777');
+    }
+
+    public function test_member_a_cannot_see_member_b_profile(): void
+    {
+        ['user' => $userA, 'member' => $memberA] = $this->createMemberWithUser();
+        ['user' => $userB, 'member' => $memberB] = $this->createMemberWithUser();
+
+        $this->actingAs($userA);
+
+        $response = $this->get(route('member.profile'));
+
+        $response->assertStatus(200);
+        $response->assertSee($memberA->full_name);
+        $response->assertDontSee($memberB->full_name);
+    }
+
+    // ==================== Cross-Tenant Isolation Tests ====================
+
+    public function test_member_from_org_a_cannot_see_org_b_data(): void
+    {
+        ['user' => $userA, 'member' => $memberA] = $this->createMemberWithUser();
+
+        $orgB = \App\Models\Organization::factory()->create();
+        $branchB = \App\Models\Branch::factory()->create(['organization_id' => $orgB->id]);
+        $groupB = \App\Models\VicobaGroup::factory()->create(['branch_id' => $branchB->id]);
+
+        $userB = User::factory()->create(['status' => UserStatus::Active, 'is_active' => true]);
+        $memberB = Member::factory()->create([
+            'user_id' => $userB->id,
+            'membership_status' => MemberStatus::Active,
+            'organization_id' => $orgB->id,
+            'branch_id' => $branchB->id,
+            'vicoba_group_id' => $groupB->id,
+        ]);
+
+        SavingsAccount::factory()->create([
+            'member_id' => $memberB->id,
+            'organization_id' => $orgB->id,
+            'branch_id' => $branchB->id,
+            'vicoba_group_id' => $groupB->id,
+            'current_balance' => 555555,
+            'status' => SavingsAccountStatus::Active,
+        ]);
+
+        $this->actingAs($userA);
+
+        $response = $this->get(route('member.dashboard'));
+
+        $response->assertStatus(200);
+        $response->assertDontSee('555,555');
+    }
+
+    // ==================== Profile Tampering Tests ====================
+
+    public function test_member_cannot_inject_organization_id_via_profile(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+        $originalOrgId = $member->organization_id;
+
+        $this->actingAs($user);
+
+        $this->post(route('member.profile.update'), [
+            'phone' => '0712345678',
+            'organization_id' => 9999,
+        ]);
+
+        $member->refresh();
+        $this->assertEquals($originalOrgId, $member->organization_id);
+    }
+
+    public function test_member_cannot_inject_branch_id_via_profile(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+        $originalBranchId = $member->branch_id;
+
+        $this->actingAs($user);
+
+        $this->post(route('member.profile.update'), [
+            'phone' => '0712345678',
+            'branch_id' => 9999,
+        ]);
+
+        $member->refresh();
+        $this->assertEquals($originalBranchId, $member->branch_id);
+    }
+
+    public function test_member_cannot_inject_vicoba_group_id_via_profile(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+        $originalGroupId = $member->vicoba_group_id;
+
+        $this->actingAs($user);
+
+        $this->post(route('member.profile.update'), [
+            'phone' => '0712345678',
+            'vicoba_group_id' => 9999,
+        ]);
+
+        $member->refresh();
+        $this->assertEquals($originalGroupId, $member->vicoba_group_id);
+    }
+
+    public function test_member_cannot_inject_member_number_via_profile(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser();
+        $originalNumber = $member->member_number;
+
+        $this->actingAs($user);
+
+        $this->post(route('member.profile.update'), [
+            'phone' => '0712345678',
+            'member_number' => 'VCB-999999',
+        ]);
+
+        $member->refresh();
+        $this->assertEquals($originalNumber, $member->member_number);
+    }
+
+    public function test_member_cannot_inject_status_via_profile(): void
+    {
+        ['user' => $user, 'member' => $member] = $this->createMemberWithUser([
+            'membership_status' => MemberStatus::Active,
+        ]);
+
+        $this->actingAs($user);
+
+        $this->post(route('member.profile.update'), [
+            'phone' => '0712345678',
+            'status' => 'inactive',
+        ]);
+
+        $member->refresh();
+        $this->assertEquals(MemberStatus::Active, $member->membership_status);
+    }
+
+    // ==================== Empty State Tests ====================
+
+    public function test_savings_page_shows_empty_state_when_no_accounts(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.savings'));
+
+        $response->assertStatus(200);
+        $response->assertSee('No savings accounts');
+    }
+
+    public function test_shares_page_shows_empty_state_when_no_accounts(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.shares'));
+
+        $response->assertStatus(200);
+        $response->assertSee('No share accounts');
+    }
+
+    public function test_welfare_page_shows_empty_state_when_no_accounts(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.welfare'));
+
+        $response->assertStatus(200);
+        $response->assertSee('No welfare accounts');
+    }
+
+    public function test_loans_page_shows_empty_state_when_no_loans(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.loans'));
+
+        $response->assertStatus(200);
+        $response->assertSee('No loans');
+    }
+
+    public function test_transactions_page_shows_empty_state_when_no_transactions(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser();
+
+        $this->actingAs($user);
+
+        $response = $this->get(route('member.transactions'));
+
+        $response->assertStatus(200);
+        $response->assertSee('No transactions yet');
+    }
+
+    // ==================== All New Routes Protected by Middleware ====================
+
+    public function test_new_member_routes_require_authentication(): void
+    {
+        $routes = [
+            route('member.savings'),
+            route('member.shares'),
+            route('member.welfare'),
+            route('member.loans'),
+            route('member.transactions'),
+            route('member.notifications'),
+        ];
+
+        foreach ($routes as $url) {
+            $response = $this->get($url);
+            $response->assertRedirect(route('login'));
+        }
+    }
+
+    public function test_new_member_routes_require_active_membership(): void
+    {
+        ['user' => $user] = $this->createMemberWithUser([
+            'membership_status' => MemberStatus::Inactive,
+        ]);
+
+        $this->actingAs($user);
+
+        $routes = [
+            route('member.savings'),
+            route('member.shares'),
+            route('member.welfare'),
+            route('member.loans'),
+            route('member.transactions'),
+            route('member.notifications'),
+        ];
+
+        foreach ($routes as $url) {
+            $response = $this->get($url);
+            $response->assertStatus(403);
+        }
     }
 }

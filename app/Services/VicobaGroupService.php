@@ -19,9 +19,26 @@ class VicobaGroupService
         return $group;
     }
 
-    public function getFilteredQuery(array $filters): Builder
+    /**
+     * Get filtered query scoped to the user's organizations.
+     */
+    public function getFilteredQuery(array $filters, ?\App\Models\User $user = null): Builder
     {
+        $user = $user ?? auth()->user();
         $query = VicobaGroup::with('branch.organization');
+
+        // Tenant scoping: non-Super Admin only sees groups from their org's branches
+        if ($user && ! $user->hasRole('Super Administrator')) {
+            $orgIds = $user->organizations()->pluck('organizations.id')->toArray();
+
+            if (empty($orgIds)) {
+                $query->whereRaw('1 = 0');
+            } else {
+                $query->whereHas('branch', function ($q) use ($orgIds) {
+                    $q->whereIn('organization_id', $orgIds);
+                });
+            }
+        }
 
         if (! empty($filters['search'])) {
             $search = $filters['search'];

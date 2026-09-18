@@ -13,7 +13,12 @@ class TransactionNumberGenerator
         'SVT' => 'savings_transactions',
         'SHT' => 'share_transactions',
         'WFT' => 'welfare_transactions',
+        'WBR' => 'welfare_benefit_requests',
         'RCT' => 'receipts',
+    ];
+
+    private array $numberColumnMap = [
+        'WBR' => 'request_number',
     ];
 
     public function generate(string $prefix): string
@@ -21,11 +26,13 @@ class TransactionNumberGenerator
         return DB::transaction(function () use ($prefix) {
             $table = $this->tableMap[$prefix] ?? null;
 
+            $column = $this->numberColumnMap[$prefix] ?? 'transaction_number';
+
             if ($table && Schema::hasTable($table)) {
                 $last = DB::table($table)
                     ->lockForUpdate()
-                    ->orderByRaw('CAST(SUBSTRING(transaction_number, '.(strlen($prefix) + 1).') AS UNSIGNED) DESC')
-                    ->value('transaction_number');
+                    ->orderByRaw("CAST(SUBSTRING({$column}, ".(strlen($prefix) + 1).') AS UNSIGNED) DESC')
+                    ->value($column);
             } else {
                 $last = DB::table('savings_transactions')
                     ->lockForUpdate()

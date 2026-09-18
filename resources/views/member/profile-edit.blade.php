@@ -23,7 +23,6 @@
             <div class="card-body">
                 <form method="POST" action="{{ route('member.profile.update') }}">
                     @csrf
-                    @method('PUT')
 
                     <div class="row g-3">
                         <div class="col-12">
