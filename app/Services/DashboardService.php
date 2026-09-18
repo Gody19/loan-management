@@ -324,7 +324,7 @@ class DashboardService
             $recentActivity = $recentActivity->concat(
                 SavingsTransaction::whereHas('account', fn ($q) => $q->where('member_id', $member->id))
                     ->where('status', 'completed')->latest()->take(5)->get()
-                    ->map(fn ($t) => ['type' => 'savings', 'label' => 'Savings ' . $t->transaction_type, 'amount' => $t->amount, 'date' => $t->created_at])
+                    ->map(fn ($t) => ['type' => 'savings', 'label' => 'Savings ' . $t->transaction_type->label(), 'amount' => $t->amount, 'date' => $t->created_at])
             );
         }
 
@@ -358,11 +358,11 @@ class DashboardService
         }
 
         return $recentSavings->latest()->take(5)->get()
-            ->map(fn ($t) => ['type' => 'savings', 'label' => 'Savings ' . $t->transaction_type, 'member' => $t->account->member->first_name . ' ' . $t->account->member->last_name, 'amount' => $t->amount, 'date' => $t->created_at, 'icon' => 'bi-wallet2', 'color' => $t->transaction_type === 'deposit' ? 'success' : 'danger'])
+            ->map(fn ($t) => ['type' => 'savings', 'label' => 'Savings ' . $t->transaction_type->label(), 'member' => $t->account->member->first_name . ' ' . $t->account->member->last_name, 'amount' => $t->amount, 'date' => $t->created_at, 'icon' => 'bi-wallet2', 'color' => $t->transaction_type->isCredit() ? 'success' : 'danger'])
             ->concat($recentShares->latest()->take(5)->get()
-                ->map(fn ($t) => ['type' => 'shares', 'label' => 'Share ' . $t->transaction_type, 'member' => $t->account->member->first_name . ' ' . $t->account->member->last_name, 'amount' => $t->amount, 'date' => $t->created_at, 'icon' => 'bi-cash-stack', 'color' => 'primary']))
+                ->map(fn ($t) => ['type' => 'shares', 'label' => 'Share ' . $t->transaction_type->label(), 'member' => $t->account->member->first_name . ' ' . $t->account->member->last_name, 'amount' => $t->amount, 'date' => $t->created_at, 'icon' => 'bi-cash-stack', 'color' => 'primary']))
             ->concat($recentWelfare->latest()->take(5)->get()
-                ->map(fn ($t) => ['type' => 'welfare', 'label' => 'Welfare ' . $t->transaction_type, 'member' => $t->account->member->first_name . ' ' . $t->account->member->last_name, 'amount' => $t->amount, 'date' => $t->created_at, 'icon' => 'bi-heart', 'color' => 'info']))
+                ->map(fn ($t) => ['type' => 'welfare', 'label' => 'Welfare ' . $t->transaction_type->label(), 'member' => $t->account->member->first_name . ' ' . $t->account->member->last_name, 'amount' => $t->amount, 'date' => $t->created_at, 'icon' => 'bi-heart', 'color' => 'info']))
             ->sortByDesc('date')->take(10)->values();
     }
 
