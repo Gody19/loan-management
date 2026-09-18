@@ -3,6 +3,19 @@
 @section('title', 'Welfare Account Details')
 
 @section('page-header')
+    @php
+        $actions = '<a href="' . route('welfare-accounts.index') . '" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>';
+        if ($account->status->value === 'active') {
+            $actions .= '<a href="' . route('welfare-accounts.contribute', $account) . '" class="btn btn-success">
+                <i class="bi bi-plus-circle me-1"></i> Contribute
+            </a>';
+            $actions .= '<a href="' . route('welfare-accounts.benefit', $account) . '" class="btn btn-warning">
+                <i class="bi bi-dash-circle me-1"></i> Benefit
+            </a>';
+        }
+    @endphp
     @include('layouts.components.page-header', [
         'title' => 'Account: ' . $account->account_number,
         'subtitle' => $account->member->full_name ?? '—' . ' | ' . $account->status->label(),
@@ -10,17 +23,7 @@
             ['label' => 'Member Welfare Accounts', 'url' => route('welfare-accounts.index')],
             ['label' => $account->account_number],
         ],
-        'actions' => '<a href="' . route('welfare-accounts.index') . '" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back
-        </a>
-        @if($account->status->value === "active")
-        <a href="' . route('welfare-accounts.contribute', $account) . '" class="btn btn-success">
-            <i class="bi bi-plus-circle me-1"></i> Contribute
-        </a>
-        <a href="' . route('welfare-accounts.benefit', $account) . '" class="btn btn-warning">
-            <i class="bi bi-dash-circle me-1"></i> Benefit
-        </a>
-        @endif'
+        'actions' => $actions,
     ])
 @endsection
 
