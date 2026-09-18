@@ -3,6 +3,29 @@
 @section('title', 'Loan Application ' . $application->application_number)
 
 @section('page-header')
+    @php
+        $csrf = '<input type="hidden" name="_token" value="' . csrf_token() . '">';
+        $actions = '<a href="' . route('loan-applications.index') . '" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>';
+        if ($application->status->value === 'draft') {
+            $actions .= '<a href="' . route('loan-applications.edit', $application) . '" class="btn btn-warning"><i class="bi bi-pencil me-1"></i> Edit</a>';
+            $actions .= '<form method="POST" action="' . route('loan-applications.submit', $application) . '" class="d-inline" data-confirm="Submit this application?">' . $csrf . '<button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i> Submit</button></form>';
+        }
+        if ($application->status->value === 'submitted') {
+            $actions .= '<form method="POST" action="' . route('loan-applications.review', $application) . '" class="d-inline" data-confirm="Move to review?">' . $csrf . '<button type="submit" class="btn btn-info text-white"><i class="bi bi-search me-1"></i> Review</button></form>';
+        }
+        if ($application->status->value === 'under_review') {
+            $actions .= '<form method="POST" action="' . route('loan-applications.approve', $application) . '" class="d-inline" data-confirm="Approve this application?">' . $csrf . '<button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Approve</button></form>';
+            $actions .= '<form method="POST" action="' . route('loan-applications.reject', $application) . '" class="d-inline">' . $csrf . '<div class="input-group input-group-sm" style="max-width:300px"><input type="text" name="rejection_reason" class="form-control" placeholder="Rejection reason..." required><button type="submit" class="btn btn-danger"><i class="bi bi-x-lg"></i></button></div></form>';
+        }
+        if (in_array($application->status->value, ['draft', 'submitted'])) {
+            $actions .= '<form method="POST" action="' . route('loan-applications.cancel', $application) . '" class="d-inline" data-confirm="Cancel this application?">' . $csrf . '<input type="hidden" name="cancellation_reason" value="Cancelled by user"><button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Cancel</button></form>';
+        }
+        if ($application->status->value === 'approved') {
+            $actions .= '<form method="POST" action="' . route('loans.create-from-application', $application) . '" class="d-inline" data-confirm="Create a loan from this approved application?">' . $csrf . '<button type="submit" class="btn btn-success"><i class="bi bi-cash-coin me-1"></i> Create Loan</button></form>';
+        }
+    @endphp
     @include('layouts.components.page-header', [
         'title' => 'Application ' . $application->application_number,
         'subtitle' => $application->member->full_name ?? '—' . ' | ' . $application->status->label(),
@@ -10,15 +33,7 @@
             ['label' => 'Loan Applications', 'url' => route('loan-applications.index')],
             ['label' => $application->application_number],
         ],
-        'actions' => '<a href="' . route('loan-applications.index') . '" class="btn btn-outline-secondary">
-            <i class="bi bi-arrow-left me-1"></i> Back
-        </a>'
-        . ($application->status->value === 'draft' ? '<a href="' . route('loan-applications.edit', $application) . '" class="btn btn-warning"><i class="bi bi-pencil me-1"></i> Edit</a>' : '')
-        . ($application->status->value === 'draft' ? '<form method="POST" action="' . route('loan-applications.submit', $application) . '" class="d-inline" data-confirm="Submit this application?">@csrf<button type="submit" class="btn btn-primary"><i class="bi bi-send me-1"></i> Submit</button></form>' : '')
-        . ($application->status->value === 'submitted' ? '<form method="POST" action="' . route('loan-applications.review', $application) . '" class="d-inline" data-confirm="Move to review?">@csrf<button type="submit" class="btn btn-info text-white"><i class="bi bi-search me-1"></i> Review</button></form>' : '')
-        . ($application->status->value === 'under_review' ? '<form method="POST" action="' . route('loan-applications.approve', $application) . '" class="d-inline" data-confirm="Approve this application?">@csrf<button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Approve</button></form><form method="POST" action="' . route('loan-applications.reject', $application) . '" class="d-inline">@csrf<div class="input-group input-group-sm" style="max-width:300px"><input type="text" name="rejection_reason" class="form-control" placeholder="Rejection reason..." required><button type="submit" class="btn btn-danger"><i class="bi bi-x-lg"></i></button></div></form>' : '')
-        . (in_array($application->status->value, ['draft', 'submitted']) ? '<form method="POST" action="' . route('loan-applications.cancel', $application) . '" class="d-inline" data-confirm="Cancel this application?">@csrf<input type="hidden" name="cancellation_reason" value="Cancelled by user"><button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Cancel</button></form>' : '')
-        . ($application->status->value === 'approved' ? '<form method="POST" action="' . route('loans.create-from-application', $application) . '" class="d-inline" data-confirm="Create a loan from this approved application?">@csrf<button type="submit" class="btn btn-success"><i class="bi bi-cash-coin me-1"></i> Create Loan</button></form>' : '')
+        'actions' => $actions,
     ])
 @endsection
 
