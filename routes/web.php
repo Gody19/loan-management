@@ -39,6 +39,9 @@ use App\Http\Controllers\AccountingPeriodController;
 use App\Http\Controllers\JournalEntryController;
 use App\Http\Controllers\AccountingReportController;
 use App\Http\Controllers\AccountingConfigurationController;
+use App\Http\Controllers\MemberLoanController;
+use App\Http\Controllers\MemberGuarantorController;
+use App\Http\Controllers\MemberRepaymentController;
 use App\Http\Controllers\LandingPageController;
 use Illuminate\Support\Facades\Route;
 
@@ -137,8 +140,57 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('welfare.contribute');
         Route::post('/welfare/benefit-request', [MemberPortalController::class, 'requestBenefit'])
             ->name('welfare.benefit-request');
-        Route::get('/loans', [MemberPortalController::class, 'loans'])
+        Route::get('/loans', [MemberLoanController::class, 'index'])
             ->name('loans');
+        Route::get('/loans/plans/{loanPlan}', [MemberLoanController::class, 'plan'])
+            ->name('loans.plan');
+        Route::get('/loans/eligibility/{loanPlan}', [MemberLoanController::class, 'eligibility'])
+            ->name('loans.eligibility');
+        Route::get('/loans/apply/{loanPlan}', [MemberLoanController::class, 'apply'])
+            ->name('loans.apply');
+        Route::post('/loans/apply/{loanPlan}', [MemberLoanController::class, 'store'])
+            ->name('loans.store');
+        Route::get('/loans/applications', [MemberLoanController::class, 'applications'])
+            ->name('loans.applications');
+        Route::get('/loans/applications/{loanApplication}', [MemberLoanController::class, 'application'])
+            ->name('loans.application');
+        Route::post('/loans/applications/{loanApplication}/cancel', [MemberLoanController::class, 'cancelApplication'])
+            ->name('loans.cancel');
+        Route::post('/loans/applications/{loanApplication}/submit', [MemberLoanController::class, 'submitApplication'])
+            ->name('loans.submit');
+        Route::post('/loans/applications/{loanApplication}/guarantors', [MemberLoanController::class, 'addGuarantor'])
+            ->name('loans.add-guarantor');
+        Route::delete('/loans/applications/{loanApplication}/guarantors/{guarantor}', [MemberLoanController::class, 'removeGuarantor'])
+            ->name('loans.remove-guarantor');
+        Route::post('/loans/applications/{loanApplication}/collaterals', [MemberLoanController::class, 'addCollateral'])
+            ->name('loans.add-collateral');
+        Route::delete('/loans/applications/{loanApplication}/collaterals/{collateral}', [MemberLoanController::class, 'removeCollateral'])
+            ->name('loans.remove-collateral');
+
+        // Guarantor Requests (member is the guarantor)
+        Route::get('/guarantor-requests', [MemberGuarantorController::class, 'index'])
+            ->name('guarantor.requests');
+        Route::get('/guarantor-requests/{guarantor}', [MemberGuarantorController::class, 'show'])
+            ->name('guarantor.request');
+        Route::post('/guarantor-requests/{guarantor}/accept', [MemberGuarantorController::class, 'accept'])
+            ->name('guarantor.accept');
+        Route::post('/guarantor-requests/{guarantor}/reject', [MemberGuarantorController::class, 'reject'])
+            ->name('guarantor.reject');
+
+        // Loan Repayments
+        Route::get('/loans/{loan}', [MemberRepaymentController::class, 'loanDetail'])
+            ->name('loans.show');
+        Route::get('/loans/{loan}/schedule', [MemberRepaymentController::class, 'repaymentSchedule'])
+            ->name('loans.schedule');
+        Route::get('/loans/{loan}/repay', [MemberRepaymentController::class, 'makePayment'])
+            ->name('loans.repay');
+        Route::post('/loans/{loan}/repay', [MemberRepaymentController::class, 'storeRepayment'])
+            ->name('loans.repay.store');
+        Route::get('/repayments', [MemberRepaymentController::class, 'repaymentHistory'])
+            ->name('repayments');
+        Route::get('/repayments/{repayment}', [MemberRepaymentController::class, 'showRepayment'])
+            ->name('repayments.show');
+
         Route::get('/transactions', [MemberPortalController::class, 'transactions'])
             ->name('transactions');
         Route::get('/notifications', [MemberPortalController::class, 'notifications'])

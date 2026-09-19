@@ -1160,7 +1160,8 @@ class MemberPortalTest extends TestCase
         $response = $this->get(route('member.loans'));
 
         $response->assertStatus(200);
-        $response->assertSee('No loans');
+        $response->assertSee('My Loans');
+        $response->assertSee('No loan applications yet');
     }
 
     public function test_transactions_page_shows_empty_state_when_no_transactions(): void

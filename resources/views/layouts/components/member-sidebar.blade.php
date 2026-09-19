@@ -51,9 +51,24 @@
             <span>My Welfare</span>
         </a>
 
-        <a href="{{ route('member.loans') }}" class="nav-link {{ request()->routeIs('member.loans') ? 'active' : '' }}">
+        <a href="{{ route('member.loans') }}" class="nav-link {{ request()->routeIs('member.loans*') ? 'active' : '' }}">
             <i class="bi bi-cash-coin"></i>
             <span>My Loans</span>
+        </a>
+
+        <a href="{{ route('member.loans.applications') }}" class="nav-link {{ request()->routeIs('member.loans.applications*') ? 'active' : '' }}">
+            <i class="bi bi-file-text"></i>
+            <span>Loan Applications</span>
+        </a>
+
+        <a href="{{ route('member.guarantor.requests') }}" class="nav-link {{ request()->routeIs('member.guarantor*') ? 'active' : '' }}">
+            <i class="bi bi-shield-check"></i>
+            <span>Guarantor Requests</span>
+        </a>
+
+        <a href="{{ route('member.repayments') }}" class="nav-link {{ request()->routeIs('member.repayments*') ? 'active' : '' }}">
+            <i class="bi bi-credit-card"></i>
+            <span>My Repayments</span>
         </a>
 
         {{-- Activity --}}

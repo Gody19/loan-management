@@ -152,6 +152,11 @@ class Member extends Model
         return $this->hasMany(LoanApplication::class);
     }
 
+    public function guarantorRequests(): HasMany
+    {
+        return $this->hasMany(LoanApplicationGuarantor::class, 'guarantor_member_id');
+    }
+
     public function repayments(): HasMany
     {
         return $this->hasMany(LoanRepayment::class);
