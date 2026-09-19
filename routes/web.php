@@ -192,6 +192,14 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         Route::get('/repayments/{repayment}', [MemberRepaymentController::class, 'showRepayment'])
             ->name('repayments.show');
 
+        // Loan Disbursements (member view)
+        Route::get('/disbursements', [MemberPortalController::class, 'disbursements'])
+            ->name('disbursements');
+
+        // Collections & Delinquency (member view - repayment schedule overview)
+        Route::get('/collections', [MemberPortalController::class, 'collections'])
+            ->name('collections');
+
         Route::get('/transactions', [MemberPortalController::class, 'transactions'])
             ->name('transactions');
         Route::get('/notifications', [MemberPortalController::class, 'notifications'])

@@ -20,6 +20,8 @@ class MemberDashboardService
 
     public function resolve(): array
     {
+        $this->member->load(['organization', 'branch', 'vicobaGroup']);
+
         return [
             'member' => $this->member,
             'savings' => $this->savingsSummary(),

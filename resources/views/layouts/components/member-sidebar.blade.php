@@ -51,14 +51,19 @@
             <span>My Welfare</span>
         </a>
 
-        <a href="{{ route('member.loans') }}" class="nav-link {{ request()->routeIs('member.loans*') ? 'active' : '' }}">
+        <a href="{{ route('member.loans') }}" class="nav-link {{ request()->routeIs('member.loans') ? 'active' : '' }}">
             <i class="bi bi-cash-coin"></i>
-            <span>My Loans</span>
+            <span>Loan Accounts</span>
         </a>
 
         <a href="{{ route('member.loans.applications') }}" class="nav-link {{ request()->routeIs('member.loans.applications*') ? 'active' : '' }}">
             <i class="bi bi-file-text"></i>
             <span>Loan Applications</span>
+        </a>
+
+        <a href="{{ route('member.disbursements') }}" class="nav-link {{ request()->routeIs('member.disbursements*') ? 'active' : '' }}">
+            <i class="bi bi-bank"></i>
+            <span>Disbursements</span>
         </a>
 
         <a href="{{ route('member.guarantor.requests') }}" class="nav-link {{ request()->routeIs('member.guarantor*') ? 'active' : '' }}">
@@ -69,6 +74,11 @@
         <a href="{{ route('member.repayments') }}" class="nav-link {{ request()->routeIs('member.repayments*') ? 'active' : '' }}">
             <i class="bi bi-credit-card"></i>
             <span>My Repayments</span>
+        </a>
+
+        <a href="{{ route('member.collections') }}" class="nav-link {{ request()->routeIs('member.collections*') ? 'active' : '' }}">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>Collections</span>
         </a>
 
         {{-- Activity --}}

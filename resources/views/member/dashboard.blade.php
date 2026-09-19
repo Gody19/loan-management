@@ -74,6 +74,49 @@
     </div>
 </div>
 
+{{-- My Organization Info --}}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card vicoba-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3"><i class="bi bi-building"></i></div>
+                    <div>
+                        <div class="stat-label">Organization</div>
+                        <div class="fw-semibold">{{ $member->organization?->name ?? 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card vicoba-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info bg-opacity-10 text-info me-3"><i class="bi bi-geo-alt"></i></div>
+                    <div>
+                        <div class="stat-label">Branch</div>
+                        <div class="fw-semibold">{{ $member->branch?->name ?? 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card vicoba-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success bg-opacity-10 text-success me-3"><i class="bi bi-diagram-3"></i></div>
+                    <div>
+                        <div class="stat-label">VICOBA Group</div>
+                        <div class="fw-semibold">{{ $member->vicobaGroup?->name ?? 'N/A' }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Next Payment --}}
 @if($loans['next_installment'])
 <div class="card vicoba-card mb-4">

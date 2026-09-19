@@ -381,6 +381,54 @@ class MemberPortalController extends Controller
         return view('member.loans', compact('member', 'loanDetails', 'completedLoans', 'recentRepayments'));
     }
 
+    // ==================== Disbursements ====================
+
+    public function disbursements(Request $request): View
+    {
+        $member = $request->user()->member;
+
+        $loanIds = $member->loans()->pluck('loans.id');
+
+        $disbursements = \App\Models\LoanDisbursement::whereIn('loan_id', $loanIds)
+            ->with('loan', 'paymentMethod', 'processor')
+            ->orderByDesc('disbursement_date')
+            ->get();
+
+        return view('member.disbursements', compact('member', 'disbursements'));
+    }
+
+    // ==================== Collections ====================
+
+    public function collections(Request $request): View
+    {
+        $member = $request->user()->member;
+
+        $loans = $member->loans()
+            ->with(['loanPlan', 'repaymentSchedule' => function ($q) {
+                $q->orderBy('installment_number');
+            }])
+            ->whereIn('status', ['active', 'pending_disbursement'])
+            ->get();
+
+        $loanSummaries = $loans->map(function ($loan) {
+            $pendingInstallments = $loan->repaymentSchedule
+                ->whereIn('status', ['pending', 'partial', 'overdue']);
+
+            $overdueInstallments = $loan->repaymentSchedule
+                ->where('status', 'overdue');
+
+            return [
+                'loan' => $loan,
+                'pending_installments' => $pendingInstallments,
+                'overdue_count' => $overdueInstallments->count(),
+                'next_due' => $pendingInstallments->first(),
+                'total_pending' => $pendingInstallments->sum('total_amount') - $pendingInstallments->sum('amount_paid'),
+            ];
+        });
+
+        return view('member.collections', compact('member', 'loanSummaries'));
+    }
+
     // ==================== Transactions ====================
 
     public function transactions(Request $request): View
