@@ -26,7 +26,7 @@ class StoreMemberRequest extends FormRequest
             'date_of_birth' => ['nullable', 'date', 'before:today'],
             'phone' => ['required', 'string', 'max:20'],
             'alternate_phone' => ['nullable', 'string', 'max:20'],
-            'email' => ['nullable', 'email', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'national_id' => ['nullable', 'string', 'max:50', 'unique:members,national_id'],
             'occupation' => ['nullable', 'string', 'max:100'],
             'employer_or_business' => ['nullable', 'string', 'max:255'],
@@ -82,6 +82,8 @@ class StoreMemberRequest extends FormRequest
             'joining_date.date' => 'Please provide a valid date.',
             'national_id.unique' => 'A member with this National ID already exists.',
             'email.email' => 'Please provide a valid email address.',
+            'email.required' => 'Email is required for portal access.',
+            'email.unique' => 'A user with this email already exists.',
         ];
     }
 }

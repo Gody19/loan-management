@@ -7,9 +7,13 @@ use App\Models\Member;
 use App\Models\MemberDocument;
 use App\Models\MemberNextOfKin;
 use App\Models\MemberStatusHistory;
+use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Spatie\Permission\Models\Role;
 
 class MemberService
 {
@@ -45,10 +49,27 @@ class MemberService
         });
     }
 
-    public function create(array $data, ?array $nextOfKinData = null, ?array $documentsData = null): Member
+    public function create(array $data, ?array $nextOfKinData = null, ?array $documentsData = null): array
     {
         return DB::transaction(function () use ($data, $nextOfKinData, $documentsData) {
             $data['member_number'] = $this->numberGenerator->generate();
+
+            $tempPassword = Str::random(12);
+
+            $user = User::create([
+                'fullname' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
+                'username' => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', ($data['first_name'] ?? '').($data['last_name'] ?? ''))).rand(100, 999),
+                'email' => $data['email'],
+                'phone' => $data['phone'] ?? null,
+                'nida_number' => $data['national_id'] ?? ('NIDA-'.Str::random(10)),
+                'password' => Hash::make($tempPassword),
+                'status' => \App\Enums\UserStatus::Active,
+                'is_active' => true,
+            ]);
+
+            $user->assignRole(Role::firstOrCreate(['name' => 'VICOBA Member', 'guard_name' => 'web']));
+
+            $data['user_id'] = $user->id;
 
             $member = Member::create($data);
 
@@ -64,7 +85,7 @@ class MemberService
 
             $this->auditService->log('member.created', $member, [], $member->toArray());
 
-            return $member;
+            return ['member' => $member, 'temp_password' => $tempPassword];
         });
     }
 

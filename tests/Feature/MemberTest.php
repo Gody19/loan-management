@@ -98,6 +98,7 @@ class MemberTest extends TestCase
             'last_name' => 'Doe',
             'gender' => 'male',
             'phone' => '+255712345678',
+            'email' => 'john.doe@example.com',
             'joining_date' => '2024-01-15',
         ], $overrides);
     }

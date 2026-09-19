@@ -83,10 +83,12 @@ class MemberController extends Controller
     {
         $this->authorize('create', Member::class);
 
-        $member = $this->memberService->create($request->validated());
+        $result = $this->memberService->create($request->validated());
+        $member = $result['member'];
+        $tempPassword = $result['temp_password'];
 
         return redirect()->route('members.show', $member)
-            ->with('success', 'Member "'.$member->full_name.'" created successfully. Member No: '.$member->member_number);
+            ->with('success', 'Member "'.$member->full_name.'" created successfully. Member No: '.$member->member_number.'. Portal credentials: '.$request->email.' / '.$tempPassword);
     }
 
     public function show(Member $member)
