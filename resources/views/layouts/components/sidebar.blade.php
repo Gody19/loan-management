@@ -208,6 +208,11 @@
                     <span>Collections & Delinquency</span>
                 </a>
                 @endif
+                @if(auth()->user()->can('loan-repayments.create'))
+                <a href="{{ route('loan-repayments-collection.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-repayments-collection.*') ? 'active' : '' }}">
+                    <span>Record Payment</span>
+                </a>
+                @endif
             </div>
         </div>
         @endif

@@ -32,6 +32,7 @@ use App\Http\Controllers\LoanApprovalLevelController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\LoanDisbursementController;
 use App\Http\Controllers\LoanRepaymentController;
+use App\Http\Controllers\LoanRepaymentCollectionController;
 use App\Http\Controllers\LoanCollectionController;
 use App\Http\Controllers\WelfareTransactionController;
 use App\Http\Controllers\ChartOfAccountController;
@@ -375,6 +376,18 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('loan-repayments.show');
     Route::post('/loan-repayments/{loanRepayment}/reverse', [LoanRepaymentController::class, 'reverse'])
         ->name('loan-repayments.reverse');
+
+    // Loan Repayment Collection (on behalf of members)
+    Route::get('/loan-repayments-collection', [LoanRepaymentCollectionController::class, 'index'])
+        ->name('loan-repayments-collection.index');
+    Route::get('/loan-repayments-collection/search-members', [LoanRepaymentCollectionController::class, 'searchMembers'])
+        ->name('loan-repayments-collection.search-members');
+    Route::get('/loan-repayments-collection/{member}/loans', [LoanRepaymentCollectionController::class, 'memberLoans'])
+        ->name('loan-repayments-collection.member-loans');
+    Route::get('/loan-repayments-collection/{loan}/repayment/create', [LoanRepaymentCollectionController::class, 'createRepayment'])
+        ->name('loan-repayments-collection.create-repayment');
+    Route::post('/loan-repayments-collection/{loan}/repayment', [LoanRepaymentCollectionController::class, 'storeRepayment'])
+        ->name('loan-repayments-collection.store-repayment');
 
     // Loan Collections & Delinquency
     Route::get('/loan-collections', [LoanCollectionController::class, 'index'])
