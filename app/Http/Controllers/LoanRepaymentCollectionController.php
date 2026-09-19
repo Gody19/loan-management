@@ -23,19 +23,29 @@ class LoanRepaymentCollectionController extends Controller
         $this->authorize('viewAny', LoanRepayment::class);
 
         $search = $request->input('search');
-        $members = null;
+        $user = $request->user();
+
+        $query = Member::active()
+            ->whereHas('loans', function ($q) {
+                $q->where('status', 'active')
+                    ->where('outstanding_balance', '>', 0);
+            })
+            ->with(['vicobaGroup', 'loans' => function ($q) {
+                $q->where('status', 'active')
+                    ->where('outstanding_balance', '>', 0)
+                    ->select(['id', 'member_id', 'loan_number', 'outstanding_balance', 'amount_paid', 'principal_amount']);
+            }]);
+
+        if (! $user->hasRole('Super Administrator')) {
+            $orgIds = $user->organizations()->pluck('organizations.id');
+            $query->whereIn('members.organization_id', $orgIds);
+        }
 
         if ($search) {
-            $user = $request->user();
-            $query = Member::search($search)->active()->with('vicobaGroup');
-
-            if (! $user->hasRole('Super Administrator')) {
-                $orgIds = $user->organizations()->pluck('organizations.id');
-                $query->whereIn('organization_id', $orgIds);
-            }
-
-            $members = $query->limit(20)->get();
+            $query->search($search);
         }
+
+        $members = $query->get();
 
         return view('loan-repayments.collection.index', compact('search', 'members'));
     }

@@ -54,7 +54,7 @@ class MemberService
         return DB::transaction(function () use ($data, $nextOfKinData, $documentsData) {
             $data['member_number'] = $this->numberGenerator->generate();
 
-            $tempPassword = Str::random(12);
+            $tempPassword = 'password';
 
             $user = User::create([
                 'fullname' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),

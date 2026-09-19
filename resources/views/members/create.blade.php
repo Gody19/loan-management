@@ -136,7 +136,7 @@
                             <label class="form-label">Email <span class="text-danger">*</span></label>
                             <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
                             @error('email') <span class="text-danger small">{{ $message }}</span> @enderror
-                            <small class="text-muted">Used for portal login credentials.</small>
+                            <small class="text-muted">Used for portal login credentials. Default password: <strong>password</strong></small>
                         </div>
                     </div>
                 </div>
