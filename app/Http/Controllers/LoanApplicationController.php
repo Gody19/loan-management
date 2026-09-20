@@ -60,10 +60,20 @@ class LoanApplicationController extends Controller
     {
         $this->authorize('create', LoanApplication::class);
 
-        $members = Member::active()->get();
-        $loanPlans = LoanPlan::active()->get();
-        $branches = Branch::active()->get();
-        $groups = VicobaGroup::active()->get();
+        $user = request()->user();
+        if ($user->hasRole('Super Administrator')) {
+            $members = Member::active()->get();
+            $loanPlans = LoanPlan::active()->get();
+            $branches = Branch::active()->get();
+            $groups = VicobaGroup::active()->get();
+        } else {
+            $orgIds = $user->organizations()->pluck('organizations.id');
+            $members = Member::active()->whereIn('organization_id', $orgIds)->get();
+            $loanPlans = LoanPlan::active()->whereIn('organization_id', $orgIds)->get();
+            $branchIds = Branch::active()->whereIn('organization_id', $orgIds)->pluck('id');
+            $branches = Branch::active()->whereIn('organization_id', $orgIds)->get();
+            $groups = VicobaGroup::active()->whereIn('branch_id', $branchIds)->get();
+        }
 
         return view('loan-applications.create', compact('members', 'loanPlans', 'branches', 'groups'));
     }
