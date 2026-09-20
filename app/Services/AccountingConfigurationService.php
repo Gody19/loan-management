@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\DB;
 
 class AccountingConfigurationService
 {
+    public function __construct(
+        private readonly ChartOfAccountsService $chartService,
+    ) {}
+
     public const MAPPING_KEYS = [
         'cash_on_hand' => 'Cash on Hand',
         'bank_account' => 'Bank Account',
@@ -57,6 +61,14 @@ class AccountingConfigurationService
     public function getAccountId(int $organizationId, string $key): int
     {
         $account = $this->getMapping($organizationId, $key);
+        if (!$account) {
+            $chartExists = \App\Models\ChartOfAccount::where('organization_id', $organizationId)->exists();
+            if (!$chartExists) {
+                $this->chartService->initializeDefaultChart($organizationId);
+            }
+            $this->initializeDefaultMappings($organizationId);
+            $account = $this->getMapping($organizationId, $key);
+        }
         if (!$account) {
             throw new \InvalidArgumentException("Account mapping not configured for: {$key}. Please configure accounting settings.");
         }
