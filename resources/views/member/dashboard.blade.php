@@ -31,7 +31,7 @@
                     <i class="bi bi-cash-coin me-1"></i> Apply for Loan
                 </a>
                 @if($loans['active_count'] > 0)
-                    <a href="{{ route('member.loans.show', $loans['all_loans']->firstWhere(fn($l) => in_array($l->status->value, ['active', 'disbursed', 'pending_disbursement']))) }}" class="btn btn-outline-success btn-sm">
+                    <a href="{{ route('member.repayment-schedule') }}" class="btn btn-outline-success btn-sm">
                         <i class="bi bi-eye me-1"></i> View Active Loan
                     </a>
                 @endif
@@ -243,7 +243,7 @@
     </div>
     <div class="col-md-3 col-6">
         @if($loans['active_count'] > 0)
-            <a href="{{ route('member.loans.show', $loans['all_loans']->firstWhere(fn($l) => in_array($l->status->value, ['active', 'disbursed']))) }}" class="card vicoba-card text-decoration-none h-100">
+            <a href="{{ route('member.repayment-schedule') }}" class="card vicoba-card text-decoration-none h-100">
                 <div class="card-body text-center">
                     <i class="bi bi-calendar3 fs-3 text-success d-block mb-1"></i>
                     <div class="fw-semibold small">View Schedule</div>
