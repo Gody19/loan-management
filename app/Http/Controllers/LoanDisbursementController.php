@@ -64,11 +64,13 @@ class LoanDisbursementController extends Controller
         }
     }
 
-    public function show(LoanDisbursement $disbursement)
+    public function show(LoanDisbursement $loanDisbursement)
     {
-        $this->authorize('view', $disbursement);
+        $this->authorize('view', $loanDisbursement);
 
-        $disbursement->load(['loan.member', 'loan.loanPlan', 'paymentMethod', 'processor']);
+        $loanDisbursement->load(['loan.member', 'loan.loanPlan', 'paymentMethod', 'processor']);
+
+        $disbursement = $loanDisbursement;
 
         return view('loans.disbursements.show', compact('disbursement'));
     }
