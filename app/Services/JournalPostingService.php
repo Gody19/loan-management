@@ -240,7 +240,14 @@ class JournalPostingService
             ->first();
 
         if (!$period) {
-            throw new \InvalidArgumentException("No open accounting period for date: {$date}.");
+            $year = (int) date('Y', strtotime($date));
+            $period = AccountingPeriod::create([
+                'organization_id' => $organizationId,
+                'name' => "FY {$year}",
+                'start_date' => "{$year}-01-01",
+                'end_date' => "{$year}-12-31",
+                'status' => 'open',
+            ]);
         }
 
         return $period;
