@@ -10,7 +10,10 @@ class LoanDisbursementPolicy
 {
     public function viewAny(User $auth): bool
     {
-        return $auth->can('loans.view');
+        if ($auth->hasRole('Super Administrator')) {
+            return true;
+        }
+        return $auth->can('loans.view') || $auth->hasRole('Organization Administrator');
     }
 
     public function view(User $auth, LoanDisbursement $disbursement): bool
