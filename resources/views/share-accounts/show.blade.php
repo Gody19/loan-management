@@ -5,7 +5,7 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Account: ' . $account->account_number,
-        'subtitle' => $account->member->full_name ?? '—' . ' | ' . $account->status->label(),
+        'subtitle' => ($account->member->full_name ?? '—') . ' | ' . $account->status->label(),
         'breadcrumb' => [
             ['label' => 'Member Share Accounts', 'url' => route('share-accounts.index')],
             ['label' => $account->account_number],

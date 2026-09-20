@@ -18,7 +18,7 @@
     @endphp
     @include('layouts.components.page-header', [
         'title' => 'Account: ' . $account->account_number,
-        'subtitle' => $account->member->full_name ?? '—' . ' | ' . $account->status->label(),
+        'subtitle' => ($account->member->full_name ?? '—') . ' | ' . $account->status->label(),
         'breadcrumb' => [
             ['label' => 'Member Welfare Accounts', 'url' => route('welfare-accounts.index')],
             ['label' => $account->account_number],

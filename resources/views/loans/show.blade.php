@@ -5,7 +5,7 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Loan ' . $loan->loan_number,
-        'subtitle' => $loan->member->full_name ?? '—' . ' | ' . $loan->status->label(),
+        'subtitle' => ($loan->member->full_name ?? '—') . ' | ' . $loan->status->label(),
         'breadcrumb' => [
             ['label' => 'Loans', 'url' => route('loans.index')],
             ['label' => $loan->loan_number],

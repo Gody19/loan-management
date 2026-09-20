@@ -28,7 +28,7 @@
     @endphp
     @include('layouts.components.page-header', [
         'title' => 'Application ' . $application->application_number,
-        'subtitle' => $application->member->full_name ?? '—' . ' | ' . $application->status->label(),
+        'subtitle' => ($application->member->full_name ?? '—') . ' | ' . $application->status->label(),
         'breadcrumb' => [
             ['label' => 'Loan Applications', 'url' => route('loan-applications.index')],
             ['label' => $application->application_number],

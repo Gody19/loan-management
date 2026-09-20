@@ -5,7 +5,7 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Disbursement ' . $disbursement->disbursement_number,
-        'subtitle' => $disbursement->loan->loan_number ?? '—' . ' | ' . $disbursement->status->label(),
+        'subtitle' => ($disbursement->loan->loan_number ?? '—') . ' | ' . $disbursement->status->label(),
         'breadcrumb' => [
             ['label' => 'Disbursements', 'url' => route('loan-disbursements.index')],
             ['label' => $disbursement->disbursement_number],
