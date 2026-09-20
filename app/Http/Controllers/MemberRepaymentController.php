@@ -211,7 +211,7 @@ class MemberRepaymentController extends Controller
         $member = $request->user()->member;
 
         $activeLoans = $member->loans()
-            ->whereIn('status', ['active', 'disbursed'])
+            ->whereIn('status', ['active', 'disbursed', 'pending_disbursement'])
             ->with(['loanPlan', 'repaymentSchedule' => function ($q) {
                 $q->orderBy('installment_number');
             }])

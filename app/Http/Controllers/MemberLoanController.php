@@ -38,7 +38,7 @@ class MemberLoanController extends Controller
             ->get();
 
         $activeLoans = $member->loans()
-            ->whereIn('status', ['active', 'disbursed'])
+            ->whereIn('status', ['active', 'disbursed', 'pending_disbursement'])
             ->with('loanPlan')
             ->get();
 

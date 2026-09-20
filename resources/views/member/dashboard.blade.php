@@ -31,7 +31,7 @@
                     <i class="bi bi-cash-coin me-1"></i> Apply for Loan
                 </a>
                 @if($loans['active_count'] > 0)
-                    <a href="{{ route('member.loans.show', $loans['all_loans']->firstWhere(fn($l) => in_array($l->status->value, ['active', 'disbursed']))) }}" class="btn btn-outline-success btn-sm">
+                    <a href="{{ route('member.loans.show', $loans['all_loans']->firstWhere(fn($l) => in_array($l->status->value, ['active', 'disbursed', 'pending_disbursement']))) }}" class="btn btn-outline-success btn-sm">
                         <i class="bi bi-eye me-1"></i> View Active Loan
                     </a>
                 @endif
@@ -276,13 +276,29 @@
     </div>
 </div>
 
+{{-- Pending Disbursement Notice --}}
+@php
+    $pendingDisbursementLoans = $loans['all_loans']->filter(fn ($l) => $l->status->value === 'pending_disbursement');
+@endphp
+@if($pendingDisbursementLoans->count() > 0)
+@foreach($pendingDisbursementLoans as $pdl)
+<div class="alert alert-warning d-flex align-items-center mb-4" role="alert">
+    <i class="bi bi-hourglass-split fs-4 me-3"></i>
+    <div>
+        <strong>Loan {{ $pdl->loan_number }} is pending disbursement.</strong><br>
+        <small>Your loan application has been approved. The disbursement is being processed. Once confirmed, your repayment schedule will become active.</small>
+    </div>
+</div>
+@endforeach
+@endif
+
 {{-- Upcoming Payments --}}
 @if($loans['upcoming_payments']->count() > 0)
 <div class="card vicoba-card mb-4">
     <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
         <h6 class="mb-0 fw-semibold"><i class="bi bi-calendar-event me-2 text-danger"></i>Upcoming Payments</h6>
         @if($loans['active_count'] > 0)
-            <a href="{{ route('member.loans.schedule', $loans['all_loans']->firstWhere(fn($l) => in_array($l->status->value, ['active', 'disbursed']))) }}" class="btn btn-outline-primary btn-sm">View Full Schedule</a>
+            <a href="{{ route('member.repayment-schedule') }}" class="btn btn-outline-primary btn-sm">View Full Schedule</a>
         @endif
     </div>
     <div class="card-body p-0">

@@ -80,7 +80,7 @@ class MemberDashboardService
             ->with('loanPlan')
             ->get();
 
-        $activeLoans = $loans->filter(fn ($loan) => in_array($loan->status->value, ['active', 'disbursed']));
+        $activeLoans = $loans->filter(fn ($loan) => in_array($loan->status->value, ['active', 'disbursed', 'pending_disbursement']));
         $completedLoans = $loans->filter(fn ($loan) => $loan->status->value === 'completed');
 
         $totalPaid = (float) $activeLoans->sum('amount_paid');
@@ -136,7 +136,7 @@ class MemberDashboardService
     private function upcomingPayments(): \Illuminate\Support\Collection
     {
         $activeLoans = $this->member->loans()
-            ->whereIn('status', ['active', 'disbursed'])
+            ->whereIn('status', ['active', 'disbursed', 'pending_disbursement'])
             ->pluck('id');
 
         if ($activeLoans->isEmpty()) {
