@@ -30,6 +30,8 @@ class MemberDashboardService
             'loans' => $this->loanSummary(),
             'upcomingPayments' => $this->upcomingPayments(),
             'recentTransactions' => $this->recentTransactions(),
+            'pendingApplications' => $this->pendingApplications(),
+            'pendingGuarantorRequests' => $this->pendingGuarantorRequests(),
         ];
     }
 
@@ -188,5 +190,19 @@ class MemberDashboardService
             ->take(10)
             ->values()
             ->toArray();
+    }
+
+    private function pendingApplications(): int
+    {
+        return $this->member->loanApplications()
+            ->whereIn('status', ['draft', 'submitted', 'under_review'])
+            ->count();
+    }
+
+    private function pendingGuarantorRequests(): int
+    {
+        return \App\Models\LoanApplicationGuarantor::where('member_id', $this->member->id)
+            ->where('status', \App\Enums\GuarantorStatus::Pending)
+            ->count();
     }
 }

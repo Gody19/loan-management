@@ -205,4 +205,23 @@ class MemberRepaymentController extends Controller
 
         return view('member.repayments.show', compact('member', 'repayment'));
     }
+
+    public function mySchedule(Request $request): View
+    {
+        $member = $request->user()->member;
+
+        $activeLoans = $member->loans()
+            ->whereIn('status', ['active', 'disbursed'])
+            ->with(['loanPlan', 'repaymentSchedule' => function ($q) {
+                $q->orderBy('installment_number');
+            }])
+            ->get();
+
+        $scheduleSummary = null;
+        if ($activeLoans->count() === 1) {
+            $scheduleSummary = $this->scheduleService->getScheduleSummary($activeLoans->first());
+        }
+
+        return view('member.my-schedule', compact('member', 'activeLoans', 'scheduleSummary'));
+    }
 }

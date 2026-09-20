@@ -206,6 +206,24 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('transactions');
         Route::get('/notifications', [MemberPortalController::class, 'notifications'])
             ->name('notifications');
+
+        // Statements (unified member financial statement)
+        Route::get('/statements', [MemberPortalController::class, 'statements'])
+            ->name('statements');
+
+        // Repayment Schedule (member's active loan schedule)
+        Route::get('/repayment-schedule', [MemberRepaymentController::class, 'mySchedule'])
+            ->name('repayment-schedule');
+
+        // Settings
+        Route::get('/settings', [MemberPortalController::class, 'settings'])
+            ->name('settings');
+        Route::post('/settings/password', [MemberPortalController::class, 'updatePassword'])
+            ->name('settings.password');
+
+        // Help & Support
+        Route::get('/help', [MemberPortalController::class, 'help'])
+            ->name('help');
     });
 
     // User Management

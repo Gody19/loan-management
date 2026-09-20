@@ -484,4 +484,118 @@ class MemberPortalController extends Controller
 
         return view('member.notifications', compact('member'));
     }
+
+    // ==================== Statements ====================
+
+    public function statements(Request $request): View
+    {
+        $member = $request->user()->member;
+        $orgId = $member->organization_id;
+
+        // Savings summary
+        $savingsAccounts = $member->savingsAccounts()->with('product')->get();
+        $savingsSummary = [
+            'total_balance' => (float) $savingsAccounts->sum('current_balance'),
+            'accounts' => $savingsAccounts,
+        ];
+
+        // Shares summary
+        $shareAccounts = $member->shareAccounts()->with('product')->get();
+        $sharesSummary = [
+            'total_shares' => (int) $shareAccounts->sum('total_shares'),
+            'total_value' => (float) $shareAccounts->sum('total_value'),
+            'accounts' => $shareAccounts,
+        ];
+
+        // Welfare summary
+        $welfareAccounts = $member->welfareAccounts()->with('fund')->get();
+        $welfareSummary = [
+            'total_balance' => (float) $welfareAccounts->sum('current_balance'),
+            'accounts' => $welfareAccounts,
+        ];
+
+        // Loan summary
+        $loans = $member->loans()->with('loanPlan')->get();
+        $activeLoans = $loans->filter(fn ($l) => in_array($l->status->value, ['active', 'disbursed']));
+        $completedLoans = $loans->filter(fn ($l) => $l->status->value === 'completed');
+
+        $loanSummary = [
+            'total_disbursed' => (float) $activeLoans->sum('disbursed_amount'),
+            'total_outstanding' => (float) $activeLoans->sum('outstanding_balance'),
+            'total_paid' => (float) $activeLoans->sum('amount_paid'),
+            'completed_count' => $completedLoans->count(),
+            'active_count' => $activeLoans->count(),
+        ];
+
+        // Recent transactions (last 20)
+        $memberId = $member->id;
+        $recentTransactions = \Illuminate\Support\Facades\DB::table('savings_transactions')
+            ->where('member_id', $memberId)->where('organization_id', $orgId)
+            ->select('id', 'transaction_number as reference', 'transaction_type as type', 'amount', 'transaction_date as date', 'status', \Illuminate\Support\Facades\DB::raw("'savings' as category"))
+            ->limit(5)->get()
+            ->concat(
+                \Illuminate\Support\Facades\DB::table('share_transactions')
+                    ->where('member_id', $memberId)->where('organization_id', $orgId)
+                    ->select('id', 'transaction_number as reference', 'transaction_type as type', 'amount', 'transaction_date as date', 'status', \Illuminate\Support\Facades\DB::raw("'shares' as category"))
+                    ->limit(5)->get()
+            )
+            ->concat(
+                \Illuminate\Support\Facades\DB::table('welfare_transactions')
+                    ->where('member_id', $memberId)->where('organization_id', $orgId)
+                    ->select('id', 'transaction_number as reference', 'transaction_type as type', 'amount', 'transaction_date as date', 'status', \Illuminate\Support\Facades\DB::raw("'welfare' as category"))
+                    ->limit(5)->get()
+            )
+            ->concat(
+                \Illuminate\Support\Facades\DB::table('loan_repayments')
+                    ->where('member_id', $memberId)->where('organization_id', $orgId)
+                    ->select('id', 'repayment_number as reference', \Illuminate\Support\Facades\DB::raw("'repayment' as type"), 'amount', 'payment_date as date', 'status', \Illuminate\Support\Facades\DB::raw("'loan_repayment' as category"))
+                    ->limit(5)->get()
+            )
+            ->sortByDesc('date')
+            ->take(20)
+            ->values();
+
+        return view('member.statements', compact(
+            'member', 'savingsSummary', 'sharesSummary', 'welfareSummary', 'loanSummary', 'recentTransactions'
+        ));
+    }
+
+    // ==================== Settings ====================
+
+    public function settings(Request $request): View
+    {
+        $user = $request->user();
+        $member = $user->member;
+
+        return view('member.settings', compact('user', 'member'));
+    }
+
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (! \Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
+            return back()->withErrors(['current_password' => 'The current password is incorrect.']);
+        }
+
+        $user->update([
+            'password' => $request->password,
+        ]);
+
+        return back()->with('success', 'Your password has been updated successfully.');
+    }
+
+    // ==================== Help & Support ====================
+
+    public function help(Request $request): View
+    {
+        $member = $request->user()->member;
+
+        return view('member.help', compact('member'));
+    }
 }

@@ -107,6 +107,82 @@
     </div>
 </div>
 
+{{-- Next Payment & Application Status --}}
+<div class="row g-3 mb-4">
+    <div class="col-xl-3 col-md-6">
+        <div class="card vicoba-card h-100 border-start border-dark border-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-dark bg-opacity-10 text-dark me-3"><i class="bi bi-calendar-event"></i></div>
+                    <div>
+                        <div class="stat-label">Next Installment</div>
+                        @if($loans['next_installment'])
+                            <div class="stat-value">TSh {{ number_format($loans['next_installment']->total_amount, 0) }}</div>
+                            <small class="text-muted">Due {{ \Carbon\Carbon::parse($loans['next_installment']->due_date)->format('d M Y') }}</small>
+                        @else
+                            <div class="stat-value text-muted">—</div>
+                            <small class="text-muted">No pending installments</small>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card vicoba-card h-100 border-start border-secondary border-4">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-secondary bg-opacity-10 text-secondary me-3"><i class="bi bi-file-text"></i></div>
+                    <div>
+                        <div class="stat-label">Pending Applications</div>
+                        <div class="stat-value">{{ $pendingApplications }}</div>
+                        @if($pendingApplications > 0)
+                            <small class="text-muted">Awaiting review</small>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <a href="{{ route('member.guarantor.requests') }}" class="text-decoration-none">
+            <div class="card vicoba-card h-100 border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-info bg-opacity-10 text-info me-3"><i class="bi bi-shield-check"></i></div>
+                        <div>
+                            <div class="stat-label">Guarantor Requests</div>
+                            <div class="stat-value">{{ $pendingGuarantorRequests }}</div>
+                            @if($pendingGuarantorRequests > 0)
+                                <small class="text-danger">Pending your response</small>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <a href="{{ route('member.repayment-schedule') }}" class="text-decoration-none">
+            <div class="card vicoba-card h-100 border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-primary bg-opacity-10 text-primary me-3"><i class="bi bi-calendar3"></i></div>
+                        <div>
+                            <div class="stat-label">Repayment Schedule</div>
+                            <div class="stat-value">{{ $loans['active_count'] }}</div>
+                            <small class="text-muted">Active loan(s)</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
 {{-- Savings & Shares Summary --}}
 <div class="row g-3 mb-4">
     <div class="col-xl-4 col-md-6">
