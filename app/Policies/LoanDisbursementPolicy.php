@@ -21,6 +21,9 @@ class LoanDisbursementPolicy
         if ($auth->hasRole('Super Administrator')) {
             return true;
         }
+        if (! $auth->can('loans.view') && ! $auth->hasRole('Organization Administrator')) {
+            return false;
+        }
         if (! $disbursement->organization_id) {
             return false;
         }
