@@ -20,7 +20,7 @@ class JournalEntry extends Model
     protected function casts(): array
     {
         return [
-            'entry_date' => 'date',
+            'entry_date' => 'date:Y-m-d',
             'status' => JournalEntryStatus::class,
             'posted_at' => 'datetime',
             'reversed_at' => 'datetime',
