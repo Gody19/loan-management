@@ -51,6 +51,66 @@ class MemberRepaymentController extends Controller
         return view('member.loans.schedule', compact('member', 'loan', 'scheduleSummary'));
     }
 
+    public function statement(Request $request, Loan $loan): View
+    {
+        $member = $request->user()->member;
+
+        if ($loan->member_id !== $member->id) {
+            abort(404);
+        }
+
+        $loan->load(['loanPlan']);
+
+        $repayments = LoanRepayment::where('loan_id', $loan->id)
+            ->where('member_id', $member->id)
+            ->with('allocations.installment')
+            ->orderBy('payment_date', 'asc')
+            ->get();
+
+        $statementLines = collect();
+
+        $statementLines->push([
+            'date' => $loan->disbursement_date?->format('Y-m-d'),
+            'description' => 'Loan Disbursement',
+            'debit' => (float) $loan->disbursed_amount,
+            'credit' => 0,
+            'balance' => (float) $loan->disbursed_amount,
+            'reference' => $loan->loan_number,
+        ]);
+
+        $runningBalance = (float) $loan->disbursed_amount;
+
+        foreach ($repayments as $repayment) {
+            if ($repayment->status->value !== 'posted') {
+                $statementLines->push([
+                    'date' => $repayment->payment_date?->format('Y-m-d'),
+                    'description' => 'Payment ('.$repayment->status->label().')',
+                    'debit' => 0,
+                    'credit' => (float) $repayment->amount,
+                    'balance' => $runningBalance,
+                    'reference' => $repayment->repayment_number,
+                    'reversed' => true,
+                ]);
+                continue;
+            }
+
+            $runningBalance -= (float) $repayment->amount;
+
+            $statementLines->push([
+                'date' => $repayment->payment_date?->format('Y-m-d'),
+                'description' => 'Repayment',
+                'debit' => 0,
+                'credit' => (float) $repayment->amount,
+                'balance' => max(0, $runningBalance),
+                'reference' => $repayment->repayment_number,
+            ]);
+        }
+
+        $statementLines = $statementLines->sortBy('date')->values();
+
+        return view('member.loans.statement', compact('member', 'loan', 'statementLines'));
+    }
+
     public function makePayment(Request $request, Loan $loan): View
     {
         $member = $request->user()->member;

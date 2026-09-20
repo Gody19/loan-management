@@ -186,4 +186,49 @@
         @endif
     </div>
 </div>
+
+{{-- Completed Loans --}}
+@if(isset($completedLoans) && $completedLoans->count() > 0)
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-check-circle me-2 text-success"></i>Completed Loans ({{ $completedLoans->count() }})</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Loan #</th>
+                        <th>Plan</th>
+                        <th class="text-end">Principal</th>
+                        <th class="text-end">Total Paid</th>
+                        <th>Status</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($completedLoans as $loan)
+                        <tr>
+                            <td><span class="badge bg-primary">{{ $loan->loan_number }}</span></td>
+                            <td>{{ $loan->loanPlan->name ?? '—' }}</td>
+                            <td class="text-end">TSh {{ number_format($loan->principal_amount, 0) }}</td>
+                            <td class="text-end text-success">TSh {{ number_format($loan->amount_paid, 0) }}</td>
+                            <td>
+                                <span class="badge bg-{{ $loan->status->value === 'completed' ? 'success' : 'secondary' }}">
+                                    {{ $loan->status->label() }}
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ route('member.loans.show', $loan) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+@endif
 @endsection

@@ -42,7 +42,13 @@ class MemberLoanController extends Controller
             ->with('loanPlan')
             ->get();
 
-        return view('member.loans.index', compact('member', 'plans', 'applications', 'activeLoans'));
+        $completedLoans = $member->loans()
+            ->whereIn('status', ['completed', 'cancelled'])
+            ->with('loanPlan')
+            ->latest()
+            ->get();
+
+        return view('member.loans.index', compact('member', 'plans', 'applications', 'activeLoans', 'completedLoans'));
     }
 
     public function plan(Request $request, LoanPlan $loanPlan): View

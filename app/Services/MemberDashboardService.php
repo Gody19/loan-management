@@ -28,6 +28,7 @@ class MemberDashboardService
             'shares' => $this->sharesSummary(),
             'welfare' => $this->welfareSummary(),
             'loans' => $this->loanSummary(),
+            'upcomingPayments' => $this->upcomingPayments(),
             'recentTransactions' => $this->recentTransactions(),
         ];
     }
@@ -78,24 +79,75 @@ class MemberDashboardService
             ->get();
 
         $activeLoans = $loans->filter(fn ($loan) => in_array($loan->status->value, ['active', 'disbursed']));
+        $completedLoans = $loans->filter(fn ($loan) => $loan->status->value === 'completed');
 
+        $totalPaid = (float) $activeLoans->sum('amount_paid');
+        $totalOutstanding = (float) $activeLoans->sum('outstanding_balance');
+
+        $overdueAmount = 0;
+        $overdueInstallments = 0;
         $nextInstallment = null;
+        $upcomingPayments = collect();
+
         if ($activeLoans->isNotEmpty()) {
             $loanIds = $activeLoans->pluck('id');
+
+            $overdueAmount = (float) DB::table('loan_repayment_schedules')
+                ->whereIn('loan_id', $loanIds)
+                ->where('status', 'overdue')
+                ->sum('outstanding_amount');
+
+            $overdueInstallments = (int) DB::table('loan_repayment_schedules')
+                ->whereIn('loan_id', $loanIds)
+                ->where('status', 'overdue')
+                ->count();
+
             $nextInstallment = DB::table('loan_repayment_schedules')
                 ->whereIn('loan_id', $loanIds)
                 ->where('status', 'pending')
                 ->where('due_date', '>=', now()->toDateString())
                 ->orderBy('due_date')
                 ->first();
+
+            $upcomingPayments = DB::table('loan_repayment_schedules')
+                ->whereIn('loan_id', $loanIds)
+                ->whereIn('status', ['pending', 'partial', 'overdue'])
+                ->where('due_date', '>=', now()->toDateString())
+                ->orderBy('due_date')
+                ->limit(5)
+                ->get();
         }
 
         return [
             'active_count' => $activeLoans->count(),
-            'total_outstanding' => (float) $activeLoans->sum('outstanding_balance'),
+            'completed_count' => $completedLoans->count(),
+            'total_outstanding' => $totalOutstanding,
+            'total_paid' => $totalPaid,
+            'overdue_amount' => $overdueAmount,
+            'overdue_installments' => $overdueInstallments,
             'next_installment' => $nextInstallment,
+            'upcoming_payments' => $upcomingPayments,
             'all_loans' => $loans,
         ];
+    }
+
+    private function upcomingPayments(): \Illuminate\Support\Collection
+    {
+        $activeLoans = $this->member->loans()
+            ->whereIn('status', ['active', 'disbursed'])
+            ->pluck('id');
+
+        if ($activeLoans->isEmpty()) {
+            return collect();
+        }
+
+        return DB::table('loan_repayment_schedules')
+            ->whereIn('loan_id', $activeLoans)
+            ->whereIn('status', ['pending', 'partial', 'overdue'])
+            ->where('due_date', '>=', now()->toDateString())
+            ->orderBy('due_date')
+            ->limit(5)
+            ->get();
     }
 
     private function recentTransactions(): array

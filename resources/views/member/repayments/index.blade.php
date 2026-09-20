@@ -64,6 +64,8 @@
                             <th class="text-end">Amount</th>
                             <th class="text-end">Principal</th>
                             <th class="text-end">Interest</th>
+                            <th class="text-end">Fees</th>
+                            <th>Reference</th>
                             <th>Method</th>
                             <th>Status</th>
                             <th class="text-center">Actions</th>
@@ -86,6 +88,8 @@
                                 <td class="text-end fw-semibold">TSh {{ number_format($repayment->amount, 2) }}</td>
                                 <td class="text-end">TSh {{ number_format($repayment->principal_portion, 2) }}</td>
                                 <td class="text-end">TSh {{ number_format($repayment->interest_portion, 2) }}</td>
+                                <td class="text-end">TSh {{ number_format($repayment->fee_portion, 2) }}</td>
+                                <td class="text-muted">{{ $repayment->reference_number ?? '—' }}</td>
                                 <td><span class="badge bg-light text-dark">{{ ucfirst(str_replace('_', ' ', $repayment->payment_method)) }}</span></td>
                                 <td>
                                     <span class="badge bg-{{ $repayment->status->color() }}">

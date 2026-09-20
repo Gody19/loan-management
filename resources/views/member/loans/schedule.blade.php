@@ -56,6 +56,7 @@
                                 <th>Due Date</th>
                                 <th>Principal</th>
                                 <th>Interest</th>
+                                <th>Fees</th>
                                 <th>Total Due</th>
                                 <th>Amount Paid</th>
                                 <th>Outstanding</th>
@@ -64,19 +65,20 @@
                         </thead>
                         <tbody>
                             @forelse($loan->repaymentSchedule as $installment)
-                                <tr class="{{ $installment->status->value === 'overdue' ? 'table-danger' : ($installment->status->value === 'paid' ? 'table-success' : '') }}">
-                                    <td class="fw-medium">{{ $installment->installment_number }}</td>
-                                    <td>{{ $installment->due_date->format('d M Y') }}</td>
-                                    <td>TSh {{ number_format($installment->principal_amount, 0) }}</td>
-                                    <td>TSh {{ number_format($installment->interest_amount, 0) }}</td>
-                                    <td class="fw-medium">TSh {{ number_format($installment->total_amount, 0) }}</td>
-                                    <td class="text-success">TSh {{ number_format($installment->amount_paid, 0) }}</td>
-                                    <td class="text-danger">TSh {{ number_format($installment->outstanding_amount, 0) }}</td>
-                                    <td><span class="badge bg-{{ $installment->status->color() }}">{{ $installment->status->label() }}</span></td>
-                                </tr>
+                                    <tr class="{{ $installment->status->value === 'overdue' ? 'table-danger' : ($installment->status->value === 'paid' ? 'table-success' : '') }}">
+                                        <td class="fw-medium">{{ $installment->installment_number }}</td>
+                                        <td>{{ $installment->due_date->format('d M Y') }}</td>
+                                        <td>TSh {{ number_format($installment->principal_amount, 0) }}</td>
+                                        <td>TSh {{ number_format($installment->interest_amount, 0) }}</td>
+                                        <td>TSh {{ number_format($installment->late_fee ?? 0, 0) }}</td>
+                                        <td class="fw-medium">TSh {{ number_format($installment->total_amount, 0) }}</td>
+                                        <td class="text-success">TSh {{ number_format($installment->amount_paid, 0) }}</td>
+                                        <td class="text-danger">TSh {{ number_format($installment->outstanding_amount, 0) }}</td>
+                                        <td><span class="badge bg-{{ $installment->status->color() }}">{{ $installment->status->label() }}</span></td>
+                                    </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-4 text-muted">
+                                    <td colspan="9" class="text-center py-4 text-muted">
                                         <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
                                         No schedule generated yet.
                                     </td>
@@ -89,6 +91,7 @@
                                 <td colspan="2">Totals</td>
                                 <td>TSh {{ number_format($loan->repaymentSchedule->sum('principal_amount'), 0) }}</td>
                                 <td>TSh {{ number_format($loan->repaymentSchedule->sum('interest_amount'), 0) }}</td>
+                                <td>TSh {{ number_format($loan->repaymentSchedule->sum('late_fee') ?? 0, 0) }}</td>
                                 <td>TSh {{ number_format($loan->repaymentSchedule->sum('total_amount'), 0) }}</td>
                                 <td class="text-success">TSh {{ number_format($loan->repaymentSchedule->sum('amount_paid'), 0) }}</td>
                                 <td class="text-danger">TSh {{ number_format($loan->repaymentSchedule->sum('outstanding_amount'), 0) }}</td>

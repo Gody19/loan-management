@@ -183,6 +183,8 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('loans.show');
         Route::get('/loans/{loan}/schedule', [MemberRepaymentController::class, 'repaymentSchedule'])
             ->name('loans.schedule');
+        Route::get('/loans/{loan}/statement', [MemberRepaymentController::class, 'statement'])
+            ->name('loans.statement');
         Route::get('/loans/{loan}/repay', [MemberRepaymentController::class, 'makePayment'])
             ->name('loans.repay');
         Route::post('/loans/{loan}/repay', [MemberRepaymentController::class, 'storeRepayment'])
