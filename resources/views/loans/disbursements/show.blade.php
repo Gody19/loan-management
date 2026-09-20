@@ -13,8 +13,8 @@
         'actions' => '<a href="' . route('loan-disbursements.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>'
-        . ($disbursement->status->value === 'pending' ? '<form method="POST" action="' . route('loan-disbursements.confirm', $disbursement) . '" class="d-inline" data-confirm="Confirm this disbursement? Loan will be activated.">@csrf<button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Confirm</button></form>' : '')
-        . ($disbursement->status->value === 'pending' ? '<form method="POST" action="' . route('loan-disbursements.reject', $disbursement) . '" class="d-inline">@csrf<div class="input-group input-group-sm" style="max-width:300px"><input type="text" name="reason" class="form-control" placeholder="Rejection reason..." required><button type="submit" class="btn btn-danger"><i class="bi bi-x-lg"></i></button></div></form>' : '')
+        . ($disbursement->status->value === 'pending' ? '<form method="POST" action="' . route('loan-disbursements.confirm', $disbursement) . '" class="d-inline" data-confirm="Confirm this disbursement? Loan will be activated."><input type="hidden" name="_token" value="' . csrf_token() . '"><button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Confirm</button></form>' : '')
+        . ($disbursement->status->value === 'pending' ? '<form method="POST" action="' . route('loan-disbursements.reject', $disbursement) . '" class="d-inline"><input type="hidden" name="_token" value="' . csrf_token() . '"><div class="input-group input-group-sm" style="max-width:300px"><input type="text" name="reason" class="form-control" placeholder="Rejection reason..." required><button type="submit" class="btn btn-danger"><i class="bi bi-x-lg"></i></button></div></form>' : '')
     ])
 @endsection
 

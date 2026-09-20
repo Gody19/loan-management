@@ -13,8 +13,9 @@
         'actions' => '<a href="' . route('loans.index') . '" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left me-1"></i> Back
         </a>'
-        . ($loan->status->value === 'pending_disbursement' ? '<form method="POST" action="' . route('loans.cancel', $loan) . '" class="d-inline" data-confirm="Cancel this loan?">@csrf<input type="hidden" name="reason" value="Cancelled by user"><button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Cancel</button></form>' : '')
-        . ($loan->status->value === 'pending_disbursement' ? '<button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#disbursementModal"><i class="bi bi-cash-stack me-1"></i> Disburse</button>' : '')
+        . ($loan->status->value === 'pending_disbursement' ? '<form method="POST" action="' . route('loans.cancel', $loan) . '" class="d-inline" data-confirm="Cancel this loan?"><input type="hidden" name="_token" value="' . csrf_token() . '"><input type="hidden" name="reason" value="Cancelled by user"><button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-circle me-1"></i> Cancel</button></form>' : '')
+        . ($loan->status->value === 'pending_disbursement' && $loan->disbursements->where('status', \App\Enums\LoanDisbursementStatus::Pending)->count() > 0 ? '<form method="POST" action="' . route('loan-disbursements.confirm', $loan->disbursements->where('status', \App\Enums\LoanDisbursementStatus::Pending)->first()) . '" class="d-inline" data-confirm="Confirm this disbursement? Loan will be activated."><input type="hidden" name="_token" value="' . csrf_token() . '"><button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Confirm Disbursement</button></form>' : '')
+        . ($loan->status->value === 'pending_disbursement' ? '<button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#disbursementModal"><i class="bi bi-cash-stack me-1"></i> New Disbursement</button>' : '')
         . ($loan->status->value === 'active' ? '<a href="' . route('loans.schedule', $loan) . '" class="btn btn-info text-white"><i class="bi bi-calendar3 me-1"></i> Schedule</a>' : '')
     ])
 @endsection
@@ -172,6 +173,17 @@
                                                 <a href="{{ route('loan-disbursements.show', $d) }}" class="btn btn-sm btn-outline-primary">
                                                     <i class="bi bi-eye"></i>
                                                 </a>
+                                                @if($d->status->value === 'pending')
+                                                    <form method="POST" action="{{ route('loan-disbursements.confirm', $d) }}" class="d-inline" data-confirm="Confirm this disbursement? Loan will be activated.">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                        <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i></button>
+                                                    </form>
+                                                    <form method="POST" action="{{ route('loan-disbursements.reject', $d) }}" class="d-inline">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                                                        <input type="hidden" name="reason" value="Duplicate or incorrect">
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" data-confirm="Reject this disbursement?"><i class="bi bi-x-lg"></i></button>
+                                                    </form>
+                                                @endif
                                             </td>
                                         </tr>
                                     @endforeach
