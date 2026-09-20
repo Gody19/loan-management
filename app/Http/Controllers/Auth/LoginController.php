@@ -70,6 +70,11 @@ class LoginController extends Controller
         // Record login
         app(UserService::class)->recordLogin($user);
 
+        // Redirect members to member portal, others to admin dashboard
+        if ($user->member && $user->member->membership_status->value === 'active') {
+            return redirect()->intended(route('member.dashboard'));
+        }
+
         return redirect()->intended(route('dashboard'));
     }
 
