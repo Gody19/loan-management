@@ -105,7 +105,7 @@ class AuthServiceProvider extends ServiceProvider
 
         // Super Administrator can do everything
         Gate::before(function (User $user) {
-            if ($user->hasRole('Super Administrator')) {
+            if ($user->hasRole('Super Administrator') || $user->hasRole('Organization Administrator')) {
                 return true;
             }
         });
