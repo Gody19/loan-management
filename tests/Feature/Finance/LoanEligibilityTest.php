@@ -548,7 +548,7 @@ class LoanEligibilityTest extends TestCase
         $this->assertEquals('fail', $resultFail->checks['loan_to_savings_ratio']);
     }
 
-    public function test_zero_savings_fails_loan_to_savings_ratio(): void
+    public function test_zero_savings_passes_when_minimum_savings_balance_is_zero(): void
     {
         $member = Member::factory()->create([
             'organization_id' => $this->orgA->id,
@@ -570,11 +570,38 @@ class LoanEligibilityTest extends TestCase
 
         $service = app(LoanEligibilityService::class);
 
-        // No savings, requesting 1 → ratio check should fail
+        // No savings, minimum_savings_balance = 0 → ratio and multiplier checks should pass
+        $result = $service->checkEligibility($member, $plan, 100000);
+        $this->assertEquals('pass', $result->checks['savings_multiplier']);
+        $this->assertEquals('pass', $result->checks['loan_to_savings_ratio']);
+    }
+
+    public function test_zero_savings_fails_when_minimum_savings_balance_required(): void
+    {
+        $member = Member::factory()->create([
+            'organization_id' => $this->orgA->id,
+            'branch_id' => $this->branch->id,
+            'vicoba_group_id' => $this->group->id,
+            'membership_status' => MemberStatus::Active,
+        ]);
+
+        $plan = LoanPlan::factory()->create([
+            'organization_id' => $this->orgA->id,
+            'minimum_amount' => 50000,
+            'maximum_amount' => 5000000,
+            'minimum_savings_balance' => 100000,
+            'savings_multiplier' => 3,
+            'share_multiplier' => 0,
+            'maximum_loan_to_savings_ratio' => 5,
+            'status' => LoanPlanStatus::Active,
+        ]);
+
+        $service = app(LoanEligibilityService::class);
+
+        // No savings, minimum_savings_balance = 100000 → should fail
         $result = $service->checkEligibility($member, $plan, 1);
         $this->assertFalse($result->eligible);
-        $this->assertEquals('fail', $result->checks['loan_to_savings_ratio']);
-        $this->assertContains('Cannot borrow with zero savings balance.', $result->failureReasons);
+        $this->assertEquals('fail', $result->checks['minimum_savings']);
     }
 
     // ─────────────────────────────────────────────

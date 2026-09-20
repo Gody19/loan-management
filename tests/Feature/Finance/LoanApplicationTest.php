@@ -490,4 +490,132 @@ class LoanApplicationTest extends TestCase
 
         $response->assertSessionHasErrors('loan_plan_id');
     }
+
+    // ─────────────────────────────────────────────
+    // Finance Independence tests
+    // ─────────────────────────────────────────────
+
+    public function test_application_can_be_created_without_finance_accounts(): void
+    {
+        $member = Member::factory()->create([
+            'organization_id' => $this->organization->id,
+            'branch_id' => $this->branch->id,
+            'membership_status' => 'active',
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('loan-applications.store'), [
+            'member_id' => $member->id,
+            'loan_plan_id' => $this->plan->id,
+            'branch_id' => $this->branch->id,
+            'requested_amount' => 500000,
+            'requested_term' => 12,
+            'repayment_frequency' => 'monthly',
+            'loan_purpose' => 'business',
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('loan_applications', [
+            'member_id' => $member->id,
+            'loan_plan_id' => $this->plan->id,
+            'status' => LoanApplicationStatus::Draft->value,
+        ]);
+    }
+
+    public function test_application_can_be_submitted_without_finance_accounts_when_plan_allows(): void
+    {
+        $plan = LoanPlan::factory()->create([
+            'organization_id' => $this->organization->id,
+            'minimum_amount' => 50000,
+            'maximum_amount' => 5000000,
+            'minimum_savings_balance' => 0,
+            'savings_multiplier' => 3,
+            'share_multiplier' => 0,
+            'maximum_loan_to_savings_ratio' => 100,
+            'status' => 'active',
+        ]);
+
+        $member = Member::factory()->create([
+            'organization_id' => $this->organization->id,
+            'branch_id' => $this->branch->id,
+            'membership_status' => 'active',
+        ]);
+
+        $application = LoanApplication::factory()->draft()->create([
+            'organization_id' => $this->organization->id,
+            'member_id' => $member->id,
+            'loan_plan_id' => $plan->id,
+            'branch_id' => $this->branch->id,
+            'requested_amount' => 100000,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('loan-applications.submit', $application));
+
+        $app = $application->fresh();
+        $this->assertEquals(LoanApplicationStatus::Submitted, $app->status);
+        $this->assertNotNull($app->submitted_at);
+        $this->assertNotNull($app->eligibility_snapshot);
+    }
+
+    public function test_application_can_be_approved_without_finance_accounts(): void
+    {
+        $application = LoanApplication::factory()->underReview()->create([
+            'organization_id' => $this->organization->id,
+            'member_id' => $this->member->id,
+            'loan_plan_id' => $this->plan->id,
+            'branch_id' => $this->branch->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('loan-applications.approve', $application));
+
+        $app = $application->fresh();
+        $this->assertEquals(LoanApplicationStatus::Approved, $app->status);
+    }
+
+    public function test_application_can_be_rejected_without_finance_accounts(): void
+    {
+        $application = LoanApplication::factory()->underReview()->create([
+            'organization_id' => $this->organization->id,
+            'member_id' => $this->member->id,
+            'loan_plan_id' => $this->plan->id,
+            'branch_id' => $this->branch->id,
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('loan-applications.reject', $application), [
+            'rejection_reason' => 'Insufficient documentation',
+        ]);
+
+        $app = $application->fresh();
+        $this->assertEquals(LoanApplicationStatus::Rejected, $app->status);
+        $this->assertEquals('Insufficient documentation', $app->rejection_reason);
+    }
+
+    public function test_approval_creates_no_finance_transactions(): void
+    {
+        $application = LoanApplication::factory()->underReview()->create([
+            'organization_id' => $this->organization->id,
+            'member_id' => $this->member->id,
+            'loan_plan_id' => $this->plan->id,
+            'branch_id' => $this->branch->id,
+        ]);
+
+        $this->actingAs($this->admin)->post(route('loan-applications.approve', $application));
+
+        $this->assertDatabaseCount('journal_entries', 0);
+    }
+
+    public function test_rejection_creates_no_finance_transactions(): void
+    {
+        $application = LoanApplication::factory()->underReview()->create([
+            'organization_id' => $this->organization->id,
+            'member_id' => $this->member->id,
+            'loan_plan_id' => $this->plan->id,
+            'branch_id' => $this->branch->id,
+        ]);
+
+        $this->actingAs($this->admin)->post(route('loan-applications.reject', $application), [
+            'rejection_reason' => 'Not eligible',
+        ]);
+
+        $this->assertDatabaseCount('journal_entries', 0);
+    }
 }

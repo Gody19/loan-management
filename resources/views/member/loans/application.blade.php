@@ -71,8 +71,6 @@
                                 <tr><td class="text-muted" style="width:45%">Eligible</td><td><span class="badge bg-{{ ($snap['eligible'] ?? false) ? 'success' : 'danger' }}">{{ ($snap['eligible'] ?? false) ? 'Yes' : 'No' }}</span></td></tr>
                                 <tr><td class="text-muted">Requested</td><td class="fw-medium">TSh {{ number_format($snap['requested_amount'] ?? 0, 0) }}</td></tr>
                                 <tr><td class="text-muted">Approved Amount</td><td class="fw-medium">TSh {{ number_format($snap['approved_amount'] ?? 0, 0) }}</td></tr>
-                                <tr><td class="text-muted">Total Savings</td><td class="fw-medium">TSh {{ number_format($snap['total_savings'] ?? 0, 0) }}</td></tr>
-                                <tr><td class="text-muted">Total Shares</td><td class="fw-medium">TSh {{ number_format($snap['total_shares'] ?? 0, 0) }}</td></tr>
                                 <tr><td class="text-muted">Failure Reasons</td><td class="fw-medium">{{ implode(', ', $snap['failure_reasons'] ?? []) ?: '—' }}</td></tr>
                             </table>
                         @else

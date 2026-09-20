@@ -62,11 +62,17 @@ class LoanEligibilityService
         }
 
         // 7. Savings multiplier limit (80% rule applied via maxLoanFromSavings)
-        $maxBySavings = $totalSavings * $plan->savings_multiplier;
-        $maxLoanFromSavings = $this->applyEightyPercentRule($maxBySavings);
-        $checks['savings_multiplier'] = $requestedAmount <= $maxLoanFromSavings ? 'pass' : 'fail';
-        if ($checks['savings_multiplier'] === 'fail') {
-            $failureReasons[] = 'Requested amount exceeds savings-based limit of '.number_format($maxLoanFromSavings, 2).' (savings × '.$plan->savings_multiplier.', capped at 80%).';
+        // Skip if minimum_savings_balance is 0 and member has no savings (savings not required)
+        if ($totalSavings > 0 || $plan->minimum_savings_balance > 0) {
+            $maxBySavings = $totalSavings * $plan->savings_multiplier;
+            $maxLoanFromSavings = $this->applyEightyPercentRule($maxBySavings);
+            $checks['savings_multiplier'] = $requestedAmount <= $maxLoanFromSavings ? 'pass' : 'fail';
+            if ($checks['savings_multiplier'] === 'fail') {
+                $failureReasons[] = 'Requested amount exceeds savings-based limit of '.number_format($maxLoanFromSavings, 2).' (savings × '.$plan->savings_multiplier.', capped at 80%).';
+            }
+        } else {
+            $checks['savings_multiplier'] = 'pass';
+            $maxLoanFromSavings = 0;
         }
 
         // 8. Share multiplier limit — only enforced when member has shares
@@ -83,18 +89,18 @@ class LoanEligibilityService
             $maxLoanFromShares = 0;
         }
 
-        // 9. Loan-to-savings ratio
+        // 9. Loan-to-savings ratio — skip if savings not required (minimum_savings_balance = 0) and no savings
         if ($totalSavings > 0) {
             $ratio = $requestedAmount / $totalSavings;
             $checks['loan_to_savings_ratio'] = $ratio <= $plan->maximum_loan_to_savings_ratio ? 'pass' : 'fail';
             if ($checks['loan_to_savings_ratio'] === 'fail') {
                 $failureReasons[] = 'Loan-to-savings ratio of '.number_format($ratio, 2).' exceeds maximum of '.$plan->maximum_loan_to_savings_ratio.'.';
             }
+        } elseif ($plan->minimum_savings_balance > 0) {
+            $checks['loan_to_savings_ratio'] = 'fail';
+            $failureReasons[] = 'Cannot borrow with zero savings balance. Minimum required: '.number_format($plan->minimum_savings_balance, 2).'.';
         } else {
-            $checks['loan_to_savings_ratio'] = $requestedAmount > 0 ? 'fail' : 'pass';
-            if ($requestedAmount > 0 && isset($checks['loan_to_savings_ratio']) && $checks['loan_to_savings_ratio'] === 'fail') {
-                $failureReasons[] = 'Cannot borrow with zero savings balance.';
-            }
+            $checks['loan_to_savings_ratio'] = 'pass';
         }
 
         $eligible = ! in_array('fail', $checks, true);
