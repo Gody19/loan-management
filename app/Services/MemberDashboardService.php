@@ -201,7 +201,7 @@ class MemberDashboardService
 
     private function pendingGuarantorRequests(): int
     {
-        return \App\Models\LoanApplicationGuarantor::where('member_id', $this->member->id)
+        return \App\Models\LoanApplicationGuarantor::where('guarantor_member_id', $this->member->id)
             ->where('status', \App\Enums\GuarantorStatus::Pending)
             ->count();
     }

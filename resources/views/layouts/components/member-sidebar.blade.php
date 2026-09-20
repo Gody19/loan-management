@@ -81,7 +81,7 @@
             @php
                 $guarantorCount = 0;
                 if (auth()->check() && auth()->user()->member) {
-                    $guarantorCount = \App\Models\LoanApplicationGuarantor::where('member_id', auth()->user()->member->id)
+                    $guarantorCount = \App\Models\LoanApplicationGuarantor::where('guarantor_member_id', auth()->user()->member->id)
                         ->where('status', \App\Enums\GuarantorStatus::Pending)
                         ->count();
                 }
