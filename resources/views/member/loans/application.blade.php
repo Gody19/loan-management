@@ -229,61 +229,26 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Select Existing Member <small class="text-muted">(optional if entering details below)</small></label>
-                        <select name="guarantor_member_id" class="form-select">
-                            <option value="">-- None --</option>
+                        <label class="form-label fw-semibold">Select Member <span class="text-danger">*</span></label>
+                        <select name="guarantor_member_id" class="form-select" required>
+                            <option value="">-- Select a member --</option>
                             @foreach(\App\Models\Member::where('organization_id', $member->organization_id)->active()->where('id', '!=', $member->id)->get() as $m)
                                 <option value="{{ $m->id }}">{{ $m->full_name }} ({{ $m->member_number }})</option>
                             @endforeach
                         </select>
                     </div>
-                    <hr>
-                    <h6 class="text-muted mb-3">Guarantor Details</h6>
                     <div class="mb-3">
-                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" name="guarantor_name" class="form-control" placeholder="Enter guarantor full name" required>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                            <input type="text" name="guarantor_phone" class="form-control" placeholder="+255..." required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Email</label>
-                            <input type="email" name="guarantor_email" class="form-control" placeholder="email@example.com">
-                        </div>
+                        <label class="form-label fw-semibold">Guaranteed Amount (TSh) <span class="text-danger">*</span></label>
+                        <input type="number" name="guaranteed_amount" class="form-control" step="1" min="1" required
+                               max="{{ $loanApplication->requested_amount }}">
+                        <div class="form-text">Maximum: TSh {{ number_format($loanApplication->requested_amount, 0) }}</div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Relationship</label>
-                        <select name="guarantor_relationship" class="form-select">
-                            <option value="">Select Relationship</option>
-                            <option value="spouse">Spouse</option>
-                            <option value="parent">Parent</option>
-                            <option value="sibling">Sibling</option>
-                            <option value="child">Child</option>
-                            <option value="friend">Friend</option>
-                            <option value="colleague">Colleague</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Occupation / Employer</label>
-                        <input type="text" name="guarantor_occupation" class="form-control" placeholder="e.g. Teacher at ABC School">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Physical Address</label>
-                        <input type="text" name="guarantor_address" class="form-control" placeholder="e.g. Block 5, House 12, Sinza">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Guaranteed Amount (TSh) <span class="text-danger">*</span></label>
-                        <input type="number" name="guaranteed_amount" class="form-control" step="0.01" min="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Notes</label>
-                        <textarea name="notes" class="form-control" rows="2"></textarea>
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea name="notes" class="form-control" rows="2" placeholder="Optional message to the guarantor..."></textarea>
                     </div>
                     <div class="alert alert-info small mb-0">
-                        <i class="bi bi-info-circle me-1"></i> The guarantor will be notified and must confirm/accept before the application can proceed.
+                        <i class="bi bi-info-circle me-1"></i> The selected member will be notified and must fill in their details (NIDA, contact info) and confirm/accept before the application can proceed.
                     </div>
                 </div>
                 <div class="modal-footer">
