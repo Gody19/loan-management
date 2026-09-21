@@ -10,8 +10,13 @@
                     @php
                         $statusColors = ['pending' => 'warning', 'accepted' => 'success', 'rejected' => 'danger', 'withdrawn' => 'secondary'];
                         $color = $statusColors[$guarantor->status->value] ?? 'secondary';
+                        $statusLabel = $guarantor->status->label();
+                        if ($guarantor->status->value === 'pending' && $guarantor->confirmed_at) {
+                            $statusLabel = 'Awaiting Review';
+                            $color = 'info';
+                        }
                     @endphp
-                    <span class="badge bg-{{ $color }} fs-6">{{ $guarantor->status->label() }}</span>
+                    <span class="badge bg-{{ $color }} fs-6">{{ $statusLabel }}</span>
                 </div>
             </div>
             <div class="card-body">
@@ -90,8 +95,8 @@
                     </div>
                     @if($guarantor->confirmed_at)
                     <div class="col-md-6">
-                        <label class="form-label text-muted small">Approved Date</label>
-                        <div class="fw-medium text-success">{{ $guarantor->confirmed_at->format('d M Y H:i') }}</div>
+                        <label class="form-label text-muted small">{{ $guarantor->status->value === 'accepted' ? 'Approved Date' : 'Accepted by You' }}</label>
+                        <div class="fw-medium text-{{ $guarantor->status->value === 'accepted' ? 'success' : 'info' }}">{{ $guarantor->confirmed_at->format('d M Y H:i') }}</div>
                     </div>
                     @endif
                     @if($guarantor->rejected_at)
@@ -165,7 +170,7 @@
             </div>
         </div>
 
-        @if($guarantor->status->value === 'pending')
+        @if($guarantor->status->value === 'pending' && !$guarantor->confirmed_at)
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
                 <h6 class="mb-0 fw-semibold"><i class="bi bi-check-circle me-2"></i>Actions</h6>

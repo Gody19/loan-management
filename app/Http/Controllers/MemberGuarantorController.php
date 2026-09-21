@@ -60,20 +60,29 @@ class MemberGuarantorController extends Controller
             abort(404);
         }
 
+        if ($guarantor->status !== \App\Enums\GuarantorStatus::Pending) {
+            return back()->withErrors(['error' => 'This guarantor request has already been processed.']);
+        }
+
         $validated = $request->validate([
             'guaranteed_amount' => 'required|numeric|min:1',
         ]);
 
-        try {
-            $this->applicationService->respondToGuarantor($guarantor, true, null, null, false, [
-                'guaranteed_amount' => $validated['guaranteed_amount'],
-            ]);
-        } catch (\InvalidArgumentException $e) {
-            return back()->withErrors(['error' => $e->getMessage()]);
+        // Check eligibility before accepting
+        $eligibility = $this->eligibilityService->canGuarantee($member, $guarantor->application);
+        if (!$eligibility['eligible']) {
+            return back()->withErrors(['error' => $eligibility['reason']]);
         }
 
+        // Mark as accepted by guarantor — status stays Pending for org review
+        $guarantor->update([
+            'guaranteed_amount' => $validated['guaranteed_amount'],
+            'confirmed_at' => now(),
+            'confirmed_by' => $member->id,
+        ]);
+
         return redirect()->route('member.guarantor.request', $guarantor)
-            ->with('success', 'Guarantor request accepted successfully.');
+            ->with('success', 'Guarantor request accepted. It will be reviewed by the organization.');
     }
 
     public function reject(Request $request, LoanApplicationGuarantor $guarantor): RedirectResponse

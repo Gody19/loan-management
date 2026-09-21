@@ -166,7 +166,7 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <a href="{{ route('member.guarantor.my-guarantees') }}" class="text-decoration-none">
+        <a href="{{ route('member.my-guarantees') }}" class="text-decoration-none">
             <div class="card vicoba-card h-100 border-start border-{{ $activeGuaranteesCount > 0 ? 'warning' : 'success' }} border-4">
                 <div class="card-body">
                     <div class="d-flex align-items-center">
