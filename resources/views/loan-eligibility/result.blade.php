@@ -79,11 +79,7 @@
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted" style="width:55%">Total Savings</td><td class="fw-medium">{{ number_format($result->totalSavings, 2) }} TZS</td></tr>
-                            <tr><td class="text-muted">Total Shares</td><td class="fw-medium">{{ number_format($result->totalShares, 2) }} TZS</td></tr>
-                            <tr><td class="text-muted">Active Loans</td><td class="fw-medium">{{ $result->activeLoanCount }}</td></tr>
-                            <tr><td class="text-muted">Max by Savings (80% rule)</td><td class="fw-medium">{{ number_format($result->maxAllowedBySavings, 2) }} TZS</td></tr>
-                            <tr><td class="text-muted">Max by Shares (80% rule)</td><td class="fw-medium">{{ number_format($result->maxAllowedByShares, 2) }} TZS</td></tr>
+                            <tr><td class="text-muted" style="width:55%">Active Loans</td><td class="fw-medium">{{ $result->activeLoanCount }}</td></tr>
                             <tr><td class="text-muted">Requested Amount</td><td class="fw-bold">{{ number_format($result->requestedAmount, 2) }} TZS</td></tr>
                             @if($result->eligible)
                             <tr><td class="text-muted">Approved Amount</td><td class="fw-bold text-success">{{ number_format($result->approvedAmount, 2) }} TZS</td></tr>

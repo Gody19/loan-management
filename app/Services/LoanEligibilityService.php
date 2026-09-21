@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\DataTransferObjects\EligibilityCheckResult;
+use App\Enums\LoanStatus;
 use App\Enums\MemberStatus;
-use App\Enums\ShareAccountStatus;
 use App\Models\LoanPlan;
 use App\Models\Member;
 
@@ -47,65 +47,35 @@ class LoanEligibilityService
             $checks['term_in_range'] = 'pass';
         }
 
-        // 5. Active loans limit
-        $activeLoanCount = $this->countActiveLoans($member);
-        $checks['active_loans_limit'] = $activeLoanCount < $plan->maximum_active_loans ? 'pass' : 'fail';
-        if ($checks['active_loans_limit'] === 'fail') {
+        // 5. Active loans — cannot apply if any active loan is not paid by 85%
+        $activeLoans = $this->getActiveLoans($member);
+        $activeLoanCount = $activeLoans->count();
+        $blockedByUnpaid = false;
+        $lowestPaidPercent = 100;
+
+        foreach ($activeLoans as $loan) {
+            if ($loan->total_amount > 0) {
+                $paidPercent = ($loan->amount_paid / $loan->total_amount) * 100;
+                if ($paidPercent < $lowestPaidPercent) {
+                    $lowestPaidPercent = round($paidPercent, 1);
+                }
+                if ($paidPercent < 85) {
+                    $blockedByUnpaid = true;
+                }
+            }
+        }
+
+        if ($blockedByUnpaid) {
+            $checks['active_loans_limit'] = 'fail';
+            $failureReasons[] = 'You have an active loan that is only '.$lowestPaidPercent.'% paid. You must pay at least 85% of your current loan before applying for a new one.';
+        } elseif ($activeLoanCount >= $plan->maximum_active_loans) {
+            $checks['active_loans_limit'] = 'fail';
             $failureReasons[] = 'Member has reached the maximum number of active loans ('.$plan->maximum_active_loans.').';
-        }
-
-        // 6. Minimum savings balance
-        $totalSavings = $this->getTotalSavings($member);
-        $checks['minimum_savings'] = $totalSavings >= $plan->minimum_savings_balance ? 'pass' : 'fail';
-        if ($checks['minimum_savings'] === 'fail') {
-            $failureReasons[] = 'Minimum savings balance of '.number_format($plan->minimum_savings_balance, 2).' not met. Current: '.number_format($totalSavings, 2).'.';
-        }
-
-        // 7. Savings multiplier limit (80% rule applied via maxLoanFromSavings)
-        // Skip if minimum_savings_balance is 0 and member has no savings (savings not required)
-        if ($totalSavings > 0 || $plan->minimum_savings_balance > 0) {
-            $maxBySavings = $totalSavings * $plan->savings_multiplier;
-            $maxLoanFromSavings = $this->applyEightyPercentRule($maxBySavings);
-            $checks['savings_multiplier'] = $requestedAmount <= $maxLoanFromSavings ? 'pass' : 'fail';
-            if ($checks['savings_multiplier'] === 'fail') {
-                $failureReasons[] = 'Requested amount exceeds savings-based limit of '.number_format($maxLoanFromSavings, 2).' (savings × '.$plan->savings_multiplier.', capped at 80%).';
-            }
         } else {
-            $checks['savings_multiplier'] = 'pass';
-            $maxLoanFromSavings = 0;
-        }
-
-        // 8. Share multiplier limit — only enforced when member has shares
-        $totalShares = $this->getTotalShares($member);
-        if ($totalShares > 0) {
-            $maxByShares = $totalShares * $plan->share_multiplier;
-            $maxLoanFromShares = $this->applyEightyPercentRule($maxByShares);
-            $checks['share_multiplier'] = $requestedAmount <= $maxLoanFromShares ? 'pass' : 'fail';
-            if ($checks['share_multiplier'] === 'fail') {
-                $failureReasons[] = 'Requested amount exceeds share-based limit of '.number_format($maxLoanFromShares, 2).' (shares × '.$plan->share_multiplier.', capped at 80%).';
-            }
-        } else {
-            $checks['share_multiplier'] = 'pass';
-            $maxLoanFromShares = 0;
-        }
-
-        // 9. Loan-to-savings ratio — skip if savings not required (minimum_savings_balance = 0) and no savings
-        if ($totalSavings > 0) {
-            $ratio = $requestedAmount / $totalSavings;
-            $checks['loan_to_savings_ratio'] = $ratio <= $plan->maximum_loan_to_savings_ratio ? 'pass' : 'fail';
-            if ($checks['loan_to_savings_ratio'] === 'fail') {
-                $failureReasons[] = 'Loan-to-savings ratio of '.number_format($ratio, 2).' exceeds maximum of '.$plan->maximum_loan_to_savings_ratio.'.';
-            }
-        } elseif ($plan->minimum_savings_balance > 0) {
-            $checks['loan_to_savings_ratio'] = 'fail';
-            $failureReasons[] = 'Cannot borrow with zero savings balance. Minimum required: '.number_format($plan->minimum_savings_balance, 2).'.';
-        } else {
-            $checks['loan_to_savings_ratio'] = 'pass';
+            $checks['active_loans_limit'] = 'pass';
         }
 
         $eligible = ! in_array('fail', $checks, true);
-
-        // Approved amount = min(requested, max allowed by savings multiplier)
         $approvedAmount = $eligible ? $requestedAmount : 0;
 
         return new EligibilityCheckResult(
@@ -116,36 +86,14 @@ class LoanEligibilityService
             eligible: $eligible,
             checks: $checks,
             failureReasons: $failureReasons,
-            totalSavings: $totalSavings,
-            totalShares: $totalShares,
             activeLoanCount: $activeLoanCount,
-            maxAllowedBySavings: $maxLoanFromSavings,
-            maxAllowedByShares: $maxLoanFromShares,
         );
     }
 
-    private function countActiveLoans(Member $member): int
+    private function getActiveLoans(Member $member): \Illuminate\Support\Collection
     {
-        // Placeholder — will be expanded when loan accounts are created in future phases
-        return 0;
-    }
-
-    private function getTotalSavings(Member $member): float
-    {
-        return (float) $member->savingsAccounts()
-            ->where('status', 'active')
-            ->sum('current_balance');
-    }
-
-    private function getTotalShares(Member $member): float
-    {
-        return (float) $member->shareAccounts()
-            ->where('status', ShareAccountStatus::Active)
-            ->sum('total_value');
-    }
-
-    private function applyEightyPercentRule(float $amount): float
-    {
-        return round($amount * 0.8, 2);
+        return $member->loans()
+            ->whereIn('status', [LoanStatus::Active, LoanStatus::Disbursed])
+            ->get();
     }
 }

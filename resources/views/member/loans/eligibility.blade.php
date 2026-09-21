@@ -34,9 +34,6 @@
                     <tr><td class="text-muted" style="width:40%">Member</td><td class="fw-medium">{{ $result->memberName }}</td></tr>
                     <tr><td class="text-muted">Loan Plan</td><td class="fw-medium">{{ $result->planName }}</td></tr>
                     <tr><td class="text-muted">Requested Amount</td><td class="fw-medium">TSh {{ number_format($result->requestedAmount, 0) }}</td></tr>
-                    <tr><td class="text-muted">Approved Amount</td><td class="fw-medium">TSh {{ number_format($result->approvedAmount, 0) }}</td></tr>
-                    <tr><td class="text-muted">Total Savings</td><td class="fw-medium">TSh {{ number_format($result->totalSavings, 0) }}</td></tr>
-                    <tr><td class="text-muted">Total Shares</td><td class="fw-medium">TSh {{ number_format($result->totalShares, 0) }}</td></tr>
                     <tr><td class="text-muted">Active Loans</td><td class="fw-medium">{{ $result->activeLoanCount }}</td></tr>
                 </table>
 

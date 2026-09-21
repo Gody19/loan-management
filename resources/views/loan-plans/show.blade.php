@@ -114,10 +114,7 @@
                             <tr><td class="text-muted" style="width:45%">Requires Guarantor</td><td class="fw-medium">{{ $loanPlan->requires_guarantor ? 'Yes' : 'No' }}</td></tr>
                             <tr><td class="text-muted">Minimum Guarantors</td><td class="fw-medium">{{ $loanPlan->minimum_guarantors }}</td></tr>
                             <tr><td class="text-muted">Requires Collateral</td><td class="fw-medium">{{ $loanPlan->requires_collateral ? 'Yes' : 'No' }}</td></tr>
-                            <tr><td class="text-muted">Min Savings Balance</td><td class="fw-medium">{{ number_format($loanPlan->minimum_savings_balance, 2) }} TZS</td></tr>
-                            <tr><td class="text-muted">Savings Multiplier</td><td class="fw-medium">{{ $loanPlan->savings_multiplier }}x</td></tr>
-                            <tr><td class="text-muted">Share Multiplier</td><td class="fw-medium">{{ $loanPlan->share_multiplier }}x</td></tr>
-                            <tr><td class="text-muted">Max Loan-to-Savings</td><td class="fw-medium">{{ $loanPlan->maximum_loan_to_savings_ratio }}x</td></tr>
+                            <tr><td class="text-muted">Max Active Loans</td><td class="fw-medium">{{ $loanPlan->maximum_active_loans }}</td></tr>
                         </table>
                     </div>
                 </div>

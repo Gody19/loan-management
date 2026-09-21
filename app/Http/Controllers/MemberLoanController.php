@@ -112,11 +112,27 @@ class MemberLoanController extends Controller
             ->whereIn('status', ['draft', 'submitted', 'under_review'])
             ->first();
 
-        $activeLoanCount = $member->loans()
+        $activeLoans = $member->loans()
             ->whereIn('status', ['active', 'disbursed'])
-            ->count();
+            ->get();
 
-        return view('member.loans.apply', compact('member', 'loanPlan', 'eligibility', 'pendingApplication', 'activeLoanCount'));
+        $activeLoanCount = $activeLoans->count();
+        $hasUnpaidLoan = false;
+        $lowestPaidPercent = 100;
+
+        foreach ($activeLoans as $loan) {
+            if ($loan->total_amount > 0) {
+                $paidPercent = ($loan->amount_paid / $loan->total_amount) * 100;
+                if ($paidPercent < $lowestPaidPercent) {
+                    $lowestPaidPercent = round($paidPercent, 1);
+                }
+                if ($paidPercent < 85) {
+                    $hasUnpaidLoan = true;
+                }
+            }
+        }
+
+        return view('member.loans.apply', compact('member', 'loanPlan', 'eligibility', 'pendingApplication', 'activeLoanCount', 'hasUnpaidLoan', 'lowestPaidPercent'));
     }
 
     public function store(MemberLoanApplicationRequest $request, LoanPlan $loanPlan): RedirectResponse

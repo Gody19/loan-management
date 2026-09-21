@@ -51,16 +51,6 @@ class StoreLoanPlanRequest extends FormRequest
             // Collateral
             'requires_collateral' => ['boolean'],
 
-            // Savings
-            'minimum_savings_balance' => ['required', 'numeric', 'min:0'],
-            'savings_multiplier' => ['required', 'numeric', 'min:0'],
-
-            // Shares
-            'share_multiplier' => ['required', 'numeric', 'min:0'],
-
-            // Loan-to-savings ratio
-            'maximum_loan_to_savings_ratio' => ['required', 'numeric', 'min:0'],
-
             // Grace period
             'grace_period' => ['required', 'integer', 'min:0'],
 
@@ -101,14 +91,6 @@ class StoreLoanPlanRequest extends FormRequest
             'maximum_active_loans.required' => 'Maximum active loans is required.',
             'maximum_active_loans.min' => 'Maximum active loans must be at least 1.',
             'minimum_guarantors.required_if' => 'Minimum guarantors is required when guarantors are required.',
-            'minimum_savings_balance.required' => 'Minimum savings balance is required.',
-            'minimum_savings_balance.min' => 'Minimum savings balance cannot be negative.',
-            'savings_multiplier.required' => 'Savings multiplier is required.',
-            'savings_multiplier.min' => 'Savings multiplier cannot be negative.',
-            'share_multiplier.required' => 'Share multiplier is required.',
-            'share_multiplier.min' => 'Share multiplier cannot be negative.',
-            'maximum_loan_to_savings_ratio.required' => 'Maximum loan-to-savings ratio is required.',
-            'maximum_loan_to_savings_ratio.min' => 'Maximum loan-to-savings ratio cannot be negative.',
             'grace_period.required' => 'Grace period is required.',
             'grace_period.min' => 'Grace period cannot be negative.',
             'processing_fee.required' => 'Processing fee is required.',

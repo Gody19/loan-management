@@ -58,11 +58,7 @@
                     </div>
                     <div class="card-body">
                         <table class="table table-borderless mb-0">
-                            <tr><td class="text-muted" style="width:50%">Minimum Savings</td><td class="fw-medium">TSh {{ number_format($loanPlan->minimum_savings_balance, 0) }}</td></tr>
-                            <tr><td class="text-muted">Savings Multiplier</td><td class="fw-medium">{{ $loanPlan->s_multiplier ?? $loanPlan->savings_multiplier }}x</td></tr>
-                            <tr><td class="text-muted">Share Multiplier</td><td class="fw-medium">{{ $loanPlan->share_multiplier }}x</td></tr>
-                            <tr><td class="text-muted">Max Loan-to-Savings</td><td class="fw-medium">{{ $loanPlan->maximum_loan_to_savings_ratio }}x</td></tr>
-                            <tr><td class="text-muted">Max Active Loans</td><td class="fw-medium">{{ $loanPlan->maximum_active_loans }}</td></tr>
+                            <tr><td class="text-muted" style="width:50%">Max Active Loans</td><td class="fw-medium">{{ $loanPlan->maximum_active_loans }}</td></tr>
                             <tr><td class="text-muted">Guarantor Required</td><td class="fw-medium">{{ $loanPlan->requires_guarantor ? $loanPlan->minimum_guarantors . ' guarantor(s)' : 'No' }}</td></tr>
                             <tr><td class="text-muted">Collateral Required</td><td class="fw-medium">{{ $loanPlan->requires_collateral ? 'Yes' : 'No' }}</td></tr>
                             <tr><td class="text-muted">Processing Fee</td><td class="fw-medium">{{ $loanPlan->processing_fee }}%</td></tr>

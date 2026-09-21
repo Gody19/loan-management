@@ -12,11 +12,7 @@ class EligibilityCheckResult
      * @param  bool  $eligible
      * @param  array<string, string>  $checks  ['check_name' => 'pass'|'fail']
      * @param  array<string>  $failureReasons
-     * @param  float  $totalSavings
-     * @param  float  $totalShares
      * @param  int  $activeLoanCount
-     * @param  float  $maxAllowedBySavings
-     * @param  float  $maxAllowedByShares
      */
     public function __construct(
         public readonly string $memberName,
@@ -26,11 +22,7 @@ class EligibilityCheckResult
         public readonly bool $eligible,
         public readonly array $checks,
         public readonly array $failureReasons,
-        public readonly float $totalSavings,
-        public readonly float $totalShares,
-        public readonly int $activeLoanCount,
-        public readonly float $maxAllowedBySavings,
-        public readonly float $maxAllowedByShares,
+        public readonly int $activeLoanCount = 0,
     ) {}
 
     public function passCount(): int

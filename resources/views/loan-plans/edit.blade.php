@@ -187,37 +187,6 @@
                 </div>
             </div>
 
-            {{-- Savings & Share Requirements --}}
-            <div class="card border-0 shadow-sm mb-4">
-                <div class="card-header bg-white border-bottom">
-                    <h6 class="mb-0 fw-semibold"><i class="bi bi-piggy-bank me-2"></i>Savings & Share Requirements</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label class="form-label">Minimum Savings Balance <span class="text-danger">*</span></label>
-                            <input type="number" name="minimum_savings_balance" class="form-control" value="{{ old('minimum_savings_balance', $loanPlan->minimum_savings_balance) }}" step="0.01" min="0" required>
-                            @error('minimum_savings_balance') <span class="text-danger small">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Savings Multiplier <span class="text-danger">*</span></label>
-                            <input type="number" name="savings_multiplier" class="form-control" value="{{ old('savings_multiplier', $loanPlan->savings_multiplier) }}" step="0.01" min="0" required>
-                            @error('savings_multiplier') <span class="text-danger small">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Share Multiplier <span class="text-danger">*</span></label>
-                            <input type="number" name="share_multiplier" class="form-control" value="{{ old('share_multiplier', $loanPlan->share_multiplier) }}" step="0.01" min="0" required>
-                            @error('share_multiplier') <span class="text-danger small">{{ $message }}</span> @enderror
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Max Loan-to-Savings Ratio <span class="text-danger">*</span></label>
-                            <input type="number" name="maximum_loan_to_savings_ratio" class="form-control" value="{{ old('maximum_loan_to_savings_ratio', $loanPlan->maximum_loan_to_savings_ratio) }}" step="0.01" min="0" required>
-                            @error('maximum_loan_to_savings_ratio') <span class="text-danger small">{{ $message }}</span> @enderror
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             {{-- Fees --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">

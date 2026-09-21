@@ -27,7 +27,12 @@
             </div>
         @endif
 
-        @if($activeLoanCount >= $loanPlan->maximum_active_loans)
+        @if($hasUnpaidLoan)
+            <div class="alert alert-danger d-flex align-items-center mb-4">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                <div>You have an active loan that is only {{ $lowestPaidPercent }}% paid. You must pay at least 85% of your current loan before applying for a new one.</div>
+            </div>
+        @elseif($activeLoanCount >= $loanPlan->maximum_active_loans)
             <div class="alert alert-danger d-flex align-items-center mb-4">
                 <i class="bi bi-exclamation-circle-fill me-2"></i>
                 <div>You have reached the maximum number of active loans ({{ $loanPlan->maximum_active_loans }}) for this plan.</div>
@@ -140,7 +145,7 @@
                         <a href="{{ route('member.loans.plan', $loanPlan) }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-1"></i> Back
                         </a>
-                        <button type="submit" class="btn btn-primary" id="submitBtn" {{ !$eligibility->eligible || $pendingApplication || $activeLoanCount >= $loanPlan->maximum_active_loans ? 'disabled' : '' }}>
+                        <button type="submit" class="btn btn-primary" id="submitBtn" {{ !$eligibility->eligible || $pendingApplication || $hasUnpaidLoan || $activeLoanCount >= $loanPlan->maximum_active_loans ? 'disabled' : '' }}>
                             <i class="bi bi-send me-1"></i> Submit Application
                         </button>
                     </div>
