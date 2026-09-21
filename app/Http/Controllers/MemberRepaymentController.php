@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\LoanStatus;
 use App\Http\Requests\StoreMemberLoanRepaymentRequest;
 use App\Models\Loan;
 use App\Models\LoanRepayment;
@@ -119,7 +120,7 @@ class MemberRepaymentController extends Controller
             abort(404);
         }
 
-        if ($loan->status->value !== 'active') {
+        if (!in_array($loan->status->value, ['active', 'pending_disbursement'])) {
             return back()->withErrors(['error' => 'Only active loans can accept repayments.']);
         }
 
@@ -137,6 +138,21 @@ class MemberRepaymentController extends Controller
             ->get();
 
         return view('member.loans.repay', compact('member', 'loan', 'paymentMethods'));
+    }
+
+    public function selectLoan(Request $request): View
+    {
+        $member = $request->user()->member;
+
+        $loans = Loan::where('member_id', $member->id)
+            ->whereIn('status', [LoanStatus::Active, LoanStatus::Disbursed, LoanStatus::PendingDisbursement])
+            ->with(['loanPlan', 'branch'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $scheduleService = $this->scheduleService;
+
+        return view('member.loans.repay-select', compact('member', 'loans', 'scheduleService'));
     }
 
     public function storeRepayment(StoreMemberLoanRepaymentRequest $request, Loan $loan): RedirectResponse

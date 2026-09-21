@@ -185,6 +185,8 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('loans.schedule');
         Route::get('/loans/{loan}/statement', [MemberRepaymentController::class, 'statement'])
             ->name('loans.statement');
+        Route::get('/repay', [MemberRepaymentController::class, 'selectLoan'])
+            ->name('repay');
         Route::get('/loans/{loan}/repay', [MemberRepaymentController::class, 'makePayment'])
             ->name('loans.repay');
         Route::post('/loans/{loan}/repay', [MemberRepaymentController::class, 'storeRepayment'])
