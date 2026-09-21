@@ -181,6 +181,10 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('guarantor.offer');
         Route::post('/guarantor-offer', [MemberGuarantorController::class, 'storeOffer'])
             ->name('guarantor.store-offer');
+        Route::get('/guarantor-search', [MemberGuarantorController::class, 'searchMembers'])
+            ->name('guarantor.search');
+        Route::get('/my-guarantees', [MemberGuarantorController::class, 'myGuarantees'])
+            ->name('my-guarantees');
 
         // Loan Repayments
         Route::get('/loans/{loan}', [MemberRepaymentController::class, 'loanDetail'])
@@ -373,6 +377,12 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('loan-applications.guarantors.destroy');
     Route::post('/loan-applications/guarantors/{guarantor}/respond', [LoanApplicationGuarantorController::class, 'respond'])
         ->name('loan-guarantors.respond');
+    Route::post('/loan-applications/guarantors/{guarantor}/approve', [LoanApplicationGuarantorController::class, 'approve'])
+        ->name('loan-guarantors.approve');
+    Route::post('/loan-applications/guarantors/{guarantor}/reject', [LoanApplicationGuarantorController::class, 'rejectGuarantor'])
+        ->name('loan-guarantors.reject');
+    Route::get('/guarantor-reviews', [LoanApplicationGuarantorController::class, 'reviewQueue'])
+        ->name('guarantor-reviews.index');
 
     // Loan Application - Collateral
     Route::post('/loan-applications/{loanApplication}/collaterals', [LoanApplicationCollateralController::class, 'store'])

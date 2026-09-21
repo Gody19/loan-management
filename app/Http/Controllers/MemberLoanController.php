@@ -9,6 +9,7 @@ use App\Models\LoanApplicationGuarantor;
 use App\Models\LoanPlan;
 use App\Models\Member;
 use App\Services\AuditService;
+use App\Services\GuarantorEligibilityService;
 use App\Services\LoanApplicationService;
 use App\Services\LoanEligibilityService;
 use Illuminate\Http\RedirectResponse;
@@ -21,6 +22,7 @@ class MemberLoanController extends Controller
     public function __construct(
         private LoanEligibilityService $eligibilityService,
         private LoanApplicationService $applicationService,
+        private GuarantorEligibilityService $guarantorEligibilityService,
         private AuditService $audit,
     ) {}
 
@@ -220,6 +222,14 @@ class MemberLoanController extends Controller
             return back()->withErrors(['error' => 'Cannot add guarantors to an application that is not in draft or submitted status.']);
         }
 
+        $existingCount = $loanApplication->guarantors()
+            ->where('status', '!=', \App\Enums\GuarantorStatus::Rejected)
+            ->count();
+
+        if ($existingCount >= 2) {
+            return back()->withErrors(['error' => 'Maximum 2 guarantors allowed per application.']);
+        }
+
         $validated = $request->validate([
             'guarantor_member_id' => 'required|exists:members,id',
             'guaranteed_amount' => 'required|numeric|min:1',
@@ -228,26 +238,15 @@ class MemberLoanController extends Controller
 
         $guarantorMember = Member::findOrFail($validated['guarantor_member_id']);
 
-        if ($guarantorMember->organization_id !== $member->organization_id) {
-            return back()->withErrors(['guarantor_member_id' => 'Guarantor must be from the same organization.']);
-        }
-
-        if ($guarantorMember->id === $member->id) {
-            return back()->withErrors(['guarantor_member_id' => 'You cannot guarantee your own loan.']);
-        }
-
-        $existing = LoanApplicationGuarantor::where('loan_application_id', $loanApplication->id)
-            ->where('guarantor_member_id', $guarantorMember->id)
-            ->exists();
-
-        if ($existing) {
-            return back()->withErrors(['guarantor_member_id' => 'This member is already a guarantor on this application.']);
+        $eligibility = $this->guarantorEligibilityService->canGuarantee($guarantorMember, $loanApplication);
+        if (!$eligibility['eligible']) {
+            return back()->withErrors(['guarantor_member_id' => $eligibility['reason']]);
         }
 
         $this->applicationService->addGuarantor($loanApplication, $validated, $guarantorMember);
 
         return redirect()->route('member.loans.application', $loanApplication)
-            ->with('success', 'Guarantor added. They will be notified to fill in their details and confirm.');
+            ->with('success', 'Guarantor added. They will be notified to confirm.');
     }
 
     public function removeGuarantor(Request $request, LoanApplication $loanApplication, LoanApplicationGuarantor $guarantor): RedirectResponse

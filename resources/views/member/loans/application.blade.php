@@ -84,30 +84,39 @@
                         @forelse($loanApplication->guarantors as $g)
                             <div class="d-flex align-items-start justify-content-between mb-2 {{ !$loop->last ? 'border-bottom pb-2' : '' }}">
                                 <div>
-                                    <div class="fw-medium">{{ $g->guarantorMember->full_name ?? $g->guarantor_name ?? '—' }}</div>
+                                    <div class="fw-medium">{{ $g->guarantorMember->full_name ?? '—' }}</div>
                                     <small class="text-muted">TSh {{ number_format($g->guaranteed_amount, 0) }}</small>
-                                    @if($g->nida_number)
-                                        <br><small class="text-muted font-monospace">NIDA: {{ $g->nida_number }}</small>
+                                    @if($g->guarantorMember?->national_id)
+                                        <br><small class="text-muted font-monospace">NIDA: {{ $g->guarantorMember->national_id }}</small>
                                     @endif
-                                    @if($g->guarantor_phone)
-                                        <br><small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ $g->guarantor_phone }}</small>
+                                    @if($g->guarantorMember?->phone)
+                                        <br><small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ $g->guarantorMember->phone }}</small>
                                     @endif
-                                    @if($g->guarantor_relationship)
-                                        <br><small class="text-muted">{{ ucfirst($g->guarantor_relationship) }}</small>
+                                    @if($g->guarantorMember?->vicobaGroup)
+                                        <br><small class="text-muted">Group: {{ $g->guarantorMember->vicobaGroup->name }}</small>
                                     @endif
-                                    @if($g->guarantor_occupation)
-                                        <br><small class="text-muted">{{ $g->guarantor_occupation }}</small>
+                                    @if($g->rejection_reason)
+                                        <br><small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ $g->rejection_reason }}</small>
                                     @endif
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="badge bg-{{ $g->status->value === 'accepted' ? 'success' : ($g->status->value === 'rejected' ? 'danger' : 'warning') }}">{{ $g->status->label() }}</span>
-                                    @if(in_array($loanApplication->status->value, ['draft', 'submitted']) && $g->status->value === 'pending')
-                                        <form method="POST" action="{{ route('member.loans.remove-guarantor', [$loanApplication, $g]) }}" class="d-inline">
-                                            @csrf @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this guarantor?')">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </form>
+                                    @if(in_array($loanApplication->status->value, ['draft', 'submitted']))
+                                        @if($g->status->value === 'pending')
+                                            <form method="POST" action="{{ route('member.loans.remove-guarantor', [$loanApplication, $g]) }}" class="d-inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this guarantor?')">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        @elseif($g->status->value === 'rejected')
+                                            <form method="POST" action="{{ route('member.loans.remove-guarantor', [$loanApplication, $g]) }}" class="d-inline">
+                                                @csrf @method('DELETE')
+                                                <button type="submit" class="btn btn-sm btn-outline-warning" onclick="return confirm('Replace this rejected guarantor? The old record will be kept for history.')">
+                                                    <i class="bi bi-arrow-repeat"></i> Replace
+                                                </button>
+                                            </form>
+                                        @endif
                                     @endif
                                 </div>
                             </div>

@@ -101,6 +101,11 @@
             <span>Offer as Guarantor</span>
         </a>
 
+        <a href="{{ route('member.my-guarantees') }}" class="nav-link {{ request()->routeIs('member.my-guarantees') ? 'active' : '' }}">
+            <i class="bi bi-shield-half"></i>
+            <span>My Guarantees</span>
+        </a>
+
         {{-- Statements --}}
         <div class="sidebar-section mt-3">Statements</div>
 

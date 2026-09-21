@@ -29,12 +29,12 @@
                         <div class="fw-medium">TSh {{ number_format($guarantor->application->requested_amount ?? 0, 0) }}</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label text-muted small">Requested Term</label>
+                        <label class="form-label text-muted small">Term</label>
                         <div class="fw-medium">{{ $guarantor->application->requested_term ?? '—' }} months</div>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label text-muted small">Loan Purpose</label>
-                        <div class="fw-medium">{{ ucfirst($guarantor->application->loan_purpose?->value ?? '—') }}</div>
+                        <label class="form-label text-muted small">Purpose</label>
+                        <div class="fw-medium">{{ $guarantor->application->loan_purpose?->label() ?? '—' }}</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label text-muted small">Application Status</label>
@@ -48,7 +48,7 @@
                     </div>
                     @if($guarantor->application->purpose_description)
                     <div class="col-12">
-                        <label class="form-label text-muted small">Purpose Description</label>
+                        <label class="form-label text-muted small">Description</label>
                         <div class="fw-medium">{{ $guarantor->application->purpose_description }}</div>
                     </div>
                     @endif
@@ -58,12 +58,12 @@
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-person me-2"></i>Applicant Information</h6>
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-person me-2"></i>Applicant</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label text-muted small">Applicant Name</label>
+                        <label class="form-label text-muted small">Name</label>
                         <div class="fw-medium">{{ $guarantor->application->member->full_name ?? '—' }}</div>
                     </div>
                     <div class="col-md-6">
@@ -76,27 +76,21 @@
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-shield me-2"></i>Guarantor Request Details</h6>
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-shield me-2"></i>Guarantor Request</h6>
             </div>
             <div class="card-body">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label text-muted small">Your Guaranteed Amount</label>
+                        <label class="form-label text-muted small">Guaranteed Amount</label>
                         <div class="fw-bold text-primary fs-5">TSh {{ number_format($guarantor->guaranteed_amount, 0) }}</div>
                     </div>
                     <div class="col-md-6">
                         <label class="form-label text-muted small">Request Date</label>
                         <div class="fw-medium">{{ $guarantor->created_at->format('d M Y H:i') }}</div>
                     </div>
-                    @if($guarantor->nida_number)
-                    <div class="col-md-6">
-                        <label class="form-label text-muted small">NIDA Number</label>
-                        <div class="fw-medium font-monospace">{{ $guarantor->nida_number }}</div>
-                    </div>
-                    @endif
                     @if($guarantor->confirmed_at)
                     <div class="col-md-6">
-                        <label class="form-label text-muted small">Accepted Date</label>
+                        <label class="form-label text-muted small">Approved Date</label>
                         <div class="fw-medium text-success">{{ $guarantor->confirmed_at->format('d M Y H:i') }}</div>
                     </div>
                     @endif
@@ -110,12 +104,6 @@
                     <div class="col-12">
                         <label class="form-label text-muted small">Rejection Reason</label>
                         <div class="alert alert-danger mb-0">{{ $guarantor->rejection_reason }}</div>
-                    </div>
-                    @endif
-                    @if($guarantor->notes)
-                    <div class="col-12">
-                        <label class="form-label text-muted small">Notes</label>
-                        <div class="fw-medium">{{ $guarantor->notes }}</div>
                     </div>
                     @endif
                 </div>
@@ -148,21 +136,21 @@
     <div class="col-lg-4">
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-bottom">
-                <h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2"></i>Other Guarantors ({{ $guarantor->application->guarantors->count() }})</h6>
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2"></i>All Guarantors ({{ $guarantor->application->guarantors->count() }})</h6>
             </div>
             <div class="card-body">
                 @forelse($guarantor->application->guarantors as $g)
                 <div class="d-flex justify-content-between align-items-center {{ !$loop->last ? 'border-bottom pb-2 mb-2' : '' }}">
                     <div>
                         <div class="fw-medium">
-                            {{ $g->guarantorMember->full_name ?? $g->guarantor_name ?? '—' }}
+                            {{ $g->guarantorMember->full_name ?? '—' }}
                             @if($g->id === $guarantor->id)
                                 <span class="badge bg-primary ms-1">You</span>
                             @endif
                         </div>
                         <small class="text-muted">TSh {{ number_format($g->guaranteed_amount, 0) }}</small>
-                        @if($g->nida_number)
-                            <br><small class="text-muted font-monospace">NIDA: {{ $g->nida_number }}</small>
+                        @if($g->guarantorMember?->national_id)
+                            <br><small class="text-muted font-monospace">NIDA: {{ $g->guarantorMember->national_id }}</small>
                         @endif
                     </div>
                     @php
@@ -172,7 +160,7 @@
                     <span class="badge bg-{{ $gColor }}">{{ $g->status->label() }}</span>
                 </div>
                 @empty
-                <div class="text-muted text-center py-3">No other guarantors.</div>
+                <div class="text-muted text-center py-3">No guarantors.</div>
                 @endforelse
             </div>
         </div>
@@ -183,7 +171,7 @@
                 <h6 class="mb-0 fw-semibold"><i class="bi bi-check-circle me-2"></i>Actions</h6>
             </div>
             <div class="card-body">
-                <p class="text-muted small mb-3">You have been requested to guarantee this loan application. Please review the details carefully before making a decision.</p>
+                <p class="text-muted small mb-3">You have been requested to guarantee this loan. Please review the details carefully.</p>
 
                 @php
                     $hasActiveGuarantee = $member && \App\Models\LoanApplicationGuarantor::hasActiveGuarantee($member->id);
@@ -193,7 +181,7 @@
                 <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     <div class="small">
-                        <strong>Blocked:</strong> You currently have an active guaranteed loan that has not been fully repaid. You cannot guarantee another loan until it is completed.
+                        <strong>Blocked:</strong> You currently have an active guaranteed loan that has not been fully repaid.
                     </div>
                 </div>
                 @endif
@@ -205,102 +193,46 @@
                 </div>
                 @enderror
 
-                <form method="POST" action="{{ route('member.guarantor.accept', $guarantor) }}" class="mb-2" id="acceptGuarantorForm">
+                <div class="alert alert-light border mb-3">
+                    <h6 class="text-muted mb-2">Your Details (from profile)</h6>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Name</small>
+                            <strong>{{ $member->full_name }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Member #</small>
+                            <strong>{{ $member->member_number }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">NIDA</small>
+                            <strong class="font-monospace">{{ $member->national_id ?? '—' }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Phone</small>
+                            <strong>{{ $member->phone ?? '—' }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ route('member.guarantor.accept', $guarantor) }}" class="mb-2">
                     @csrf
-                    <h6 class="text-muted mb-3">Your Guarantor Details</h6>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">NIDA Number <span class="text-danger">*</span></label>
-                        <input type="text" name="nida_number" class="form-control" required minlength="6" maxlength="50"
-                               placeholder="Enter your National ID (NIDA) number"
-                               value="{{ old('nida_number', $guarantor->nida_number ?? $member->national_id ?? '') }}"
-                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                        <div class="form-text">Must be unique. Will be validated against existing records.</div>
-                        @error('nida_number')
-                            <div class="text-danger small mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" name="guarantor_name" class="form-control" required maxlength="255"
-                               placeholder="Enter your full name"
-                               value="{{ old('guarantor_name', $guarantor->guarantor_name ?? $member->full_name ?? '') }}"
-                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                        @error('guarantor_name')
-                            <div class="text-danger small mt-1">{{ $message }}</div>
-                        @enderror
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
-                            <input type="text" name="guarantor_phone" class="form-control" required maxlength="50"
-                                   placeholder="+255..."
-                                   value="{{ old('guarantor_phone', $guarantor->guarantor_phone ?? $member->phone ?? '') }}"
-                                   {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                            @error('guarantor_phone')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Email</label>
-                            <input type="email" name="guarantor_email" class="form-control" maxlength="255"
-                                   placeholder="email@example.com"
-                                   value="{{ old('guarantor_email', $guarantor->guarantor_email ?? $member->email ?? '') }}"
-                                   {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                            @error('guarantor_email')
-                                <div class="text-danger small mt-1">{{ $message }}</div>
-                            @enderror
-                        </div>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Relationship to Applicant</label>
-                        <select name="guarantor_relationship" class="form-select" {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                            <option value="">Select Relationship</option>
-                            @foreach(['spouse' => 'Spouse', 'parent' => 'Parent', 'sibling' => 'Sibling', 'child' => 'Child', 'friend' => 'Friend', 'colleague' => 'Colleague', 'other' => 'Other'] as $val => $label)
-                                <option value="{{ $val }}" {{ old('guarantor_relationship', $guarantor->guarantor_relationship) === $val ? 'selected' : '' }}>{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Occupation / Employer</label>
-                        <input type="text" name="guarantor_occupation" class="form-control" maxlength="255"
-                               placeholder="e.g. Teacher at ABC School"
-                               value="{{ old('guarantor_occupation', $guarantor->guarantor_occupation ?? $member->occupation ?? '') }}"
-                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                    </div>
-
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Physical Address</label>
-                        <input type="text" name="guarantor_address" class="form-control" maxlength="500"
-                               placeholder="e.g. Block 5, House 12, Sinza"
-                               value="{{ old('guarantor_address', $guarantor->guarantor_address ?? '') }}"
-                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                    </div>
-
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Guaranteed Amount (TSh) <span class="text-danger">*</span></label>
                         <input type="number" name="guaranteed_amount" class="form-control" step="1" min="1" required
                                value="{{ old('guaranteed_amount', $guarantor->guaranteed_amount) }}"
                                max="{{ $guarantor->application->requested_amount }}"
                                {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                        <div class="form-text">Maximum: TSh {{ number_format($guarantor->application->requested_amount ?? 0, 0) }}</div>
-                        @error('guaranteed_amount')
-                            <div class="text-danger small mt-1">{{ $message }}</div>
-                        @enderror
+                        <div class="form-text">Max: TSh {{ number_format($guarantor->application->requested_amount ?? 0, 0) }}</div>
                     </div>
-
                     <button type="submit" class="btn btn-success w-100" {{ $hasActiveGuarantee ? 'disabled' : '' }}
-                            onclick="return confirm('Are you sure you want to accept this guarantor request?')">
-                        <i class="bi bi-check-lg me-1"></i> Accept Request
+                            onclick="return confirm('Accept this guarantor request?')">
+                        <i class="bi bi-check-lg me-1"></i> Accept
                     </button>
                 </form>
 
                 <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                    <i class="bi bi-x-lg me-1"></i> Reject Request
+                    <i class="bi bi-x-lg me-1"></i> Reject
                 </button>
             </div>
         </div>
@@ -323,10 +255,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <p class="text-muted">Please provide a reason for rejecting this guarantor request.</p>
+                    <p class="text-muted">Please provide a reason for rejecting this request.</p>
                     <div class="mb-3">
-                        <label class="form-label">Rejection Reason <span class="text-danger">*</span></label>
-                        <textarea name="rejection_reason" class="form-control" rows="3" required maxlength="1000" placeholder="Enter reason for rejection..."></textarea>
+                        <label class="form-label fw-semibold">Rejection Reason <span class="text-danger">*</span></label>
+                        <textarea name="rejection_reason" class="form-control" rows="3" required maxlength="1000" placeholder="Enter reason..."></textarea>
                         @error('rejection_reason')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
@@ -334,7 +266,7 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Reject Request</button>
+                    <button type="submit" class="btn btn-danger">Reject</button>
                 </div>
             </div>
         </form>

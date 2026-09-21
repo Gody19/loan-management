@@ -68,15 +68,34 @@ class LoanApplicationService
                 throw new \InvalidArgumentException('Member is not eligible: ' . implode('; ', $eligibilityResult->failureReasons));
             }
 
-            // Validate guarantor requirements
-            if ($plan->requires_guarantor) {
-                $guarantorCount = LoanApplicationGuarantor::where('loan_application_id', $application->id)
-                    ->where('status', GuarantorStatus::Accepted)
-                    ->count();
-                if ($guarantorCount < $plan->minimum_guarantors) {
-                    throw new \InvalidArgumentException(
-                        "Application requires at least {$plan->minimum_guarantors} accepted guarantor(s). Currently has {$guarantorCount}."
-                    );
+            // Validate guarantor requirements - always require at least 1
+            $guarantorQuery = LoanApplicationGuarantor::where('loan_application_id', $application->id)
+                ->where('status', '!=', GuarantorStatus::Rejected);
+
+            $guarantorCount = $guarantorQuery->count();
+
+            if ($guarantorCount < 1) {
+                throw new \InvalidArgumentException(
+                    'Application requires at least 1 guarantor. Currently has 0. Please add a guarantor before submitting.'
+                );
+            }
+
+            if ($guarantorCount > 2) {
+                throw new \InvalidArgumentException(
+                    'Application allows a maximum of 2 guarantors. Currently has ' . $guarantorCount . '.'
+                );
+            }
+
+            $eligibilityService = app(\App\Services\GuarantorEligibilityService::class);
+            $activeGuarantors = $guarantorQuery->where('status', '!=', GuarantorStatus::Rejected)->get();
+            foreach ($activeGuarantors as $g) {
+                if ($g->guarantor_member_id) {
+                    $elig = $eligibilityService->canGuarantee($g->guarantorMember, $application);
+                    if (!$elig['eligible']) {
+                        throw new \InvalidArgumentException(
+                            "Guarantor (Member #{$g->guarantorMember->member_number}) is not eligible: {$elig['reason']}"
+                        );
+                    }
                 }
             }
 
@@ -210,8 +229,8 @@ class LoanApplicationService
 
     public function removeGuarantor(LoanApplicationGuarantor $guarantor): void
     {
-        if ($guarantor->status !== GuarantorStatus::Pending) {
-            throw new \InvalidArgumentException('Only pending guarantors can be removed.');
+        if (!in_array($guarantor->status, [GuarantorStatus::Pending, GuarantorStatus::Rejected])) {
+            throw new \InvalidArgumentException('Only pending or rejected guarantors can be removed.');
         }
 
         $application = $guarantor->application;
@@ -225,68 +244,32 @@ class LoanApplicationService
     public function respondToGuarantor(LoanApplicationGuarantor $guarantor, bool $accept, ?string $reason = null, ?string $nidaNumber = null, bool $requireNida = false, array $details = []): LoanApplicationGuarantor
     {
         if ($guarantor->status !== GuarantorStatus::Pending) {
-            throw new \InvalidArgumentException('Guarantor has already responded.');
+            throw new \InvalidArgumentException('This guarantor has already been reviewed.');
         }
 
         if ($accept) {
-            if ($requireNida) {
-                if (!$nidaNumber) {
-                    throw new \InvalidArgumentException('NIDA number is required to accept a guarantor request.');
+            $eligibilityService = app(\App\Services\GuarantorEligibilityService::class);
+            if ($guarantor->guarantor_member_id) {
+                $elig = $eligibilityService->canGuarantee($guarantor->guarantorMember, $guarantor->application);
+                if (!$elig['eligible']) {
+                    throw new \InvalidArgumentException('Guarantor is not eligible: ' . $elig['reason']);
                 }
-
-                $nidaTrimmed = trim($nidaNumber);
-                if (strlen($nidaTrimmed) < 6) {
-                    throw new \InvalidArgumentException('NIDA number must be at least 6 characters.');
-                }
-
-                $nidaExists = LoanApplicationGuarantor::where('nida_number', $nidaTrimmed)
-                    ->where('id', '!=', $guarantor->id)
-                    ->where('status', '!=', GuarantorStatus::Rejected)
-                    ->exists();
-                if ($nidaExists) {
-                    throw new \InvalidArgumentException('This NIDA number is already registered by another guarantor.');
-                }
-
-                if ($guarantor->guarantor_member_id && LoanApplicationGuarantor::hasActiveGuarantee($guarantor->guarantor_member_id)) {
-                    throw new \InvalidArgumentException('You cannot guarantee another loan because you still have an active guaranteed loan that has not been fully repaid.');
-                }
-            } else {
-                $nidaTrimmed = $nidaNumber ? trim($nidaNumber) : null;
             }
 
             $updateData = [
-                'nida_number' => $nidaTrimmed,
                 'status' => GuarantorStatus::Accepted,
                 'confirmed_at' => now(),
                 'confirmed_by' => auth()->id(),
             ];
 
-            if (!empty($details['guarantor_name'])) {
-                $updateData['guarantor_name'] = trim($details['guarantor_name']);
-            }
-            if (!empty($details['guarantor_phone'])) {
-                $updateData['guarantor_phone'] = trim($details['guarantor_phone']);
-            }
-            if (isset($details['guarantor_email'])) {
-                $updateData['guarantor_email'] = trim($details['guarantor_email']) ?: null;
-            }
-            if (isset($details['guarantor_relationship'])) {
-                $updateData['guarantor_relationship'] = trim($details['guarantor_relationship']) ?: null;
-            }
-            if (isset($details['guarantor_occupation'])) {
-                $updateData['guarantor_occupation'] = trim($details['guarantor_occupation']) ?: null;
-            }
-            if (isset($details['guarantor_address'])) {
-                $updateData['guarantor_address'] = trim($details['guarantor_address']) ?: null;
-            }
             if (!empty($details['guaranteed_amount'])) {
                 $updateData['guaranteed_amount'] = (float) $details['guaranteed_amount'];
             }
 
             $guarantor->update($updateData);
-            $this->audit->log('loan_application.guarantor_accepted', $guarantor->application, [], [
+            $this->audit->log('loan_application.guarantor_approved', $guarantor->application, [], [
                 'guarantor_member_id' => $guarantor->guarantor_member_id,
-                'nida_number' => $nidaTrimmed,
+                'reviewed_by' => auth()->id(),
             ]);
         } else {
             if (!$reason) {
@@ -301,6 +284,7 @@ class LoanApplicationService
             $this->audit->log('loan_application.guarantor_rejected', $guarantor->application, [], [
                 'guarantor_member_id' => $guarantor->guarantor_member_id,
                 'reason' => $reason,
+                'reviewed_by' => auth()->id(),
             ]);
         }
 

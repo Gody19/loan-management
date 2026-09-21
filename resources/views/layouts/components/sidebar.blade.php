@@ -189,6 +189,9 @@
                 <a href="{{ route('loan-applications.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-applications.*') ? 'active' : '' }}">
                     <span>Applications</span>
                 </a>
+                <a href="{{ route('guarantor-reviews.index') }}" class="nav-link sub-link {{ request()->routeIs('guarantor-reviews.*') ? 'active' : '' }}">
+                    <span>Guarantor Reviews</span>
+                </a>
                 @endif
                 @if(auth()->user()->can('loan_approval_level.view'))
                 <a href="{{ route('loan-approval-levels.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-approval-levels.*') ? 'active' : '' }}">

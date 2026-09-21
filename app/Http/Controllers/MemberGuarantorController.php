@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\LoanApplication;
 use App\Models\LoanApplicationGuarantor;
 use App\Models\Member;
+use App\Services\GuarantorEligibilityService;
 use App\Services\LoanApplicationService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -13,7 +15,8 @@ use Illuminate\View\View;
 class MemberGuarantorController extends Controller
 {
     public function __construct(
-        private LoanApplicationService $applicationService
+        private LoanApplicationService $applicationService,
+        private GuarantorEligibilityService $eligibilityService
     ) {}
 
     public function index(Request $request): View
@@ -58,25 +61,13 @@ class MemberGuarantorController extends Controller
         }
 
         $validated = $request->validate([
-            'nida_number' => 'required|string|min:6|max:50',
-            'guarantor_name' => 'required|string|max:255',
-            'guarantor_phone' => 'required|string|max:50',
-            'guarantor_email' => 'nullable|email|max:255',
-            'guarantor_relationship' => 'nullable|string|max:100',
-            'guarantor_occupation' => 'nullable|string|max:255',
-            'guarantor_address' => 'nullable|string|max:500',
             'guaranteed_amount' => 'required|numeric|min:1',
         ]);
 
         try {
-            $this->applicationService->respondToGuarantor(
-                $guarantor,
-                true,
-                null,
-                $validated['nida_number'],
-                true,
-                $validated
-            );
+            $this->applicationService->respondToGuarantor($guarantor, true, null, null, false, [
+                'guaranteed_amount' => $validated['guaranteed_amount'],
+            ]);
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }
@@ -107,6 +98,46 @@ class MemberGuarantorController extends Controller
             ->with('success', 'Guarantor request rejected.');
     }
 
+    public function searchMembers(Request $request): JsonResponse
+    {
+        $member = $request->user()->member;
+        $query = $request->input('q', '');
+        $applicationId = $request->input('application_id');
+
+        $application = $applicationId ? LoanApplication::find($applicationId) : null;
+
+        $results = Member::query()
+            ->where('organization_id', $member->organization_id)
+            ->where('id', '!=', $member->id)
+            ->active()
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'LIKE', "%{$query}%")
+                  ->orWhere('last_name', 'LIKE', "%{$query}%")
+                  ->orWhere('member_number', 'LIKE', "%{$query}%")
+                  ->orWhere('national_id', 'LIKE', "%{$query}%")
+                  ->orWhere('phone', 'LIKE', "%{$query}%");
+            })
+            ->with('vicobaGroup:id,name')
+            ->limit(20)
+            ->get()
+            ->map(function ($m) use ($application) {
+                $eligibility = $this->eligibilityService->getEligibility($m, $application);
+                return [
+                    'id' => $m->id,
+                    'full_name' => $m->full_name,
+                    'member_number' => $m->member_number,
+                    'national_id' => $m->national_id,
+                    'phone' => $m->phone,
+                    'group' => $m->vicobaGroup->name ?? '—',
+                    'eligible' => $eligibility['eligible'],
+                    'reason' => $eligibility['reason'],
+                    'active_guarantees' => $eligibility['active_count'],
+                ];
+            });
+
+        return response()->json($results);
+    }
+
     public function offerForm(Request $request): View
     {
         $member = $request->user()->member;
@@ -133,7 +164,6 @@ class MemberGuarantorController extends Controller
 
         $validated = $request->validate([
             'loan_application_id' => 'required|exists:loan_applications,id',
-            'nida_number' => 'required|string|min:6|max:50',
             'guaranteed_amount' => 'required|numeric|min:1',
             'notes' => 'nullable|string|max:500',
         ]);
@@ -152,32 +182,49 @@ class MemberGuarantorController extends Controller
             return back()->withErrors(['error' => 'This application is no longer accepting guarantors.']);
         }
 
-        $alreadyGuarantor = LoanApplicationGuarantor::where('loan_application_id', $application->id)
-            ->where('guarantor_member_id', $member->id)
-            ->exists();
-        if ($alreadyGuarantor) {
-            return back()->withErrors(['error' => 'You are already a guarantor on this application.']);
-        }
-
-        $nidaTrimmed = trim($validated['nida_number']);
-        $nidaExists = LoanApplicationGuarantor::where('nida_number', $nidaTrimmed)
-            ->where('status', '!=', \App\Enums\GuarantorStatus::Rejected)
-            ->exists();
-        if ($nidaExists) {
-            return back()->withErrors(['nida_number' => 'This NIDA number is already registered by another guarantor.']);
-        }
-
-        if (LoanApplicationGuarantor::hasActiveGuarantee($member->id)) {
-            return back()->withErrors(['error' => 'You cannot guarantee another loan because you still have an active guaranteed loan that has not been fully repaid.']);
+        $eligibility = $this->eligibilityService->canGuarantee($member, $application);
+        if (!$eligibility['eligible']) {
+            return back()->withErrors(['error' => $eligibility['reason']]);
         }
 
         $guarantor = $this->applicationService->addGuarantor($application, [
             'guaranteed_amount' => $validated['guaranteed_amount'],
-            'nida_number' => $nidaTrimmed,
             'notes' => $validated['notes'] ?? null,
         ], $member);
 
         return redirect()->route('member.guarantor.request', $guarantor)
             ->with('success', 'You have successfully offered as a guarantor. The applicant will be notified.');
+    }
+
+    public function myGuarantees(Request $request): View
+    {
+        $member = $request->user()->member;
+
+        $activeGuarantees = LoanApplicationGuarantor::where('guarantor_member_id', $member->id)
+            ->whereIn('status', [\App\Enums\GuarantorStatus::Pending, \App\Enums\GuarantorStatus::Accepted])
+            ->with([
+                'application.loan',
+                'application.member',
+                'application.loanPlan',
+            ])
+            ->get();
+
+        $completedGuarantees = LoanApplicationGuarantor::where('guarantor_member_id', $member->id)
+            ->where('status', \App\Enums\GuarantorStatus::Accepted)
+            ->whereHas('application.loan', function ($q) {
+                $q->whereIn('status', [\App\Enums\LoanStatus::Completed, \App\Enums\LoanStatus::Cancelled]);
+            })
+            ->with([
+                'application.loan',
+                'application.member',
+                'application.loanPlan',
+            ])
+            ->get();
+
+        $eligibility = $this->eligibilityService->getEligibility($member);
+
+        return view('member.guarantor-requests.my-guarantees', compact(
+            'member', 'activeGuarantees', 'completedGuarantees', 'eligibility'
+        ));
     }
 }
