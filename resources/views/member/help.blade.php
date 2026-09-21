@@ -3,15 +3,6 @@
 @section('title', 'Help & Support - FinancePro VICOBA')
 @section('page-title', 'Help & Support')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">Help & Support</li>
-        </ol>
-    </nav>
-@endsection
-
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-10 col-xl-9">

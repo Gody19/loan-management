@@ -3,15 +3,6 @@
 @section('title', 'Financial Statement - FinancePro VICOBA')
 @section('page-title', 'Financial Statement')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">Financial Statement</li>
-        </ol>
-    </nav>
-@endsection
-
 @section('content')
 <div class="row justify-content-center">
     <div class="col-lg-11 col-xl-10">

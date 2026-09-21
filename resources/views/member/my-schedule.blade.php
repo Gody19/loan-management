@@ -3,15 +3,6 @@
 @section('title', 'Repayment Schedule - FinancePro VICOBA')
 @section('page-title', 'Repayment Schedule')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">Repayment Schedule</li>
-        </ol>
-    </nav>
-@endsection
-
 @section('content')
 @if($activeLoans->isEmpty())
     <div class="card vicoba-card">

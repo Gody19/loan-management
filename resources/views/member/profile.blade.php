@@ -3,15 +3,6 @@
 @section('title', 'My Profile - FinancePro VICOBA')
 @section('page-title', 'My Profile')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">My Profile</li>
-        </ol>
-    </nav>
-@endsection
-
 @section('content')
 <div class="row g-4">
     {{-- Profile Card --}}
