@@ -72,6 +72,22 @@
             <span>Repayment History</span>
         </a>
 
+        @php
+            $activeLoan = null;
+            if (auth()->check() && auth()->user()->member) {
+                $activeLoan = \App\Models\Loan::where('member_id', auth()->user()->member->id)
+                    ->whereIn('status', [\App\Enums\LoanStatus::Active, \App\Enums\LoanStatus::Disbursed, \App\Enums\LoanStatus::PendingDisbursement])
+                    ->where('deleted_at', null)
+                    ->first();
+            }
+        @endphp
+        @if($activeLoan)
+            <a href="{{ route('member.loans.repay', $activeLoan) }}" class="nav-link {{ request()->routeIs('member.loans.repay*') ? 'active' : '' }}">
+                <i class="bi bi-cash"></i>
+                <span>Make Payment</span>
+            </a>
+        @endif
+
         {{-- Guarantor Requests --}}
         <div class="sidebar-section mt-3">Guarantor</div>
 

@@ -13,6 +13,8 @@ class LoanApplicationGuarantor extends Model
 
     protected $fillable = [
         'loan_application_id', 'guarantor_member_id', 'guaranteed_amount',
+        'guarantor_name', 'guarantor_phone', 'guarantor_email',
+        'guarantor_relationship', 'guarantor_occupation', 'guarantor_address',
         'status', 'notes', 'confirmed_at', 'confirmed_by',
         'rejected_at', 'rejected_by', 'rejection_reason',
         'created_by', 'updated_by',

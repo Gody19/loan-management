@@ -157,41 +157,50 @@ class LoanApplicationService
         });
     }
 
-    public function addGuarantor(LoanApplication $application, array $data, Member $guarantorMember): LoanApplicationGuarantor
+    public function addGuarantor(LoanApplication $application, array $data, ?Member $guarantorMember): LoanApplicationGuarantor
     {
-        // Rule 1: No self-guaranteeing
-        if ($guarantorMember->id === $application->member_id) {
-            throw new \InvalidArgumentException('A member cannot guarantee their own application.');
-        }
+        if ($guarantorMember) {
+            // Rule 1: No self-guaranteeing
+            if ($guarantorMember->id === $application->member_id) {
+                throw new \InvalidArgumentException('A member cannot guarantee their own application.');
+            }
 
-        // Rule 3: Same organization
-        if ($guarantorMember->organization_id !== $application->organization_id) {
-            throw new \InvalidArgumentException('Guarantor must belong to the same organization.');
-        }
+            // Rule 3: Same organization
+            if ($guarantorMember->organization_id !== $application->organization_id) {
+                throw new \InvalidArgumentException('Guarantor must belong to the same organization.');
+            }
 
-        // Rule 4: Active member
-        if ($guarantorMember->membership_status->value !== 'active') {
-            throw new \InvalidArgumentException('Guarantor must be an active member.');
-        }
+            // Rule 4: Active member
+            if ($guarantorMember->membership_status->value !== 'active') {
+                throw new \InvalidArgumentException('Guarantor must be an active member.');
+            }
 
-        // Rule 2: No duplicate
-        $exists = LoanApplicationGuarantor::where('loan_application_id', $application->id)
-            ->where('guarantor_member_id', $guarantorMember->id)
-            ->exists();
-        if ($exists) {
-            throw new \InvalidArgumentException('This member is already a guarantor for this application.');
+            // Rule 2: No duplicate
+            $exists = LoanApplicationGuarantor::where('loan_application_id', $application->id)
+                ->where('guarantor_member_id', $guarantorMember->id)
+                ->exists();
+            if ($exists) {
+                throw new \InvalidArgumentException('This member is already a guarantor for this application.');
+            }
         }
 
         $guarantor = LoanApplicationGuarantor::create([
             'loan_application_id' => $application->id,
-            'guarantor_member_id' => $guarantorMember->id,
+            'guarantor_member_id' => $guarantorMember?->id,
             'guaranteed_amount' => $data['guaranteed_amount'],
             'notes' => $data['notes'] ?? null,
             'status' => GuarantorStatus::Pending,
+            'guarantor_name' => $data['guarantor_name'] ?? null,
+            'guarantor_phone' => $data['guarantor_phone'] ?? null,
+            'guarantor_email' => $data['guarantor_email'] ?? null,
+            'guarantor_relationship' => $data['guarantor_relationship'] ?? null,
+            'guarantor_occupation' => $data['guarantor_occupation'] ?? null,
+            'guarantor_address' => $data['guarantor_address'] ?? null,
         ]);
 
         $this->audit->log('loan_application.guarantor_added', $application, [], [
-            'guarantor_member_id' => $guarantorMember->id,
+            'guarantor_member_id' => $guarantorMember?->id,
+            'guarantor_name' => $data['guarantor_name'] ?? null,
             'guaranteed_amount' => $data['guaranteed_amount'],
         ]);
 

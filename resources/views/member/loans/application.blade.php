@@ -84,7 +84,7 @@
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2"></i>Guarantors ({{ $loanApplication->guarantors->count() }})</h6>
-                        @if(in_array($loanApplication->status->value, ['draft']))
+                        @if(in_array($loanApplication->status->value, ['draft', 'submitted']))
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addGuarantorModal">
                                 <i class="bi bi-plus"></i>
                             </button>
@@ -94,12 +94,18 @@
                         @forelse($loanApplication->guarantors as $g)
                             <div class="d-flex align-items-center justify-content-between mb-2 {{ !$loop->last ? 'border-bottom pb-2' : '' }}">
                                 <div>
-                                    <div class="fw-medium">{{ $g->guarantorMember->full_name ?? '—' }}</div>
+                                    <div class="fw-medium">{{ $g->guarantorMember->full_name ?? $g->guarantor_name ?? '—' }}</div>
                                     <small class="text-muted">TSh {{ number_format($g->guaranteed_amount, 0) }}</small>
+                                    @if($g->guarantor_phone)
+                                        <br><small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ $g->guarantor_phone }}</small>
+                                    @endif
+                                    @if($g->guarantor_relationship)
+                                        <br><small class="text-muted">{{ ucfirst($g->guarantor_relationship) }}</small>
+                                    @endif
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="badge bg-{{ $g->status->value === 'accepted' ? 'success' : ($g->status->value === 'rejected' ? 'danger' : 'warning') }}">{{ $g->status->label() }}</span>
-                                    @if(in_array($loanApplication->status->value, ['draft']) && $g->status->value === 'pending')
+                                    @if(in_array($loanApplication->status->value, ['draft', 'submitted']) && $g->status->value === 'pending')
                                         <form method="POST" action="{{ route('member.loans.remove-guarantor', [$loanApplication, $g]) }}" class="d-inline">
                                             @csrf @method('DELETE')
                                             <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Remove this guarantor?')">
@@ -125,7 +131,7 @@
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-building me-2"></i>Collateral ({{ $loanApplication->collaterals->count() }})</h6>
-                        @if(in_array($loanApplication->status->value, ['draft']))
+                        @if(in_array($loanApplication->status->value, ['draft', 'submitted']))
                             <button type="button" class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addCollateralModal">
                                 <i class="bi bi-plus"></i>
                             </button>
@@ -181,7 +187,20 @@
                 <i class="bi bi-arrow-left me-1"></i> Back
             </a>
             <div>
-                @if(in_array($loanApplication->status->value, ['draft']))
+                @php
+                    $relatedLoan = \App\Models\Loan::where('loan_application_id', $loanApplication->id)->where('deleted_at', null)->first();
+                @endphp
+                @if($relatedLoan)
+                    <a href="{{ route('member.loans.show', $relatedLoan) }}" class="btn btn-primary me-2">
+                        <i class="bi bi-eye me-1"></i> View Loan Details
+                    </a>
+                    @if(in_array($relatedLoan->status->value, ['active', 'disbursed', 'pending_disbursement']))
+                        <a href="{{ route('member.loans.repay', $relatedLoan) }}" class="btn btn-success me-2">
+                            <i class="bi bi-cash me-1"></i> Make Payment
+                        </a>
+                    @endif
+                @endif
+@if(in_array($loanApplication->status->value, ['draft', 'submitted']))
                     <form method="POST" action="{{ route('member.loans.submit', $loanApplication) }}" class="d-inline">
                         @csrf
                         <button type="submit" class="btn btn-success me-2" onclick="return confirm('Submit this application for review?')">
@@ -214,13 +233,50 @@
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label class="form-label">Guarantor Member <span class="text-danger">*</span></label>
-                        <select name="guarantor_member_id" class="form-select" required>
-                            <option value="">Select Member</option>
+                        <label class="form-label">Select Existing Member <small class="text-muted">(optional if entering details below)</small></label>
+                        <select name="guarantor_member_id" class="form-select">
+                            <option value="">-- None --</option>
                             @foreach(\App\Models\Member::where('organization_id', $member->organization_id)->active()->where('id', '!=', $member->id)->get() as $m)
                                 <option value="{{ $m->id }}">{{ $m->full_name }} ({{ $m->member_number }})</option>
                             @endforeach
                         </select>
+                    </div>
+                    <hr>
+                    <h6 class="text-muted mb-3">Guarantor Details</h6>
+                    <div class="mb-3">
+                        <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="guarantor_name" class="form-control" placeholder="Enter guarantor full name" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Phone Number <span class="text-danger">*</span></label>
+                            <input type="text" name="guarantor_phone" class="form-control" placeholder="+255..." required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="guarantor_email" class="form-control" placeholder="email@example.com">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Relationship</label>
+                        <select name="guarantor_relationship" class="form-select">
+                            <option value="">Select Relationship</option>
+                            <option value="spouse">Spouse</option>
+                            <option value="parent">Parent</option>
+                            <option value="sibling">Sibling</option>
+                            <option value="child">Child</option>
+                            <option value="friend">Friend</option>
+                            <option value="colleague">Colleague</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Occupation / Employer</label>
+                        <input type="text" name="guarantor_occupation" class="form-control" placeholder="e.g. Teacher at ABC School">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Physical Address</label>
+                        <input type="text" name="guarantor_address" class="form-control" placeholder="e.g. Block 5, House 12, Sinza">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Guaranteed Amount (TSh) <span class="text-danger">*</span></label>
@@ -229,6 +285,9 @@
                     <div class="mb-3">
                         <label class="form-label">Notes</label>
                         <textarea name="notes" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="bi bi-info-circle me-1"></i> The guarantor will be notified and must confirm/accept before the application can proceed.
                     </div>
                 </div>
                 <div class="modal-footer">
