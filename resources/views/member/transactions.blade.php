@@ -3,15 +3,6 @@
 @section('title', 'My Transactions - FinancePro VICOBA')
 @section('page-title', 'My Transactions')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">My Transactions</li>
-        </ol>
-    </nav>
-@endsection
-
 @section('content')
 @if($transactions->count() > 0)
 <div class="card vicoba-card">
