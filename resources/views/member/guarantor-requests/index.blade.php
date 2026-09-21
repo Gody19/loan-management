@@ -6,6 +6,9 @@
         <h4 class="mb-1 fw-bold">Guarantor Requests</h4>
         <p class="text-muted mb-0">Loan applications where you have been requested as a guarantor</p>
     </div>
+    <a href="{{ route('member.guarantor.offer') }}" class="btn btn-success">
+        <i class="bi bi-shield-plus me-1"></i> Offer as Guarantor
+    </a>
 </div>
 
 @php

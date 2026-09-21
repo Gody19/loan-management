@@ -177,6 +177,10 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('guarantor.accept');
         Route::post('/guarantor-requests/{guarantor}/reject', [MemberGuarantorController::class, 'reject'])
             ->name('guarantor.reject');
+        Route::get('/guarantor-offer', [MemberGuarantorController::class, 'offerForm'])
+            ->name('guarantor.offer');
+        Route::post('/guarantor-offer', [MemberGuarantorController::class, 'storeOffer'])
+            ->name('guarantor.store-offer');
 
         // Loan Repayments
         Route::get('/loans/{loan}', [MemberRepaymentController::class, 'loanDetail'])
