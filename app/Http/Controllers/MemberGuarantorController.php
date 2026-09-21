@@ -59,10 +59,24 @@ class MemberGuarantorController extends Controller
 
         $validated = $request->validate([
             'nida_number' => 'required|string|min:6|max:50',
+            'guarantor_name' => 'required|string|max:255',
+            'guarantor_phone' => 'required|string|max:50',
+            'guarantor_email' => 'nullable|email|max:255',
+            'guarantor_relationship' => 'nullable|string|max:100',
+            'guarantor_occupation' => 'nullable|string|max:255',
+            'guarantor_address' => 'nullable|string|max:500',
+            'guaranteed_amount' => 'required|numeric|min:1',
         ]);
 
         try {
-            $this->applicationService->respondToGuarantor($guarantor, true, null, $validated['nida_number'], true);
+            $this->applicationService->respondToGuarantor(
+                $guarantor,
+                true,
+                null,
+                $validated['nida_number'],
+                true,
+                $validated
+            );
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

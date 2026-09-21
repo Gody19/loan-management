@@ -207,19 +207,94 @@
 
                 <form method="POST" action="{{ route('member.guarantor.accept', $guarantor) }}" class="mb-2" id="acceptGuarantorForm">
                     @csrf
+                    <h6 class="text-muted mb-3">Your Guarantor Details</h6>
+
                     <div class="mb-3">
                         <label class="form-label fw-semibold">NIDA Number <span class="text-danger">*</span></label>
                         <input type="text" name="nida_number" class="form-control" required minlength="6" maxlength="50"
                                placeholder="Enter your National ID (NIDA) number"
-                               value="{{ old('nida_number', $member->national_id ?? '') }}"
+                               value="{{ old('nida_number', $guarantor->nida_number ?? $member->national_id ?? '') }}"
                                {{ $hasActiveGuarantee ? 'disabled' : '' }}>
-                        <div class="form-text">Your NIDA number must be unique. It will be validated against existing guarantor records.</div>
+                        <div class="form-text">Must be unique. Will be validated against existing records.</div>
                         @error('nida_number')
                             <div class="text-danger small mt-1">{{ $message }}</div>
                         @enderror
                     </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Full Name <span class="text-danger">*</span></label>
+                        <input type="text" name="guarantor_name" class="form-control" required maxlength="255"
+                               placeholder="Enter your full name"
+                               value="{{ old('guarantor_name', $guarantor->guarantor_name ?? $member->full_name ?? '') }}"
+                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                        @error('guarantor_name')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone Number <span class="text-danger">*</span></label>
+                            <input type="text" name="guarantor_phone" class="form-control" required maxlength="50"
+                                   placeholder="+255..."
+                                   value="{{ old('guarantor_phone', $guarantor->guarantor_phone ?? $member->phone ?? '') }}"
+                                   {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                            @error('guarantor_phone')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email</label>
+                            <input type="email" name="guarantor_email" class="form-control" maxlength="255"
+                                   placeholder="email@example.com"
+                                   value="{{ old('guarantor_email', $guarantor->guarantor_email ?? $member->email ?? '') }}"
+                                   {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                            @error('guarantor_email')
+                                <div class="text-danger small mt-1">{{ $message }}</div>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Relationship to Applicant</label>
+                        <select name="guarantor_relationship" class="form-select" {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                            <option value="">Select Relationship</option>
+                            @foreach(['spouse' => 'Spouse', 'parent' => 'Parent', 'sibling' => 'Sibling', 'child' => 'Child', 'friend' => 'Friend', 'colleague' => 'Colleague', 'other' => 'Other'] as $val => $label)
+                                <option value="{{ $val }}" {{ old('guarantor_relationship', $guarantor->guarantor_relationship) === $val ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Occupation / Employer</label>
+                        <input type="text" name="guarantor_occupation" class="form-control" maxlength="255"
+                               placeholder="e.g. Teacher at ABC School"
+                               value="{{ old('guarantor_occupation', $guarantor->guarantor_occupation ?? $member->occupation ?? '') }}"
+                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Physical Address</label>
+                        <input type="text" name="guarantor_address" class="form-control" maxlength="500"
+                               placeholder="e.g. Block 5, House 12, Sinza"
+                               value="{{ old('guarantor_address', $guarantor->guarantor_address ?? '') }}"
+                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Guaranteed Amount (TSh) <span class="text-danger">*</span></label>
+                        <input type="number" name="guaranteed_amount" class="form-control" step="1" min="1" required
+                               value="{{ old('guaranteed_amount', $guarantor->guaranteed_amount) }}"
+                               max="{{ $guarantor->application->requested_amount }}"
+                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                        <div class="form-text">Maximum: TSh {{ number_format($guarantor->application->requested_amount ?? 0, 0) }}</div>
+                        @error('guaranteed_amount')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
                     <button type="submit" class="btn btn-success w-100" {{ $hasActiveGuarantee ? 'disabled' : '' }}
-                            onclick="return confirm('Are you sure you want to accept this guarantor request? Your NIDA number will be recorded.')">
+                            onclick="return confirm('Are you sure you want to accept this guarantor request?')">
                         <i class="bi bi-check-lg me-1"></i> Accept Request
                     </button>
                 </form>

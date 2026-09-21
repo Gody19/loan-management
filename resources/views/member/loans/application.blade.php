@@ -82,15 +82,21 @@
                     </div>
                     <div class="card-body">
                         @forelse($loanApplication->guarantors as $g)
-                            <div class="d-flex align-items-center justify-content-between mb-2 {{ !$loop->last ? 'border-bottom pb-2' : '' }}">
+                            <div class="d-flex align-items-start justify-content-between mb-2 {{ !$loop->last ? 'border-bottom pb-2' : '' }}">
                                 <div>
                                     <div class="fw-medium">{{ $g->guarantorMember->full_name ?? $g->guarantor_name ?? '—' }}</div>
                                     <small class="text-muted">TSh {{ number_format($g->guaranteed_amount, 0) }}</small>
+                                    @if($g->nida_number)
+                                        <br><small class="text-muted font-monospace">NIDA: {{ $g->nida_number }}</small>
+                                    @endif
                                     @if($g->guarantor_phone)
                                         <br><small class="text-muted"><i class="bi bi-telephone me-1"></i>{{ $g->guarantor_phone }}</small>
                                     @endif
                                     @if($g->guarantor_relationship)
                                         <br><small class="text-muted">{{ ucfirst($g->guarantor_relationship) }}</small>
+                                    @endif
+                                    @if($g->guarantor_occupation)
+                                        <br><small class="text-muted">{{ $g->guarantor_occupation }}</small>
                                     @endif
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
@@ -211,7 +217,7 @@
     </div>
 </div>
 
-@if(in_array($loanApplication->status->value, ['draft']))
+@if(in_array($loanApplication->status->value, ['draft', 'submitted']))
 <div class="modal fade" id="addGuarantorModal" tabindex="-1">
     <div class="modal-dialog">
         <form method="POST" action="{{ route('member.loans.add-guarantor', $loanApplication) }}">

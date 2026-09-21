@@ -222,7 +222,7 @@ class LoanApplicationService
         ], []);
     }
 
-    public function respondToGuarantor(LoanApplicationGuarantor $guarantor, bool $accept, ?string $reason = null, ?string $nidaNumber = null, bool $requireNida = false): LoanApplicationGuarantor
+    public function respondToGuarantor(LoanApplicationGuarantor $guarantor, bool $accept, ?string $reason = null, ?string $nidaNumber = null, bool $requireNida = false, array $details = []): LoanApplicationGuarantor
     {
         if ($guarantor->status !== GuarantorStatus::Pending) {
             throw new \InvalidArgumentException('Guarantor has already responded.');
@@ -254,12 +254,36 @@ class LoanApplicationService
                 $nidaTrimmed = $nidaNumber ? trim($nidaNumber) : null;
             }
 
-            $guarantor->update([
+            $updateData = [
                 'nida_number' => $nidaTrimmed,
                 'status' => GuarantorStatus::Accepted,
                 'confirmed_at' => now(),
                 'confirmed_by' => auth()->id(),
-            ]);
+            ];
+
+            if (!empty($details['guarantor_name'])) {
+                $updateData['guarantor_name'] = trim($details['guarantor_name']);
+            }
+            if (!empty($details['guarantor_phone'])) {
+                $updateData['guarantor_phone'] = trim($details['guarantor_phone']);
+            }
+            if (isset($details['guarantor_email'])) {
+                $updateData['guarantor_email'] = trim($details['guarantor_email']) ?: null;
+            }
+            if (isset($details['guarantor_relationship'])) {
+                $updateData['guarantor_relationship'] = trim($details['guarantor_relationship']) ?: null;
+            }
+            if (isset($details['guarantor_occupation'])) {
+                $updateData['guarantor_occupation'] = trim($details['guarantor_occupation']) ?: null;
+            }
+            if (isset($details['guarantor_address'])) {
+                $updateData['guarantor_address'] = trim($details['guarantor_address']) ?: null;
+            }
+            if (!empty($details['guaranteed_amount'])) {
+                $updateData['guaranteed_amount'] = (float) $details['guaranteed_amount'];
+            }
+
+            $guarantor->update($updateData);
             $this->audit->log('loan_application.guarantor_accepted', $guarantor->application, [], [
                 'guarantor_member_id' => $guarantor->guarantor_member_id,
                 'nida_number' => $nidaTrimmed,
