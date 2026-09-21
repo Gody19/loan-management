@@ -166,6 +166,27 @@
     </div>
 
     <div class="col-xl-3 col-md-6">
+        <a href="{{ route('member.guarantor.my-guarantees') }}" class="text-decoration-none">
+            <div class="card vicoba-card h-100 border-start border-{{ $activeGuaranteesCount > 0 ? 'warning' : 'success' }} border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="stat-icon bg-{{ $activeGuaranteesCount > 0 ? 'warning' : 'success' }} bg-opacity-10 text-{{ $activeGuaranteesCount > 0 ? 'warning' : 'success' }} me-3"><i class="bi bi-shield"></i></div>
+                        <div>
+                            <div class="stat-label">My Guarantees</div>
+                            <div class="stat-value">{{ $activeGuaranteesCount }}</div>
+                            @if($activeGuaranteesCount > 0)
+                                <small class="text-warning">Active guarantee(s)</small>
+                            @else
+                                <small class="text-muted">{{ $canGuarantee ? 'Available' : 'Not eligible' }}</small>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
         <a href="{{ route('member.repayment-schedule') }}" class="text-decoration-none">
             <div class="card vicoba-card h-100 border-start border-primary border-4">
                 <div class="card-body">

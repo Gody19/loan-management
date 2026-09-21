@@ -32,6 +32,8 @@ class MemberDashboardService
             'recentTransactions' => $this->recentTransactions(),
             'pendingApplications' => $this->pendingApplications(),
             'pendingGuarantorRequests' => $this->pendingGuarantorRequests(),
+            'activeGuaranteesCount' => $this->activeGuaranteesCount(),
+            'canGuarantee' => $this->canGuarantee(),
         ];
     }
 
@@ -204,5 +206,23 @@ class MemberDashboardService
         return \App\Models\LoanApplicationGuarantor::where('guarantor_member_id', $this->member->id)
             ->where('status', \App\Enums\GuarantorStatus::Pending)
             ->count();
+    }
+
+    private function activeGuaranteesCount(): int
+    {
+        return \App\Models\LoanApplicationGuarantor::where('guarantor_member_id', $this->member->id)
+            ->where('status', \App\Enums\GuarantorStatus::Accepted)
+            ->whereHas('application', function ($q) {
+                $q->whereIn('status', ['approved', 'under_review'])
+                    ->whereHas('loan', function ($q2) {
+                        $q2->where('outstanding_balance', '>', 0);
+                    });
+            })
+            ->count();
+    }
+
+    private function canGuarantee(): bool
+    {
+        return !\App\Models\LoanApplicationGuarantor::hasActiveGuarantee($this->member->id);
     }
 }
