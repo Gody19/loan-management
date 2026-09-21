@@ -3,16 +3,6 @@
 @section('title', 'Eligibility Check - ' . $loanPlan->name)
 @section('page-title', 'Eligibility Check')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.loans') }}">My Loans</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.loans.plan', $loanPlan) }}">{{ $loanPlan->name }}</a></li>
-            <li class="breadcrumb-item active">Eligibility</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row justify-content-center">

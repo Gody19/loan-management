@@ -3,14 +3,6 @@
 @section('title', 'Select Loan to Pay - FinancePro VICOBA')
 @section('page-title', 'Make a Payment')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">Make a Payment</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row justify-content-center">

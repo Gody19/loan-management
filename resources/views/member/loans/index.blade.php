@@ -3,14 +3,6 @@
 @section('title', 'My Loans - FinancePro VICOBA')
 @section('page-title', 'My Loans')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">My Loans</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row g-3 mb-4">

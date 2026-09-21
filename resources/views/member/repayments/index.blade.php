@@ -3,14 +3,6 @@
 @section('title', 'My Repayments - FinancePro VICOBA')
 @section('page-title', 'My Repayments')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item active">My Repayments</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row g-3 mb-4">

@@ -3,15 +3,6 @@
 @section('title', 'My Applications - FinancePro VICOBA')
 @section('page-title', 'My Applications')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.loans') }}">My Loans</a></li>
-            <li class="breadcrumb-item active">Applications</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="card border-0 shadow-sm">

@@ -3,15 +3,6 @@
 @section('title', 'Apply for ' . $loanPlan->name . ' - FinancePro VICOBA')
 @section('page-title', 'Apply for ' . $loanPlan->name)
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.loans') }}">My Loans</a></li>
-            <li class="breadcrumb-item active">Apply</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row justify-content-center">

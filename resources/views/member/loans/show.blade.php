@@ -3,15 +3,6 @@
 @section('title', 'Loan Details - ' . $loan->loan_number)
 @section('page-title', 'Loan Details')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.loans') }}">My Loans</a></li>
-            <li class="breadcrumb-item active">{{ $loan->loan_number }}</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row g-4">

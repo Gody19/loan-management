@@ -3,15 +3,6 @@
 @section('title', 'Payment Details - ' . $repayment->repayment_number)
 @section('page-title', 'Payment Details')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.repayments') }}">My Repayments</a></li>
-            <li class="breadcrumb-item active">{{ $repayment->repayment_number }}</li>
-        </ol>
-    </nav>
-@endsection
 
 @section('content')
 <div class="row">
