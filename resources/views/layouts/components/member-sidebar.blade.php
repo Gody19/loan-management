@@ -80,7 +80,7 @@
         {{-- Guarantor Requests --}}
         <div class="sidebar-section mt-3">Guarantor</div>
 
-        <a href="{{ route('member.guarantor.requests') }}" class="nav-link {{ request()->routeIs('member.guarantor*') ? 'active' : '' }}">
+        <a href="{{ route('member.guarantor.requests') }}" class="nav-link {{ request()->routeIs('member.guarantor.requests') || request()->routeIs('member.guarantor.request') ? 'active' : '' }}">
             <i class="bi bi-shield-check"></i>
             <span>Guarantor Requests</span>
             @php
@@ -94,6 +94,11 @@
             @if($guarantorCount > 0)
                 <span class="badge bg-danger ms-auto" style="font-size: 0.65rem;">{{ $guarantorCount }}</span>
             @endif
+        </a>
+
+        <a href="{{ route('member.guarantor.offer') }}" class="nav-link {{ request()->routeIs('member.guarantor.offer') ? 'active' : '' }}">
+            <i class="bi bi-shield-plus"></i>
+            <span>Offer as Guarantor</span>
         </a>
 
         {{-- Statements --}}
