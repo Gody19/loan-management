@@ -55,8 +55,12 @@ class MemberGuarantorController extends Controller
             abort(404);
         }
 
+        $validated = $request->validate([
+            'nida_number' => 'required|string|min:6|max:50',
+        ]);
+
         try {
-            $this->applicationService->respondToGuarantor($guarantor, true);
+            $this->applicationService->respondToGuarantor($guarantor, true, null, $validated['nida_number'], true);
         } catch (\InvalidArgumentException $e) {
             return back()->withErrors(['error' => $e->getMessage()]);
         }

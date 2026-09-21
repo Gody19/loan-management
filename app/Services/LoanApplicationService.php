@@ -188,6 +188,7 @@ class LoanApplicationService
             'loan_application_id' => $application->id,
             'guarantor_member_id' => $guarantorMember?->id,
             'guaranteed_amount' => $data['guaranteed_amount'],
+            'nida_number' => $data['nida_number'] ?? null,
             'notes' => $data['notes'] ?? null,
             'status' => GuarantorStatus::Pending,
             'guarantor_name' => $data['guarantor_name'] ?? null,
@@ -221,20 +222,47 @@ class LoanApplicationService
         ], []);
     }
 
-    public function respondToGuarantor(LoanApplicationGuarantor $guarantor, bool $accept, ?string $reason = null): LoanApplicationGuarantor
+    public function respondToGuarantor(LoanApplicationGuarantor $guarantor, bool $accept, ?string $reason = null, ?string $nidaNumber = null, bool $requireNida = false): LoanApplicationGuarantor
     {
         if ($guarantor->status !== GuarantorStatus::Pending) {
             throw new \InvalidArgumentException('Guarantor has already responded.');
         }
 
         if ($accept) {
+            if ($requireNida) {
+                if (!$nidaNumber) {
+                    throw new \InvalidArgumentException('NIDA number is required to accept a guarantor request.');
+                }
+
+                $nidaTrimmed = trim($nidaNumber);
+                if (strlen($nidaTrimmed) < 6) {
+                    throw new \InvalidArgumentException('NIDA number must be at least 6 characters.');
+                }
+
+                $nidaExists = LoanApplicationGuarantor::where('nida_number', $nidaTrimmed)
+                    ->where('id', '!=', $guarantor->id)
+                    ->where('status', '!=', GuarantorStatus::Rejected)
+                    ->exists();
+                if ($nidaExists) {
+                    throw new \InvalidArgumentException('This NIDA number is already registered by another guarantor.');
+                }
+
+                if ($guarantor->guarantor_member_id && LoanApplicationGuarantor::hasActiveGuarantee($guarantor->guarantor_member_id)) {
+                    throw new \InvalidArgumentException('You cannot guarantee another loan because you still have an active guaranteed loan that has not been fully repaid.');
+                }
+            } else {
+                $nidaTrimmed = $nidaNumber ? trim($nidaNumber) : null;
+            }
+
             $guarantor->update([
+                'nida_number' => $nidaTrimmed,
                 'status' => GuarantorStatus::Accepted,
                 'confirmed_at' => now(),
                 'confirmed_by' => auth()->id(),
             ]);
             $this->audit->log('loan_application.guarantor_accepted', $guarantor->application, [], [
                 'guarantor_member_id' => $guarantor->guarantor_member_id,
+                'nida_number' => $nidaTrimmed,
             ]);
         } else {
             if (!$reason) {

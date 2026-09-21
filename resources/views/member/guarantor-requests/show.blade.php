@@ -1,15 +1,5 @@
 @extends('layouts.member')
 
-@section('breadcrumb')
-<nav aria-label="breadcrumb">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-        <li class="breadcrumb-item"><a href="{{ route('member.guarantor.requests') }}">Guarantor Requests</a></li>
-        <li class="breadcrumb-item active">{{ $guarantor->application->application_number ?? 'Request' }}</li>
-    </ol>
-</nav>
-@endsection
-
 @section('content')
 <div class="row">
     <div class="col-lg-8">
@@ -98,6 +88,12 @@
                         <label class="form-label text-muted small">Request Date</label>
                         <div class="fw-medium">{{ $guarantor->created_at->format('d M Y H:i') }}</div>
                     </div>
+                    @if($guarantor->nida_number)
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small">NIDA Number</label>
+                        <div class="fw-medium font-monospace">{{ $guarantor->nida_number }}</div>
+                    </div>
+                    @endif
                     @if($guarantor->confirmed_at)
                     <div class="col-md-6">
                         <label class="form-label text-muted small">Accepted Date</label>
@@ -159,12 +155,15 @@
                 <div class="d-flex justify-content-between align-items-center {{ !$loop->last ? 'border-bottom pb-2 mb-2' : '' }}">
                     <div>
                         <div class="fw-medium">
-                            {{ $g->guarantorMember->full_name ?? '—' }}
+                            {{ $g->guarantorMember->full_name ?? $g->guarantor_name ?? '—' }}
                             @if($g->id === $guarantor->id)
                                 <span class="badge bg-primary ms-1">You</span>
                             @endif
                         </div>
                         <small class="text-muted">TSh {{ number_format($g->guaranteed_amount, 0) }}</small>
+                        @if($g->nida_number)
+                            <br><small class="text-muted font-monospace">NIDA: {{ $g->nida_number }}</small>
+                        @endif
                     </div>
                     @php
                         $gStatusColors = ['pending' => 'warning', 'accepted' => 'success', 'rejected' => 'danger', 'withdrawn' => 'secondary'];
@@ -186,9 +185,41 @@
             <div class="card-body">
                 <p class="text-muted small mb-3">You have been requested to guarantee this loan application. Please review the details carefully before making a decision.</p>
 
-                <form method="POST" action="{{ route('member.guarantor.accept', $guarantor) }}" class="mb-2">
+                @php
+                    $hasActiveGuarantee = $member && \App\Models\LoanApplicationGuarantor::hasActiveGuarantee($member->id);
+                @endphp
+
+                @if($hasActiveGuarantee)
+                <div class="alert alert-warning d-flex align-items-center mb-3" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div class="small">
+                        <strong>Blocked:</strong> You currently have an active guaranteed loan that has not been fully repaid. You cannot guarantee another loan until it is completed.
+                    </div>
+                </div>
+                @endif
+
+                @error('error')
+                <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    <div class="small">{{ $message }}</div>
+                </div>
+                @enderror
+
+                <form method="POST" action="{{ route('member.guarantor.accept', $guarantor) }}" class="mb-2" id="acceptGuarantorForm">
                     @csrf
-                    <button type="submit" class="btn btn-success w-100" onclick="return confirm('Are you sure you want to accept this guarantor request?')">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">NIDA Number <span class="text-danger">*</span></label>
+                        <input type="text" name="nida_number" class="form-control" required minlength="6" maxlength="50"
+                               placeholder="Enter your National ID (NIDA) number"
+                               value="{{ old('nida_number', $member->national_id ?? '') }}"
+                               {{ $hasActiveGuarantee ? 'disabled' : '' }}>
+                        <div class="form-text">Your NIDA number must be unique. It will be validated against existing guarantor records.</div>
+                        @error('nida_number')
+                            <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+                    <button type="submit" class="btn btn-success w-100" {{ $hasActiveGuarantee ? 'disabled' : '' }}
+                            onclick="return confirm('Are you sure you want to accept this guarantor request? Your NIDA number will be recorded.')">
                         <i class="bi bi-check-lg me-1"></i> Accept Request
                     </button>
                 </form>
