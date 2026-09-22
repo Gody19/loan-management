@@ -3,13 +3,13 @@
 @section('title', 'My Dashboard - FinancePro VICOBA')
 @section('page-title', 'My Dashboard')
 
-@section('breadcrumb')
+{{-- @section('breadcrumb')
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item active">My Dashboard</li>
         </ol>
     </nav>
-@endsection
+@endsection --}}
 
 @section('content')
 {{-- Member Identity --}}

@@ -3,19 +3,9 @@
 @section('title', 'Edit Profile - FinancePro VICOBA')
 @section('page-title', 'Edit Profile')
 
-@section('breadcrumb')
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item"><a href="{{ route('member.dashboard') }}">Dashboard</a></li>
-            <li class="breadcrumb-item"><a href="{{ route('member.profile') }}">My Profile</a></li>
-            <li class="breadcrumb-item active">Edit</li>
-        </ol>
-    </nav>
-@endsection
-
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10 col-xl-9">
+<div class="row">
+    <div class="col-12">
         <div class="card vicoba-card">
             <div class="card-header bg-transparent">
                 <h6 class="mb-0 fw-semibold"><i class="bi bi-pencil me-2"></i>Edit Profile</h6>
@@ -55,6 +45,16 @@
                                    id="email" name="email"
                                    value="{{ old('email', $member->email) }}">
                             @error('email')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="national_id" class="form-label">National ID / NIDA</label>
+                            <input type="text" class="form-control @error('national_id') is-invalid @enderror"
+                                   id="national_id" name="national_id"
+                                   value="{{ old('national_id', $member->national_id) }}">
+                            @error('national_id')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
                         </div>

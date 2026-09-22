@@ -4,8 +4,8 @@
 @section('page-title', 'Offer as Guarantor')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10">
+<div class="row">
+    <div class="col-12">
 
         @if($hasActiveGuarantee)
         <div class="alert alert-warning d-flex align-items-center mb-4" role="alert">

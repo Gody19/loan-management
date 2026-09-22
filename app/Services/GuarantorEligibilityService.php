@@ -13,7 +13,7 @@ class GuarantorEligibilityService
      *
      * @return array{eligible: bool, reason: ?string}
      */
-    public function canGuarantee(Member $member, ?LoanApplication $currentApplication = null): array
+    public function canGuarantee(Member $member, ?LoanApplication $currentApplication = null, ?int $excludeGuarantorId = null): array
     {
         if ($member->membership_status->value !== 'active') {
             return ['eligible' => false, 'reason' => 'Member is not an active member.'];
@@ -35,6 +35,7 @@ class GuarantorEligibilityService
             $alreadyOnApplication = LoanApplicationGuarantor::where('loan_application_id', $currentApplication->id)
                 ->where('guarantor_member_id', $member->id)
                 ->where('status', '!=', \App\Enums\GuarantorStatus::Rejected)
+                ->when($excludeGuarantorId, fn ($q) => $q->where('id', '!=', $excludeGuarantorId))
                 ->exists();
 
             if ($alreadyOnApplication) {
@@ -61,9 +62,9 @@ class GuarantorEligibilityService
     /**
      * Get detailed eligibility information for a member.
      */
-    public function getEligibility(Member $member, ?LoanApplication $currentApplication = null): array
+    public function getEligibility(Member $member, ?LoanApplication $currentApplication = null, ?int $excludeGuarantorId = null): array
     {
-        $result = $this->canGuarantee($member, $currentApplication);
+        $result = $this->canGuarantee($member, $currentApplication, $excludeGuarantorId);
 
         $activeGuarantees = LoanApplicationGuarantor::where('guarantor_member_id', $member->id)
             ->whereIn('status', [\App\Enums\GuarantorStatus::Pending, \App\Enums\GuarantorStatus::Accepted])
@@ -91,8 +92,8 @@ class GuarantorEligibilityService
     /**
      * Check if a member is eligible to guarantee (boolean shorthand).
      */
-    public function isEligible(Member $member, ?LoanApplication $currentApplication = null): bool
+    public function isEligible(Member $member, ?LoanApplication $currentApplication = null, ?int $excludeGuarantorId = null): bool
     {
-        return $this->canGuarantee($member, $currentApplication)['eligible'];
+        return $this->canGuarantee($member, $currentApplication, $excludeGuarantorId)['eligible'];
     }
 }

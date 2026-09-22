@@ -4,8 +4,8 @@
 @section('page-title', 'Financial Statement')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-11 col-xl-10">
+<div class="row">
+    <div class="col-12">
 
         {{-- Statement Header --}}
         <div class="card vicoba-card mb-4">
