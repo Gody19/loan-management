@@ -69,20 +69,20 @@ class MemberGuarantorController extends Controller
         ]);
 
         // Check eligibility before accepting
-        $eligibility = $this->eligibilityService->canGuarantee($member, $guarantor->application);
+        $eligibility = $this->eligibilityService->canGuarantee($member, $guarantor->application, $guarantor->id);
         if (!$eligibility['eligible']) {
             return back()->withErrors(['error' => $eligibility['reason']]);
         }
 
-        // Mark as accepted by guarantor — status stays Pending for org review
         $guarantor->update([
+            'status' => \App\Enums\GuarantorStatus::Accepted,
             'guaranteed_amount' => $validated['guaranteed_amount'],
             'confirmed_at' => now(),
-            'confirmed_by' => $member->id,
+            'confirmed_by' => $request->user()->id,
         ]);
 
         return redirect()->route('member.guarantor.request', $guarantor)
-            ->with('success', 'Guarantor request accepted. It will be reviewed by the organization.');
+            ->with('success', 'Guarantor request confirmed successfully.');
     }
 
     public function reject(Request $request, LoanApplicationGuarantor $guarantor): RedirectResponse
@@ -232,8 +232,28 @@ class MemberGuarantorController extends Controller
 
         $eligibility = $this->eligibilityService->getEligibility($member);
 
+        $myApplications = LoanApplication::where('member_id', $member->id)
+            ->whereIn('status', ['draft', 'submitted', 'under_review'])
+            ->with(['loanPlan', 'guarantors.guarantorMember'])
+            ->latest()
+            ->get();
+
+        $searchableMembers = Member::where('organization_id', $member->organization_id)
+            ->where('id', '!=', $member->id)
+            ->active()
+            ->with('vicobaGroup:id,name')
+            ->get()
+            ->map(fn ($m) => [
+                'id' => $m->id,
+                'full_name' => $m->full_name,
+                'member_number' => $m->member_number,
+                'national_id' => $m->national_id,
+                'phone' => $m->phone,
+                'group' => $m->vicobaGroup->name ?? '—',
+            ]);
+
         return view('member.guarantor-requests.my-guarantees', compact(
-            'member', 'activeGuarantees', 'completedGuarantees', 'eligibility'
+            'member', 'activeGuarantees', 'completedGuarantees', 'eligibility', 'myApplications', 'searchableMembers'
         ));
     }
 }
