@@ -261,8 +261,7 @@ class MemberLoanController extends Controller
 
         $this->applicationService->addGuarantor($loanApplication, $validated, $guarantorMember);
 
-        return redirect()->route('member.loans.application', $loanApplication)
-            ->with('success', 'Guarantor added. They will be notified to confirm.');
+        return back()->with('success', 'Guarantor added. They will be notified to confirm.');
     }
 
     public function removeGuarantor(Request $request, LoanApplication $loanApplication, LoanApplicationGuarantor $guarantor): RedirectResponse
@@ -279,8 +278,35 @@ class MemberLoanController extends Controller
 
         $this->applicationService->removeGuarantor($guarantor);
 
-        return redirect()->route('member.loans.application', $loanApplication)
+        return redirect()->route('member.my-guarantees')
             ->with('success', 'Guarantor has been removed.');
+    }
+
+    public function updateGuarantor(Request $request, LoanApplication $loanApplication, LoanApplicationGuarantor $guarantor): RedirectResponse
+    {
+        $member = $request->user()->member;
+
+        if ($loanApplication->member_id !== $member->id) {
+            abort(404);
+        }
+
+        if ($guarantor->loan_application_id !== $loanApplication->id) {
+            abort(404);
+        }
+
+        if (!in_array($loanApplication->status->value, ['draft', 'submitted'])) {
+            return back()->withErrors(['error' => 'Cannot edit guarantors on an application that is not in draft or submitted status.']);
+        }
+
+        $validated = $request->validate([
+            'guaranteed_amount' => 'required|numeric|min:1',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $this->applicationService->updateGuarantor($guarantor, $validated);
+
+        return redirect()->route('member.my-guarantees')
+            ->with('success', 'Guarantor updated successfully.');
     }
 
     public function addCollateral(Request $request, LoanApplication $loanApplication): RedirectResponse

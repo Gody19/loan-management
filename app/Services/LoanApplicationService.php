@@ -237,6 +237,23 @@ class LoanApplicationService
         ], []);
     }
 
+    public function updateGuarantor(LoanApplicationGuarantor $guarantor, array $data): LoanApplicationGuarantor
+    {
+        if (!in_array($guarantor->status, [GuarantorStatus::Pending, GuarantorStatus::Rejected])) {
+            throw new \InvalidArgumentException('Only pending or rejected guarantors can be edited.');
+        }
+
+        $old = $guarantor->toArray();
+        $guarantor->update([
+            'guaranteed_amount' => $data['guaranteed_amount'],
+            'notes' => $data['notes'] ?? null,
+        ]);
+
+        $this->audit->log('loan_application.guarantor_updated', $guarantor->application, $old, $guarantor->fresh()->toArray());
+
+        return $guarantor;
+    }
+
     public function respondToGuarantor(LoanApplicationGuarantor $guarantor, bool $accept, ?string $reason = null, ?string $nidaNumber = null, bool $requireNida = false, array $details = []): LoanApplicationGuarantor
     {
         if ($guarantor->status !== GuarantorStatus::Pending) {
@@ -246,7 +263,7 @@ class LoanApplicationService
         if ($accept) {
             $eligibilityService = app(\App\Services\GuarantorEligibilityService::class);
             if ($guarantor->guarantor_member_id) {
-                $elig = $eligibilityService->canGuarantee($guarantor->guarantorMember, $guarantor->application);
+                $elig = $eligibilityService->canGuarantee($guarantor->guarantorMember, $guarantor->application, $guarantor->id);
                 if (!$elig['eligible']) {
                     throw new \InvalidArgumentException('Guarantor is not eligible: ' . $elig['reason']);
                 }

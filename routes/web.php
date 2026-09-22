@@ -163,6 +163,8 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('loans.add-guarantor');
         Route::delete('/loans/applications/{loanApplication}/guarantors/{guarantor}', [MemberLoanController::class, 'removeGuarantor'])
             ->name('loans.remove-guarantor');
+        Route::put('/loans/applications/{loanApplication}/guarantors/{guarantor}', [MemberLoanController::class, 'updateGuarantor'])
+            ->name('loans.update-guarantor');
         Route::post('/loans/applications/{loanApplication}/collaterals', [MemberLoanController::class, 'addCollateral'])
             ->name('loans.add-collateral');
         Route::delete('/loans/applications/{loanApplication}/collaterals/{collateral}', [MemberLoanController::class, 'removeCollateral'])
