@@ -348,4 +348,65 @@ class MemberLoanController extends Controller
         return redirect()->route('member.loans.application', $loanApplication)
             ->with('success', 'Collateral has been removed.');
     }
+
+    public function uploadCollateralDocument(Request $request, LoanApplication $loanApplication, LoanApplicationCollateral $collateral)
+    {
+        $member = $request->user()->member;
+
+        if ($loanApplication->member_id !== $member->id) {
+            abort(404);
+        }
+
+        if ($collateral->loan_application_id !== $loanApplication->id) {
+            abort(404);
+        }
+
+        if (!in_array($loanApplication->status->value, ['draft', 'submitted'])) {
+            return back()->withErrors(['error' => 'Cannot upload documents for an application that is not editable.']);
+        }
+
+        $validated = $request->validate([
+            'document_type' => 'required|string|in:' . implode(',', \App\Enums\CollateralDocumentType::values()),
+            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png',
+        ]);
+
+        try {
+            $this->applicationService->addCollateralDocument($collateral, $validated, $request->file('file'));
+            return back()->with('success', 'Document uploaded successfully.');
+        } catch (\Exception $e) {
+            return back()->withErrors(['error' => 'Failed to upload document: ' . $e->getMessage()]);
+        }
+    }
+
+    public function removeCollateralDocument(Request $request, \App\Models\CollateralDocument $document)
+    {
+        $member = $request->user()->member;
+        $collateral = $document->collateral;
+        $application = $collateral->application;
+
+        if ($application->member_id !== $member->id) {
+            abort(404);
+        }
+
+        $this->applicationService->removeCollateralDocument($document);
+
+        return back()->with('success', 'Document removed.');
+    }
+
+    public function downloadCollateralDocument(Request $request, \App\Models\CollateralDocument $document)
+    {
+        $member = $request->user()->member;
+        $collateral = $document->collateral;
+        $application = $collateral->application;
+
+        if ($application->member_id !== $member->id) {
+            abort(404);
+        }
+
+        if (!\Illuminate\Support\Facades\Storage::disk('private')->exists($document->file_path)) {
+            abort(404, 'Document not found.');
+        }
+
+        return \Illuminate\Support\Facades\Storage::disk('private')->download($document->file_path, $document->original_filename);
+    }
 }

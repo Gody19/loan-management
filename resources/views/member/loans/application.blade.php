@@ -143,13 +143,67 @@
                         @endif
                     </div>
                     <div class="card-body">
+                        @php $snapshot = $loanApplication->collateralSnapshot; @endphp
+                        @if($snapshot && $snapshot->collateral_required)
+                            <div class="alert alert-warning small mb-3">
+                                <i class="bi bi-exclamation-triangle me-1"></i>
+                                <strong>Collateral Required</strong> — Min value: TSh {{ number_format($snapshot->minimum_collateral_value, 0) }}
+                                | Coverage: {{ $snapshot->coverage_percentage }}%
+                                | Assets: {{ $snapshot->minimum_assets }}–{{ $snapshot->maximum_assets }}
+                                @if($snapshot->allowed_collateral_types)
+                                    <br>Allowed types: {{ implode(', ', array_map(fn($t) => ucfirst($t), $snapshot->allowed_collateral_types)) }}
+                                @endif
+                                @if($snapshot->required_document_types)
+                                    <br>Required docs: {{ implode(', ', array_map(fn($t) => \App\Enums\CollateralDocumentType::tryFrom($t)?->label() ?? $t, $snapshot->required_document_types)) }}
+                                @endif
+                            </div>
+                        @endif
+
                         @forelse($loanApplication->collaterals as $c)
-                            <div class="d-flex align-items-center justify-content-between mb-2 {{ !$loop->last ? 'border-bottom pb-2' : '' }}">
-                                <div>
-                                    <div class="fw-medium">{{ $c->collateral_type->label() }}</div>
-                                    <small class="text-muted">{{ Str::limit($c->description, 40) }} | TSh {{ number_format($c->estimated_value, 0) }}</small>
+                            <div class="border rounded p-3 mb-3">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <div class="fw-medium">{{ $c->collateral_type->label() }}</div>
+                                        <small class="text-muted">{{ Str::limit($c->description, 50) }} | TSh {{ number_format($c->estimated_value, 0) }}</small>
+                                        @if($c->reviewed_value)
+                                            <br><small class="text-primary">Reviewed value: TSh {{ number_format($c->reviewed_value, 0) }}</small>
+                                        @endif
+                                        @if($c->review_notes)
+                                            <br><small class="text-muted">Notes: {{ $c->review_notes }}</small>
+                                        @endif
+                                    </div>
+                                    <span class="badge bg-{{ $c->status->color() }}">{{ $c->status->label() }}</span>
                                 </div>
-                                <span class="badge bg-{{ $c->status->value === 'verified' ? 'success' : ($c->status->value === 'rejected' ? 'danger' : 'warning') }}">{{ $c->status->label() }}</span>
+
+                                {{-- Documents --}}
+                                @if($c->documents->count() > 0)
+                                    <div class="small mb-2">
+                                        <strong>Documents:</strong>
+                                        @foreach($c->documents as $doc)
+                                            <span class="badge bg-light text-dark border me-1 mb-1">
+                                                {{ $doc->document_type->label() }}
+                                                <a href="{{ route('member.loans.collateral-document.download', $doc) }}" class="ms-1"><i class="bi bi-download"></i></a>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                {{-- Upload documents for own collaterals --}}
+                                @if(in_array($loanApplication->status->value, ['draft', 'submitted']))
+                                    <form method="POST" action="{{ route('member.loans.collateral-document.upload', [$loanApplication, $c]) }}" enctype="multipart/form-data" class="mt-2">
+                                        @csrf
+                                        <div class="input-group input-group-sm">
+                                            <select name="document_type" class="form-select" style="max-width:180px" required>
+                                                <option value="">Doc type...</option>
+                                                @foreach(\App\Enums\CollateralDocumentType::values() as $dt)
+                                                    <option value="{{ $dt }}">{{ \App\Enums\CollateralDocumentType::from($dt)->label() }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-upload"></i></button>
+                                        </div>
+                                    </form>
+                                @endif
                             </div>
                         @empty
                             <div class="text-muted text-center py-3">

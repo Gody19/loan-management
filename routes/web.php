@@ -169,6 +169,12 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('loans.add-collateral');
         Route::delete('/loans/applications/{loanApplication}/collaterals/{collateral}', [MemberLoanController::class, 'removeCollateral'])
             ->name('loans.remove-collateral');
+        Route::post('/loans/applications/{loanApplication}/collaterals/{collateral}/documents', [MemberLoanController::class, 'uploadCollateralDocument'])
+            ->name('loans.collateral-document.upload');
+        Route::delete('/collateral-documents/{document}', [MemberLoanController::class, 'removeCollateralDocument'])
+            ->name('loans.collateral-document.destroy');
+        Route::get('/collateral-documents/{document}/download', [MemberLoanController::class, 'downloadCollateralDocument'])
+            ->name('loans.collateral-document.download');
 
         // Guarantor Requests (member is the guarantor)
         Route::get('/guarantor-requests', [MemberGuarantorController::class, 'index'])
@@ -391,6 +397,16 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('loan-applications.collaterals.store');
     Route::delete('/loan-applications/{loanApplication}/collaterals/{collateral}', [LoanApplicationCollateralController::class, 'destroy'])
         ->name('loan-applications.collaterals.destroy');
+    Route::post('/loan-applications/{loanApplication}/collaterals/{collateral}/verify', [LoanApplicationCollateralController::class, 'verify'])
+        ->name('loan-applications.collaterals.verify');
+    Route::post('/loan-applications/{loanApplication}/collaterals/{collateral}/reject', [LoanApplicationCollateralController::class, 'reject'])
+        ->name('loan-applications.collaterals.reject');
+    Route::post('/loan-applications/{loanApplication}/collaterals/{collateral}/documents', [LoanApplicationCollateralController::class, 'uploadDocument'])
+        ->name('loan-applications.collaterals.documents.upload');
+    Route::get('/collateral-documents/{document}/download', [LoanApplicationCollateralController::class, 'downloadDocument'])
+        ->name('loan-applications.collaterals.documents.download');
+    Route::delete('/collateral-documents/{document}', [LoanApplicationCollateralController::class, 'destroyDocument'])
+        ->name('loan-applications.collaterals.documents.destroy');
 
     // Loan Approval Levels
     Route::resource('loan-approval-levels', LoanApprovalLevelController::class);

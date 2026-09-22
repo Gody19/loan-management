@@ -152,6 +152,47 @@
             </div>
 
         </div>
+
+        {{-- Collateral Rules --}}
+        @if($loanPlan->collateralRules->count() > 0)
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <h6 class="mb-0 fw-semibold"><i class="bi bi-shield-lock me-2"></i>Collateral Rules (Amount-Based)</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Amount Range</th>
+                                <th>Required</th>
+                                <th>Coverage</th>
+                                <th>Min Value</th>
+                                <th>Assets</th>
+                                <th>Allowed Types</th>
+                                <th>Required Docs</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($loanPlan->collateralRules->sortBy('minimum_amount') as $rule)
+                            <tr>
+                                <td class="fw-medium">TSh {{ number_format($rule->minimum_amount, 0) }} - {{ number_format($rule->maximum_amount, 0) }}</td>
+                                <td><span class="badge bg-{{ $rule->collateral_required ? 'warning' : 'success' }}">{{ $rule->collateral_required ? 'Yes' : 'No' }}</span></td>
+                                <td>{{ $rule->coverage_percentage }}%</td>
+                                <td>TSh {{ number_format($rule->minimum_collateral_value, 0) }}</td>
+                                <td>{{ $rule->minimum_assets }} - {{ $rule->maximum_assets }}</td>
+                                <td><small>{{ $rule->allowed_collateral_types ? implode(', ', array_map(fn($t) => ucfirst($t), $rule->allowed_collateral_types)) : 'Any' }}</small></td>
+                                <td><small>{{ $rule->required_document_types ? implode(', ', array_map(fn($t) => str_replace('_', ' ', $t), $rule->required_document_types)) : 'None' }}</small></td>
+                                <td><span class="badge bg-{{ $rule->status ? 'success' : 'secondary' }}">{{ $rule->status ? 'Active' : 'Inactive' }}</span></td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 @endsection

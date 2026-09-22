@@ -215,6 +215,99 @@
                 </div>
             </div>
 
+            {{-- Collateral Rules --}}
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-semibold"><i class="bi bi-shield-lock me-2"></i>Collateral Rules (Amount-Based)</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCollateralRule()">
+                        <i class="bi bi-plus"></i> Add Rule
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="collateralRulesContainer">
+                        @forelse($loanPlan->collateralRules as $rule)
+                        <div class="border rounded p-3 mb-3 collateral-rule" id="rule_{{ $loop->index }}">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="fw-semibold small mb-0">Rule #{{ $loop->index + 1 }}</h6>
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRule({{ $loop->index }})">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                            <div class="row g-2">
+                                <input type="hidden" name="collateral_rules[{{ $loop->index }}][id]" value="{{ $rule->id }}">
+                                <div class="col-md-3">
+                                    <label class="form-label small">Min Amount</label>
+                                    <input type="number" name="collateral_rules[{{ $loop->index }}][minimum_amount]" class="form-control form-control-sm" value="{{ $rule->minimum_amount }}" step="0.01" min="0" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label small">Max Amount</label>
+                                    <input type="number" name="collateral_rules[{{ $loop->index }}][maximum_amount]" class="form-control form-control-sm" value="{{ $rule->maximum_amount }}" step="0.01" min="0" required>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Required</label>
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" name="collateral_rules[{{ $loop->index }}][collateral_required]" value="1" {{ $rule->collateral_required ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Coverage %</label>
+                                    <input type="number" name="collateral_rules[{{ $loop->index }}][coverage_percentage]" class="form-control form-control-sm" value="{{ $rule->coverage_percentage }}" step="0.01" min="0">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Min Value</label>
+                                    <input type="number" name="collateral_rules[{{ $loop->index }}][minimum_collateral_value]" class="form-control form-control-sm" value="{{ $rule->minimum_collateral_value }}" step="0.01" min="0">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Min Assets</label>
+                                    <input type="number" name="collateral_rules[{{ $loop->index }}][minimum_assets]" class="form-control form-control-sm" value="{{ $rule->minimum_assets }}" min="0">
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Max Assets</label>
+                                    <input type="number" name="collateral_rules[{{ $loop->index }}][maximum_assets]" class="form-control form-control-sm" value="{{ $rule->maximum_assets }}" min="1">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Allowed Types</label>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach(\App\Enums\CollateralType::values() as $type)
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="checkbox" name="collateral_rules[{{ $loop->parent->index }}][allowed_collateral_types][]" value="{{ $type }}" id="rule_{{ $loop->parent->index }}_type_{{ $type }}" {{ in_array($type, $rule->allowed_collateral_types ?? []) ? 'checked' : '' }}>
+                                            <label class="form-check-label small" for="rule_{{ $loop->parent->index }}_type_{{ $type }}">{{ $type }}</label>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label small">Required Documents</label>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        @foreach(\App\Enums\CollateralDocumentType::values() as $doc)
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="checkbox" name="collateral_rules[{{ $loop->parent->index }}][required_document_types][]" value="{{ $doc }}" id="rule_{{ $loop->parent->index }}_doc_{{ $doc }}" {{ in_array($doc, $rule->required_document_types ?? []) ? 'checked' : '' }}>
+                                            <label class="form-check-label small" for="rule_{{ $loop->parent->index }}_doc_{{ $doc }}">{{ str_replace('_', ' ', $doc) }}</label>
+                                        </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <label class="form-label small">Active</label>
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" name="collateral_rules[{{ $loop->index }}][status]" value="1" {{ $rule->status ? 'checked' : '' }}>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small">Description</label>
+                                    <input type="text" name="collateral_rules[{{ $loop->index }}][description]" class="form-control form-control-sm" value="{{ $rule->description ?? '' }}">
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-muted text-center py-3" id="noRulesMsg">
+                            No collateral rules configured. Click "Add Rule" to define amount-based collateral requirements.
+                        </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
             {{-- Status --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
@@ -245,4 +338,104 @@
         </div>
     </div>
 </form>
+
+@push('scripts')
+<script>
+let ruleIndex = {{ $loanPlan->collateralRules->count() }};
+const collateralTypes = @json(\App\Enums\CollateralType::values());
+const documentTypes = @json(\App\Enums\CollateralDocumentType::values());
+
+function addCollateralRule() {
+    const container = document.getElementById('collateralRulesContainer');
+    const noRulesMsg = document.getElementById('noRulesMsg');
+    if (noRulesMsg) noRulesMsg.remove();
+
+    const html = `
+    <div class="border rounded p-3 mb-3 collateral-rule" id="rule_${ruleIndex}">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h6 class="fw-semibold small mb-0">Rule #${ruleIndex + 1}</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRule(${ruleIndex})">
+                <i class="bi bi-trash"></i>
+            </button>
+        </div>
+        <div class="row g-2">
+            <input type="hidden" name="collateral_rules[${ruleIndex}][id]" value="">
+            <div class="col-md-3">
+                <label class="form-label small">Min Amount <span class="text-danger">*</span></label>
+                <input type="number" name="collateral_rules[${ruleIndex}][minimum_amount]" class="form-control form-control-sm" step="0.01" min="0" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small">Max Amount <span class="text-danger">*</span></label>
+                <input type="number" name="collateral_rules[${ruleIndex}][maximum_amount]" class="form-control form-control-sm" step="0.01" min="0" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Required</label>
+                <div class="form-check form-switch mt-1">
+                    <input class="form-check-input" type="checkbox" name="collateral_rules[${ruleIndex}][collateral_required]" value="1">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Coverage %</label>
+                <input type="number" name="collateral_rules[${ruleIndex}][coverage_percentage]" class="form-control form-control-sm" value="100" step="0.01" min="0">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Min Value</label>
+                <input type="number" name="collateral_rules[${ruleIndex}][minimum_collateral_value]" class="form-control form-control-sm" value="0" step="0.01" min="0">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Min Assets</label>
+                <input type="number" name="collateral_rules[${ruleIndex}][minimum_assets]" class="form-control form-control-sm" value="1" min="0">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Max Assets</label>
+                <input type="number" name="collateral_rules[${ruleIndex}][maximum_assets]" class="form-control form-control-sm" value="1" min="1">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">Allowed Types</label>
+                <div class="d-flex flex-wrap gap-1">
+                    ${collateralTypes.map(t => `
+                        <div class="form-check form-check-inline m-0">
+                            <input class="form-check-input" type="checkbox" name="collateral_rules[${ruleIndex}][allowed_collateral_types][]" value="${t}" id="rule_${ruleIndex}_type_${t}" checked>
+                            <label class="form-check-label small" for="rule_${ruleIndex}_type_${t}">${t}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small">Required Documents</label>
+                <div class="d-flex flex-wrap gap-1">
+                    ${documentTypes.map(t => `
+                        <div class="form-check form-check-inline m-0">
+                            <input class="form-check-input" type="checkbox" name="collateral_rules[${ruleIndex}][required_document_types][]" value="${t}" id="rule_${ruleIndex}_doc_${t}">
+                            <label class="form-check-label small" for="rule_${ruleIndex}_doc_${t}">${t.replace(/_/g, ' ')}</label>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small">Active</label>
+                <div class="form-check form-switch mt-1">
+                    <input class="form-check-input" type="checkbox" name="collateral_rules[${ruleIndex}][status]" value="1" checked>
+                </div>
+            </div>
+            <div class="col-12">
+                <label class="form-label small">Description</label>
+                <input type="text" name="collateral_rules[${ruleIndex}][description]" class="form-control form-control-sm" placeholder="e.g. Vehicle collateral required for this amount range">
+            </div>
+        </div>
+    </div>`;
+    container.insertAdjacentHTML('beforeend', html);
+    ruleIndex++;
+}
+
+function removeRule(index) {
+    const rule = document.getElementById('rule_' + index);
+    if (rule) rule.remove();
+    const container = document.getElementById('collateralRulesContainer');
+    if (container.querySelectorAll('.collateral-rule').length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3" id="noRulesMsg">No collateral rules configured. Click "Add Rule" to define amount-based collateral requirements.</div>';
+    }
+}
+</script>
+@endpush
 @endsection

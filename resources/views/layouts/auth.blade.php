@@ -384,6 +384,7 @@
         {{-- Left Panel: Branding --}}
         <div class="auth-brand-panel d-none d-lg-flex">
             <div class="auth-brand-content">
+                
                 <div class="auth-brand-logo">
                     <div class="auth-brand-logo-icon">
                         <i class="bi bi-grid-1x2-fill"></i>

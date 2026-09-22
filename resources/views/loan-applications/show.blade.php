@@ -148,13 +148,76 @@
                         @endif
                     </div>
                     <div class="card-body">
+                        @php $snapshot = $application->collateralSnapshot; @endphp
+                        @if($snapshot && $snapshot->collateral_required)
+                            <div class="alert alert-info small mb-3">
+                                <i class="bi bi-info-circle me-1"></i>
+                                <strong>Collateral Required</strong> — Min value: TSh {{ number_format($snapshot->minimum_collateral_value, 0) }}
+                                | Coverage: {{ $snapshot->coverage_percentage }}%
+                                | Assets: {{ $snapshot->minimum_assets }}–{{ $snapshot->maximum_assets }}
+                                @if($snapshot->allowed_collateral_types)
+                                    <br>Allowed types: {{ implode(', ', array_map(fn($t) => ucfirst($t), $snapshot->allowed_collateral_types)) }}
+                                @endif
+                                @if($snapshot->required_document_types)
+                                    <br>Required docs: {{ implode(', ', array_map(fn($t) => \App\Enums\CollateralDocumentType::tryFrom($t)?->label() ?? $t, $snapshot->required_document_types)) }}
+                                @endif
+                            </div>
+                        @endif
+
                         @forelse($application->collaterals as $c)
-                            <div class="d-flex align-items-center justify-content-between mb-2 {{ !$loop->last ? 'border-bottom pb-2' : '' }}">
-                                <div>
-                                    <div class="fw-medium">{{ $c->collateral_type->label() }}</div>
-                                    <small class="text-muted">{{ Str::limit($c->description, 40) }} | {{ number_format($c->estimated_value, 0) }} TZS</small>
+                            <div class="border rounded p-3 mb-3 {{ !$loop->last ? '' : '' }}">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <div>
+                                        <div class="fw-medium">{{ $c->collateral_type->label() }}</div>
+                                        <small class="text-muted">{{ Str::limit($c->description, 50) }} | TSh {{ number_format($c->estimated_value, 0) }}</small>
+                                        @if($c->reviewed_value)
+                                            <br><small class="text-primary">Reviewed value: TSh {{ number_format($c->reviewed_value, 0) }}</small>
+                                        @endif
+                                    </div>
+                                    <span class="badge bg-{{ $c->status->color() }}">{{ $c->status->label() }}</span>
                                 </div>
-                                <span class="badge bg-{{ $c->status->value === 'verified' ? 'success' : ($c->status->value === 'rejected' ? 'danger' : 'warning') }}">{{ $c->status->value }}</span>
+
+                                {{-- Documents --}}
+                                @if($c->documents->count() > 0)
+                                    <div class="small mb-2">
+                                        <strong>Documents:</strong>
+                                        @foreach($c->documents as $doc)
+                                            <span class="badge bg-light text-dark border me-1">
+                                                {{ $doc->document_type->label() }}
+                                                <a href="{{ route('loan-applications.collaterals.documents.download', $doc) }}" class="ms-1"><i class="bi bi-download"></i></a>
+                                            </span>
+                                        @endforeach
+                                    </div>
+                                @endif
+
+                                {{-- Admin actions for pending collaterals --}}
+                                @if($c->status->value === 'pending' && in_array($application->status->value, ['submitted', 'under_review']))
+                                    <div class="d-flex gap-2 mt-2">
+                                        <form method="POST" action="{{ route('loan-applications.collaterals.verify', [$application, $c]) }}" class="d-inline-flex align-items-center gap-1 flex-grow-1">
+                                            @csrf
+                                            <input type="number" name="reviewed_value" class="form-control form-control-sm" placeholder="Value" step="0.01" min="0" required style="max-width:120px">
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Verify</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('loan-applications.collaterals.reject', [$application, $c]) }}" class="d-inline-flex align-items-center gap-1 flex-grow-1">
+                                            @csrf
+                                            <input type="text" name="rejection_reason" class="form-control form-control-sm" placeholder="Reason" required>
+                                            <button type="submit" class="btn btn-sm btn-danger"><i class="bi bi-x-lg"></i></button>
+                                        </form>
+                                    </div>
+                                    <form method="POST" action="{{ route('loan-applications.collaterals.documents.upload', [$application, $c]) }}" enctype="multipart/form-data" class="mt-2">
+                                        @csrf
+                                        <div class="input-group input-group-sm">
+                                            <select name="document_type" class="form-select" style="max-width:180px" required>
+                                                <option value="">Doc type...</option>
+                                                @foreach(\App\Enums\CollateralDocumentType::values() as $dt)
+                                                    <option value="{{ $dt }}">{{ \App\Enums\CollateralDocumentType::from($dt)->label() }}</option>
+                                                @endforeach
+                                            </select>
+                                            <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-upload"></i></button>
+                                        </div>
+                                    </form>
+                                @endif
                             </div>
                         @empty
                             <div class="text-muted text-center py-3">No collateral added.</div>

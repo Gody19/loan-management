@@ -5,12 +5,14 @@ namespace App\Services;
 use App\Enums\GuarantorStatus;
 use App\Enums\LoanApplicationStatus;
 use App\Enums\LoanCollateralStatus;
+use App\Models\CollateralDocument;
 use App\Models\LoanApplication;
 use App\Models\LoanApplicationCollateral;
 use App\Models\LoanApplicationGuarantor;
 use App\Models\Member;
 use App\Models\LoanPlan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class LoanApplicationService
 {
@@ -99,15 +101,15 @@ class LoanApplicationService
                 }
             }
 
-            // Validate collateral requirements
-            if ($plan->requires_collateral) {
-                $collateralCount = LoanApplicationCollateral::where('loan_application_id', $application->id)
-                    ->where('status', LoanCollateralStatus::Verified)
-                    ->count();
-                if ($collateralCount === 0) {
-                    throw new \InvalidArgumentException('Application requires at least one verified collateral.');
-                }
+            // Validate collateral requirements using the collateral rule engine
+            $collateralService = app(\App\Services\CollateralRequirementService::class);
+            $collateralErrors = $collateralService->validateCollateral($application);
+            if (!empty($collateralErrors)) {
+                throw new \InvalidArgumentException('Collateral requirement not satisfied: ' . implode(' ', $collateralErrors));
             }
+
+            // Create collateral requirement snapshot
+            $collateralService->createSnapshot($application);
 
             $application->update([
                 'status' => LoanApplicationStatus::Submitted,
@@ -332,5 +334,76 @@ class LoanApplicationService
         $this->audit->log('loan_application.collateral_removed', $application, [
             'collateral_type' => $collateral->collateral_type->value,
         ], []);
+    }
+
+    public function verifyCollateral(LoanApplicationCollateral $collateral, array $data = []): LoanApplicationCollateral
+    {
+        $old = $collateral->toArray();
+        $collateral->update([
+            'status' => LoanCollateralStatus::Verified,
+            'reviewed_value' => $data['reviewed_value'] ?? $collateral->estimated_value,
+            'valuation_date' => $data['valuation_date'] ?? null,
+            'valuation_reference' => $data['valuation_reference'] ?? null,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+            'review_notes' => $data['review_notes'] ?? null,
+        ]);
+
+        $this->audit->log('loan_application.collateral_approved', $collateral->application, $old, [
+            'status' => 'verified',
+            'reviewed_value' => $collateral->reviewed_value,
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return $collateral;
+    }
+
+    public function rejectCollateral(LoanApplicationCollateral $collateral, string $reason): LoanApplicationCollateral
+    {
+        $old = $collateral->toArray();
+        $collateral->update([
+            'status' => LoanCollateralStatus::Rejected,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+            'review_notes' => $reason,
+        ]);
+
+        $this->audit->log('loan_application.collateral_rejected', $collateral->application, $old, [
+            'status' => 'rejected',
+            'reason' => $reason,
+            'reviewed_by' => auth()->id(),
+        ]);
+
+        return $collateral;
+    }
+
+    public function addCollateralDocument(LoanApplicationCollateral $collateral, array $data, $file): CollateralDocument
+    {
+        $safeFilename = $collateral->id . '_' . time() . '_' . preg_replace('/[^a-zA-Z0-9.]/', '_', $file->getClientOriginalName());
+        $path = $file->storeAs('collateral-documents/' . $collateral->id, $safeFilename, 'private');
+
+        $document = CollateralDocument::create([
+            'loan_application_collateral_id' => $collateral->id,
+            'document_type' => $data['document_type'],
+            'file_path' => $path,
+            'original_filename' => $file->getClientOriginalName(),
+            'mime_type' => $file->getMimeType(),
+            'file_size' => $file->getSize(),
+            'status' => 'pending',
+        ]);
+
+        $this->audit->log('loan_application.collateral_document_uploaded', $collateral->application, [], [
+            'collateral_id' => $collateral->id,
+            'document_type' => $data['document_type'],
+            'filename' => $file->getClientOriginalName(),
+        ]);
+
+        return $document;
+    }
+
+    public function removeCollateralDocument(CollateralDocument $document): void
+    {
+        Storage::disk('private')->delete($document->file_path);
+        $document->delete();
     }
 }

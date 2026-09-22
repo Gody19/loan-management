@@ -70,6 +70,7 @@ class LoanApplication extends Model
     public function guarantors(): HasMany { return $this->hasMany(LoanApplicationGuarantor::class); }
     public function collaterals(): HasMany { return $this->hasMany(LoanApplicationCollateral::class); }
     public function approvals(): HasMany { return $this->hasMany(LoanApplicationApproval::class); }
+    public function collateralSnapshot(): HasOne { return $this->hasOne(LoanApplicationCollateralSnapshot::class); }
     public function loan(): HasOne { return $this->hasOne(Loan::class); }
 
     // Scopes

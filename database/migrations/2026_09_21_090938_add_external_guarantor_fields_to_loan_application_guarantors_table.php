@@ -17,12 +17,16 @@ return new class extends Migration
             $table->string('guarantor_address')->nullable()->after('guarantor_occupation');
         });
 
-        DB::statement('ALTER TABLE loan_application_guarantors MODIFY guarantor_member_id BIGINT UNSIGNED NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE loan_application_guarantors MODIFY guarantor_member_id BIGINT UNSIGNED NULL');
+        }
     }
 
     public function down(): void
     {
-        DB::statement('ALTER TABLE loan_application_guarantors MODIFY guarantor_member_id BIGINT UNSIGNED NOT NULL');
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement('ALTER TABLE loan_application_guarantors MODIFY guarantor_member_id BIGINT UNSIGNED NOT NULL');
+        }
 
         Schema::table('loan_application_guarantors', function (Blueprint $table) {
             $table->dropColumn([

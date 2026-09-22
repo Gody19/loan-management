@@ -4,10 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLoanPlanRequest;
 use App\Models\LoanPlan;
+use App\Models\LoanPlanCollateralRule;
 use App\Models\Organization;
 use App\Services\AuditService;
 use App\Services\OrganizationContext;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class LoanPlanController extends Controller
 {
@@ -61,6 +63,9 @@ class LoanPlanController extends Controller
         OrganizationContext::authorizeOrganization((int) $request->organization_id);
 
         $loanPlan = LoanPlan::create($request->validated());
+
+        $this->syncCollateralRules($loanPlan, $request);
+
         $this->audit->log('loan_plan.created', $loanPlan, [], $loanPlan->toArray());
 
         return redirect()->route('loan-plans.index')->with('success', 'Loan plan "'.$loanPlan->name.'" created.');
@@ -69,7 +74,7 @@ class LoanPlanController extends Controller
     public function show(LoanPlan $loanPlan)
     {
         $this->authorize('view', $loanPlan);
-        $loanPlan->load(['organization', 'creator']);
+        $loanPlan->load(['organization', 'creator', 'collateralRules']);
 
         return view('loan-plans.show', ['loanPlan' => $loanPlan]);
     }
@@ -78,6 +83,7 @@ class LoanPlanController extends Controller
     {
         $this->authorize('update', $loanPlan);
         $organizations = OrganizationContext::scopedOrganizations()->active()->get();
+        $loanPlan->load('collateralRules');
 
         return view('loan-plans.edit', ['loanPlan' => $loanPlan, 'organizations' => $organizations]);
     }
@@ -87,6 +93,9 @@ class LoanPlanController extends Controller
         $this->authorize('update', $loanPlan);
         $old = $loanPlan->only(array_keys($request->validated()));
         $loanPlan->update($request->validated());
+
+        $this->syncCollateralRules($loanPlan, $request);
+
         $this->audit->log('loan_plan.updated', $loanPlan, $old, $loanPlan->toArray());
 
         return redirect()->route('loan-plans.index')->with('success', 'Loan plan updated.');
@@ -119,5 +128,42 @@ class LoanPlanController extends Controller
         $this->audit->log('loan_plan.deactivated', $loanPlan, $old, ['status' => 'inactive']);
 
         return redirect()->route('loan-plans.show', $loanPlan)->with('success', 'Loan plan deactivated.');
+    }
+
+    private function syncCollateralRules(LoanPlan $loanPlan, Request $request): void
+    {
+        $rules = $request->input('collateral_rules', []);
+
+        $existingIds = collect($rules)->pluck('id')->filter()->toArray();
+        $loanPlan->collateralRules()->whereNotIn('id', $existingIds)->delete();
+
+        foreach ($rules as $ruleData) {
+            if (empty($ruleData['minimum_amount']) || empty($ruleData['maximum_amount'])) {
+                continue;
+            }
+
+            $data = [
+                'minimum_amount' => $ruleData['minimum_amount'],
+                'maximum_amount' => $ruleData['maximum_amount'],
+                'collateral_required' => !empty($ruleData['collateral_required']),
+                'coverage_percentage' => $ruleData['coverage_percentage'] ?? 100,
+                'minimum_collateral_value' => $ruleData['minimum_collateral_value'] ?? 0,
+                'minimum_assets' => $ruleData['minimum_assets'] ?? 1,
+                'maximum_assets' => $ruleData['maximum_assets'] ?? 1,
+                'allowed_collateral_types' => $ruleData['allowed_collateral_types'] ?? null,
+                'required_document_types' => $ruleData['required_document_types'] ?? null,
+                'description' => $ruleData['description'] ?? null,
+                'status' => !empty($ruleData['status']),
+            ];
+
+            if (!empty($ruleData['id'])) {
+                $rule = LoanPlanCollateralRule::find($ruleData['id']);
+                if ($rule && $rule->loan_plan_id === $loanPlan->id) {
+                    $rule->update($data);
+                }
+            } else {
+                $loanPlan->collateralRules()->create($data);
+            }
+        }
     }
 }
