@@ -20,8 +20,8 @@
 @endsection
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10">
+<div class="row">
+    <div class="col-12">
 
         {{-- Plan Summary --}}
         <div class="card border-0 shadow-sm mb-4">
