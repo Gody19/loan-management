@@ -92,7 +92,7 @@ class LoanApplicationService
             $activeGuarantors = $guarantorQuery->where('status', '!=', GuarantorStatus::Rejected)->get();
             foreach ($activeGuarantors as $g) {
                 if ($g->guarantor_member_id) {
-                    $elig = $eligibilityService->canGuarantee($g->guarantorMember, $application);
+                    $elig = $eligibilityService->canGuarantee($g->guarantorMember, $application, $g->id);
                     if (!$elig['eligible']) {
                         throw new \InvalidArgumentException(
                             "Guarantor (Member #{$g->guarantorMember->member_number}) is not eligible: {$elig['reason']}"

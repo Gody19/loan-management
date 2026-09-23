@@ -15,8 +15,6 @@
 
 @section('content')
 
-<div class="row justify-content-center">
-    <div class="col-lg-10">
         <form method="POST" action="{{ route('branches.store') }}" data-validate>
             @csrf
 
@@ -112,7 +110,5 @@
                 </a>
             </div>
         </form>
-    </div>
-</div>
 
 @endsection

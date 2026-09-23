@@ -186,4 +186,24 @@
             mainContent.classList.toggle('expanded');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const aside = document.querySelector('.aside-content');
+        const key = 'member_sidebar_scroll';
+
+        const saved = sessionStorage.getItem(key);
+        if (saved) {
+            aside.scrollTop = parseInt(saved, 10);
+        }
+
+        aside.addEventListener('scroll', function() {
+            sessionStorage.setItem(key, aside.scrollTop);
+        });
+
+        document.querySelectorAll('.aside-content a').forEach(function(link) {
+            link.addEventListener('click', function() {
+                sessionStorage.setItem(key, aside.scrollTop);
+            });
+        });
+    });
 </script>

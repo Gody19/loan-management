@@ -77,8 +77,8 @@
                             <td>{{ number_format($product->minimum_amount, 2) }}</td>
                             <td>{{ number_format($product->maximum_amount, 2) }}</td>
                             <td>
-                                <span class="badge bg-{{ $product->status === 'active' ? 'success' : 'secondary' }}">
-                                    {{ ucfirst($product->status) }}
+                                <span class="badge bg-{{ $product->status->value === 'active' ? 'success' : 'secondary' }}">
+                                    {{ $product->status->label() }}
                                 </span>
                             </td>
                             <td class="text-end">

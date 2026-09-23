@@ -20,9 +20,6 @@
 <form method="POST" action="{{ route('welfare-funds.store') }}" data-validate>
     @csrf
 
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
                     <h6 class="mb-0 fw-semibold"><i class="bi bi-heart me-2"></i>Fund Details</h6>
@@ -99,7 +96,5 @@
                 </button>
             </div>
 
-        </div>
-    </div>
 </form>
 @endsection

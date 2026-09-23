@@ -20,9 +20,6 @@
 <form method="POST" action="{{ route('savings-accounts.store') }}" data-validate>
     @csrf
 
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-
             {{-- Account Details --}}
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
@@ -119,8 +116,6 @@
                 </button>
             </div>
 
-        </div>
-    </div>
 </form>
 @endsection
 

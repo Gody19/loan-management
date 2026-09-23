@@ -31,15 +31,15 @@
                                 @endforeach
                             </select>
                             @if($mapping['account'])
-                                <small class="text-success"><i class="fas fa-check-circle me-1"></i> Mapped to: {{ $mapping['account']->account_code }} - {{ $mapping['account']->account_name }}</small>
+                                <small class="text-success"><i class="bi bi-check-circle me-1"></i> Mapped to: {{ $mapping['account']->account_code }} - {{ $mapping['account']->account_name }}</small>
                             @else
-                                <small class="text-warning"><i class="fas fa-exclamation-triangle me-1"></i> Not configured</small>
+                                <small class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i> Not configured</small>
                             @endif
                         </div>
                     @endforeach
                 </div>
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Save Mappings</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-floppy me-1"></i> Save Mappings</button>
                 </div>
             </form>
         </div>

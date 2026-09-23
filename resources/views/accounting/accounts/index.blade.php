@@ -1,11 +1,10 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="mb-0">Chart of Accounts</h4>
         <a href="{{ route('accounting.accounts.create') }}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> Add Account
+            <i class="bi bi-plus-lg me-1"></i> Add Account
         </a>
     </div>
 
@@ -65,18 +64,18 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <a href="{{ route('accounting.accounts.show', $account->id) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="fas fa-eye"></i></a>
-                                                <a href="{{ route('accounting.accounts.edit', $account->id) }}" class="btn btn-sm btn-outline-warning" title="Edit"><i class="fas fa-edit"></i></a>
+                                                <a href="{{ route('accounting.accounts.show', $account->id) }}" class="btn btn-sm btn-outline-primary" title="View"><i class="bi bi-eye"></i></a>
+                                                <a href="{{ route('accounting.accounts.edit', $account->id) }}" class="btn btn-sm btn-outline-warning" title="Edit"><i class="bi bi-pencil"></i></a>
                                                 @unless($account->is_system)
                                                     <form action="{{ route('accounting.accounts.toggle', $account->id) }}" method="POST" class="d-inline">
                                                         @csrf
                                                         <button type="submit" class="btn btn-sm btn-outline-{{ $account->is_active ? 'secondary' : 'success' }}" title="{{ $account->is_active ? 'Deactivate' : 'Activate' }}">
-                                                            <i class="fas fa-{{ $account->is_active ? 'ban' : 'check' }}"></i>
+                                                            <i class="bi bi-{{ $account->is_active ? 'x-circle' : 'check-circle' }}"></i>
                                                         </button>
                                                     </form>
                                                     <form action="{{ route('accounting.accounts.destroy', $account->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this account?')">
                                                         @csrf @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
                                                     </form>
                                                 @endunless
                                             </td>
@@ -92,5 +91,4 @@
             </div>
         </div>
     </div>
-</div>
 @endsection

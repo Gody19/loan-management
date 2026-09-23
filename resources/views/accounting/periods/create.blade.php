@@ -1,12 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0">Create Accounting Period</h4>
-                <a href="{{ route('accounting.periods.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+                <a href="{{ route('accounting.periods.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
             </div>
 
             <div class="card shadow-sm">
@@ -31,13 +28,10 @@
                             </div>
                         </div>
                         <div class="mt-4">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i> Create Period</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-floppy me-1"></i> Create Period</button>
                             <a href="{{ route('accounting.periods.index') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 @endsection

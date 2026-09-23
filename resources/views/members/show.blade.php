@@ -29,8 +29,8 @@
 @endsection
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10">
+<div class="row">
+    <div class="col-12">
 
         {{-- Profile Summary Card --}}
         <div class="card border-0 shadow-sm mb-4">
@@ -389,7 +389,7 @@
                                             </div>
                                             <div class="text-end">
                                                 <div class="fw-bold">TSh {{ number_format($account->balance, 2) }}</div>
-                                                <span class="badge bg-{{ $account->status === App\Enums\SavingsAccountStatus::ACTIVE ? 'success' : 'secondary' }}">{{ $account->status->label() }}</span>
+                                                <span class="badge bg-{{ $account->status === App\Enums\SavingsAccountStatus::Active ? 'success' : 'secondary' }}">{{ $account->status->label() }}</span>
                                             </div>
                                         </div>
                                     @endforeach
@@ -451,7 +451,7 @@
                                             </div>
                                             <div class="text-end">
                                                 <div class="fw-bold">TSh {{ number_format($account->balance, 2) }}</div>
-                                                <span class="badge bg-{{ $account->status === App\Enums\WelfareAccountStatus::ACTIVE ? 'success' : 'secondary' }}">{{ $account->status->label() }}</span>
+                                                <span class="badge bg-{{ $account->status === App\Enums\WelfareAccountStatus::Active ? 'success' : 'secondary' }}">{{ $account->status->label() }}</span>
                                             </div>
                                         </div>
                                     @endforeach

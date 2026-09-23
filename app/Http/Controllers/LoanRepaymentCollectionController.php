@@ -123,7 +123,7 @@ class LoanRepaymentCollectionController extends Controller
         $scheduleSummary = $this->scheduleService->getScheduleSummary($loan);
 
         $paymentMethods = \App\Models\PaymentMethod::where('organization_id', $loan->organization_id)
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->orderBy('name')
             ->get();
 

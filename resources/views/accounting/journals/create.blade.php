@@ -1,12 +1,9 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0">Create Journal Entry</h4>
-                <a href="{{ route('accounting.journals.index') }}" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-1"></i> Back</a>
+                <a href="{{ route('accounting.journals.index') }}" class="btn btn-outline-secondary"><i class="bi bi-arrow-left me-1"></i> Back</a>
             </div>
 
             @if($errors->any())
@@ -55,7 +52,7 @@
                                         <td><input type="text" name="lines[0][description]" class="form-control form-control-sm" placeholder="Optional"></td>
                                         <td><input type="number" name="lines[0][debit]" class="form-control form-control-sm debit-input" step="0.01" min="0" value="0"></td>
                                         <td><input type="number" name="lines[0][credit]" class="form-control form-control-sm credit-input" step="0.01" min="0" value="0"></td>
-                                        <td><button type="button" class="btn btn-sm btn-outline-danger remove-line"><i class="fas fa-times"></i></button></td>
+                                        <td><button type="button" class="btn btn-sm btn-outline-danger remove-line"><i class="bi bi-x-lg"></i></button></td>
                                     </tr>
                                     <tr class="line-row">
                                         <td>
@@ -69,14 +66,14 @@
                                         <td><input type="text" name="lines[1][description]" class="form-control form-control-sm" placeholder="Optional"></td>
                                         <td><input type="number" name="lines[1][debit]" class="form-control form-control-sm debit-input" step="0.01" min="0" value="0"></td>
                                         <td><input type="number" name="lines[1][credit]" class="form-control form-control-sm credit-input" step="0.01" min="0" value="0"></td>
-                                        <td><button type="button" class="btn btn-sm btn-outline-danger remove-line"><i class="fas fa-times"></i></button></td>
+                                        <td><button type="button" class="btn btn-sm btn-outline-danger remove-line"><i class="bi bi-x-lg"></i></button></td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <button type="button" class="btn btn-sm btn-outline-primary" id="addLine"><i class="fas fa-plus me-1"></i> Add Line</button>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="addLine"><i class="bi bi-plus-lg me-1"></i> Add Line</button>
                             <div>
                                 <span class="me-3">Total Debit: <strong id="totalDebit" class="text-primary">TSh 0.00</strong></span>
                                 <span>Total Credit: <strong id="totalCredit" class="text-primary">TSh 0.00</strong></span>
@@ -85,15 +82,12 @@
                         </div>
 
                         <div class="mt-3">
-                            <button type="submit" class="btn btn-primary" id="submitBtn"><i class="fas fa-save me-1"></i> Create Draft</button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn"><i class="bi bi-floppy me-1"></i> Create Draft</button>
                             <a href="{{ route('accounting.journals.index') }}" class="btn btn-outline-secondary ms-2">Cancel</a>
                         </div>
                     </form>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 @endsection
 
 @push('scripts')
@@ -108,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <td><input type="text" name="lines[${lineIndex}][description]" class="form-control form-control-sm" placeholder="Optional"></td>
             <td><input type="number" name="lines[${lineIndex}][debit]" class="form-control form-control-sm debit-input" step="0.01" min="0" value="0"></td>
             <td><input type="number" name="lines[${lineIndex}][credit]" class="form-control form-control-sm credit-input" step="0.01" min="0" value="0"></td>
-            <td><button type="button" class="btn btn-sm btn-outline-danger remove-line"><i class="fas fa-times"></i></button></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-line"><i class="bi bi-x-lg"></i></button></td>
         </tr>`;
         document.getElementById('linesBody').insertAdjacentHTML('beforeend', row);
         lineIndex++;

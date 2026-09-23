@@ -143,6 +143,16 @@
                         @endif
                     </div>
                     <div class="card-body">
+                        @if(session('success'))
+                            <div class="alert alert-success small py-2 mb-3">
+                                <i class="bi bi-check-circle me-1"></i>{{ session('success') }}
+                            </div>
+                        @endif
+                        @if(session('error') || $errors->has('error'))
+                            <div class="alert alert-danger small py-2 mb-3">
+                                <i class="bi bi-x-circle me-1"></i>{{ session('error') ?? $errors->first('error') }}
+                            </div>
+                        @endif
                         @php $snapshot = $loanApplication->collateralSnapshot; @endphp
                         @if($snapshot && $snapshot->collateral_required)
                             <div class="alert alert-warning small mb-3">
@@ -154,7 +164,15 @@
                                     <br>Allowed types: {{ implode(', ', array_map(fn($t) => ucfirst($t), $snapshot->allowed_collateral_types)) }}
                                 @endif
                                 @if($snapshot->required_document_types)
-                                    <br>Required docs: {{ implode(', ', array_map(fn($t) => \App\Enums\CollateralDocumentType::tryFrom($t)?->label() ?? $t, $snapshot->required_document_types)) }}
+                                    @php
+                                        $uploadedTypes = $loanApplication->collaterals->flatMap->documents->pluck('document_type')->map(fn($v) => $v->value)->unique()->toArray();
+                                        $missingDocs = array_diff($snapshot->required_document_types, $uploadedTypes);
+                                    @endphp
+                                    @if(count($missingDocs) > 0)
+                                        <br><strong class="text-danger">Missing docs:</strong> {{ implode(', ', array_map(fn($t) => \App\Enums\CollateralDocumentType::tryFrom($t)?->label() ?? $t, $missingDocs)) }}
+                                    @else
+                                        <br><span class="text-success"><i class="bi bi-check-circle me-1"></i>All required documents uploaded.</span>
+                                    @endif
                                 @endif
                             </div>
                         @endif
@@ -200,7 +218,7 @@
                                                 @endforeach
                                             </select>
                                             <input type="file" name="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required>
-                                            <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-upload"></i></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" onclick="this.innerHTML='<span class=\'spinner-border spinner-border-sm\'></span> Uploading...'; this.disabled=true; this.form.submit();"><i class="bi bi-upload"></i> Upload</button>
                                         </div>
                                     </form>
                                 @endif
@@ -259,24 +277,34 @@
                         </a>
                     @endif
                 @endif
-@if(in_array($loanApplication->status->value, ['draft', 'submitted']))
-                    <form method="POST" action="{{ route('member.loans.submit', $loanApplication) }}" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-success me-2" onclick="return confirm('Submit this application for review?')">
-                            <i class="bi bi-send me-1"></i> Submit Application
-                        </button>
-                    </form>
-                @endif
                 @if(in_array($loanApplication->status->value, ['draft', 'submitted']))
-                    <form method="POST" action="{{ route('member.loans.cancel', $loanApplication) }}" class="d-inline">
+                    <form method="POST" action="{{ route('member.loans.submit', $loanApplication) }}" class="d-inline" id="submitForm">
                         @csrf
-                        <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Are you sure you want to cancel this application?')">
-                            <i class="bi bi-x-circle me-1"></i> Cancel Application
+                        <button type="button" class="btn btn-success me-2" id="submitBtn">
+                            <i class="bi bi-send me-1"></i> Submit Application
                         </button>
                     </form>
                 @endif
             </div>
         </div>
+
+        {{-- Pre-submission validation errors --}}
+        @if($loanApplication->status->value === 'draft' && !empty($submissionErrors))
+        <div class="card border-0 shadow-sm mt-4">
+            <div class="card-header bg-danger bg-opacity-10 border-bottom">
+                <h6 class="mb-0 fw-semibold text-danger"><i class="bi bi-exclamation-triangle me-2"></i>Submission Requirements Not Met</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Please fix the following issues before submitting your application:</p>
+                @foreach($submissionErrors as $err)
+                    <div class="d-flex align-items-start mb-2">
+                        <span class="badge bg-{{ $err['type'] === 'eligibility' ? 'warning' : ($err['type'] === 'guarantor' ? 'info' : 'danger') }} me-2 mt-1">{{ ucfirst($err['type']) }}</span>
+                        <span class="text-danger small">{{ $err['message'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
     </div>
 </div>
 
@@ -372,4 +400,24 @@
     </div>
 </div>
 @endif
+
+<script>
+document.getElementById('submitBtn')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    Swal.fire({
+        title: 'Submit Application?',
+        html: '<p class="text-start">Are you sure you want to submit this application for review?</p><p class="text-danger fw-semibold text-start mt-2"><i class="bi bi-exclamation-triangle me-1"></i>After submission, you will not be able to edit or cancel until the organization reviews and revises your application.</p>',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#198754',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, Submit',
+        cancelButtonText: 'Go Back'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            document.getElementById('submitForm').submit();
+        }
+    });
+});
+</script>
 @endsection

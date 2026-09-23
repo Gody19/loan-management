@@ -8,10 +8,10 @@
             @if($period->isOpen())
                 <form action="{{ route('accounting.periods.close', $period->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Close this period?')">
                     @csrf
-                    <button type="submit" class="btn btn-danger"><i class="fas fa-lock me-1"></i> Close Period</button>
+                    <button type="submit" class="btn btn-danger"><i class="bi bi-lock me-1"></i> Close Period</button>
                 </form>
             @endif
-            <a href="{{ route('accounting.periods.index') }}" class="btn btn-outline-secondary ms-2"><i class="fas fa-arrow-left me-1"></i> Back</a>
+            <a href="{{ route('accounting.periods.index') }}" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left me-1"></i> Back</a>
         </div>
     </div>
 

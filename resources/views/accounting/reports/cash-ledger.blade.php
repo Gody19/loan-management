@@ -25,7 +25,7 @@
                     <input type="date" class="form-control" name="end_date" value="{{ request('end_date') }}">
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-filter me-1"></i> Generate</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1"></i> Generate</button>
                 </div>
             </form>
         </div>

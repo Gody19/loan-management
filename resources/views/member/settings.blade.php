@@ -4,9 +4,6 @@
 @section('page-title', 'Settings')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-8 col-xl-7">
-
         {{-- Change Password --}}
         <div class="card vicoba-card mb-4">
             <div class="card-header bg-white border-bottom">
@@ -95,7 +92,4 @@
                 </ul>
             </div>
         </div>
-
-    </div>
-</div>
 @endsection

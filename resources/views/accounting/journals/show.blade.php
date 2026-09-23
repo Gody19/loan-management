@@ -1,22 +1,19 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10 col-xl-9">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4 class="mb-0">Journal Entry: {{ $entry->journal_number }}</h4>
                 <div>
                     @if($entry->status->value === 'draft')
                         <form action="{{ route('accounting.journals.post', $entry->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Post this journal entry? This action cannot be undone.')">
                             @csrf
-                            <button type="submit" class="btn btn-success"><i class="fas fa-check me-1"></i> Post</button>
+                            <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i> Post</button>
                         </form>
                     @endif
                     @if($entry->status->value === 'posted')
-                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reversalModal"><i class="fas fa-undo me-1"></i> Reverse</button>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#reversalModal"><i class="bi bi-arrow-counterclockwise me-1"></i> Reverse</button>
                     @endif
-                    <a href="{{ route('accounting.journals.index') }}" class="btn btn-outline-secondary ms-2"><i class="fas fa-arrow-left me-1"></i> Back</a>
+                    <a href="{{ route('accounting.journals.index') }}" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left me-1"></i> Back</a>
                 </div>
             </div>
 
@@ -107,9 +104,6 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
 
 <!-- Reversal Modal -->
 @if($entry->status->value === 'posted')

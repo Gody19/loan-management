@@ -16,8 +16,6 @@
 
 @section('content')
 
-<div class="row justify-content-center">
-    <div class="col-lg-10 col-xl-9">
         <form method="POST" action="{{ route('vicoba-groups.update', $group) }}" data-validate>
             @csrf
             @method('PUT')
@@ -127,7 +125,5 @@
                 </a>
             </div>
         </form>
-    </div>
-</div>
 
 @endsection

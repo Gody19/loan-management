@@ -20,9 +20,6 @@
 <form method="POST" action="{{ route('welfare-accounts.store') }}" data-validate>
     @csrf
 
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-
             <div class="card border-0 shadow-sm mb-4">
                 <div class="card-header bg-white border-bottom">
                     <h6 class="mb-0 fw-semibold"><i class="bi bi-wallet2 me-2"></i>Account Details</h6>
@@ -100,8 +97,6 @@
                 </button>
             </div>
 
-        </div>
-    </div>
 </form>
 @endsection
 

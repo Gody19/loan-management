@@ -173,6 +173,13 @@ class MemberLoanController extends Controller
             abort(404);
         }
 
+        // Run pre-submission checks first
+        $submissionErrors = $this->getSubmissionErrors($loanApplication, $member);
+        if (!empty($submissionErrors)) {
+            $messages = array_map(fn($e) => $e['message'], $submissionErrors);
+            return back()->withErrors(['error' => 'Cannot submit application: ' . implode(' | ', $messages)]);
+        }
+
         try {
             $this->applicationService->submit($loanApplication);
         } catch (\InvalidArgumentException $e) {
@@ -180,7 +187,7 @@ class MemberLoanController extends Controller
         }
 
         return redirect()->route('member.loans.application', $loanApplication)
-            ->with('success', 'Your loan application has been submitted successfully.');
+            ->with('success', 'Thank you for applying! Your application has been submitted successfully. Please wait for the organization to review your application.');
     }
 
     public function applications(Request $request): View
@@ -203,9 +210,65 @@ class MemberLoanController extends Controller
             abort(404);
         }
 
-        $loanApplication->load(['loanPlan', 'guarantors.guarantorMember', 'collaterals', 'approvals.actor']);
+        $loanApplication->load(['loanPlan', 'guarantors.guarantorMember', 'collaterals', 'approvals.actor', 'collateralSnapshot']);
 
-        return view('member.loans.application', compact('member', 'loanApplication'));
+        $submissionErrors = [];
+        if ($loanApplication->status->value === 'draft') {
+            $submissionErrors = $this->getSubmissionErrors($loanApplication, $member);
+        }
+
+        return view('member.loans.application', compact('member', 'loanApplication', 'submissionErrors'));
+    }
+
+    private function getSubmissionErrors(LoanApplication $loanApplication, Member $member): array
+    {
+        $errors = [];
+        $plan = $loanApplication->loanPlan;
+
+        // Check eligibility
+        $eligibilityResult = $this->eligibilityService->checkEligibility(
+            $member,
+            $plan,
+            (float) $loanApplication->requested_amount,
+            $loanApplication->requested_term
+        );
+
+        if (!$eligibilityResult->eligible) {
+            foreach ($eligibilityResult->failureReasons as $reason) {
+                $errors[] = ['type' => 'eligibility', 'message' => $reason];
+            }
+        }
+
+        // Check guarantor requirements
+        $guarantorCount = $loanApplication->guarantors()
+            ->where('status', '!=', \App\Enums\GuarantorStatus::Rejected)
+            ->count();
+
+        if ($plan->requires_guarantor) {
+            if ($guarantorCount < 1) {
+                $errors[] = ['type' => 'guarantor', 'message' => 'This plan requires at least ' . $plan->minimum_guarantors . ' guarantor(s). You have ' . $guarantorCount . '.'];
+            }
+            if ($guarantorCount > 2) {
+                $errors[] = ['type' => 'guarantor', 'message' => 'Maximum 2 guarantors allowed. You have ' . $guarantorCount . '.'];
+            }
+        }
+
+        // Check if guarantors are accepted
+        $pendingGuarantors = $loanApplication->guarantors()
+            ->where('status', \App\Enums\GuarantorStatus::Pending)
+            ->count();
+        if ($pendingGuarantors > 0) {
+            $errors[] = ['type' => 'guarantor', 'message' => $pendingGuarantors . ' guarantor(s) have not accepted yet.'];
+        }
+
+        // Check collateral requirements
+        $collateralService = app(\App\Services\CollateralRequirementService::class);
+        $collateralErrors = $collateralService->validateCollateral($loanApplication);
+        foreach ($collateralErrors as $msg) {
+            $errors[] = ['type' => 'collateral', 'message' => $msg];
+        }
+
+        return $errors;
     }
 
     public function cancelApplication(Request $request, LoanApplication $loanApplication): RedirectResponse

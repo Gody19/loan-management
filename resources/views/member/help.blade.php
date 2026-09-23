@@ -4,9 +4,6 @@
 @section('page-title', 'Help & Support')
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10 col-xl-9">
-
         {{-- How to Apply for a Loan --}}
         <div class="card vicoba-card mb-4">
             <div class="card-header bg-white border-bottom">
@@ -126,6 +123,4 @@
             </div>
         </div>
 
-    </div>
-</div>
 @endsection

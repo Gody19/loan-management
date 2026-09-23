@@ -4,7 +4,7 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="mb-0">Journal Entries</h4>
-        <a href="{{ route('accounting.journals.create') }}" class="btn btn-primary"><i class="fas fa-plus me-1"></i> New Journal Entry</a>
+        <a href="{{ route('accounting.journals.create') }}" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> New Journal Entry</a>
     </div>
 
     @if(session('success'))
@@ -36,11 +36,11 @@
                                 <td class="text-end">TSh {{ number_format($entry->lines->sum('debit'), 2) }}</td>
                                 <td class="text-end">TSh {{ number_format($entry->lines->sum('credit'), 2) }}</td>
                                 <td>
-                                    <a href="{{ route('accounting.journals.show', $entry->id) }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></a>
+                                    <a href="{{ route('accounting.journals.show', $entry->id) }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
                                     @if($entry->status->value === 'draft')
                                         <form action="{{ route('accounting.journals.post', $entry->id) }}" method="POST" class="d-inline" onsubmit="return confirm('Post this journal entry?')">
                                             @csrf
-                                            <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check"></i> Post</button>
+                                            <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Post</button>
                                         </form>
                                     @endif
                                 </td>
