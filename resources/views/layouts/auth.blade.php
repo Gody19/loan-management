@@ -385,7 +385,7 @@
         <div class="auth-brand-panel d-none d-lg-flex">
             <div class="auth-brand-content">
                 
-                <div class="auth-brand-logo">
+                <a href="{{ route('home') }}" class="auth-brand-logo" style="text-decoration: none; color: inherit;">
                     <div class="auth-brand-logo-icon">
                         <i class="bi bi-grid-1x2-fill"></i>
                     </div>
@@ -393,7 +393,7 @@
                         <p class="auth-brand-title">FinancePro</p>
                         <p class="auth-brand-subtitle">VICOBA Management System</p>
                     </div>
-                </div>
+                </a>
 
                 <h1 class="auth-brand-headline">
                     Manage Your VICOBA.<br>Simplify Your Financial Operations.
@@ -433,7 +433,7 @@
             <div class="auth-form-wrapper">
                 {{-- Mobile Logo --}}
                 <div class="auth-form-logo d-lg-none">
-                    <a href="/">
+                    <a href="{{ route('home') }}">
                         <div class="auth-form-logo-icon">
                             <i class="bi bi-grid-1x2-fill"></i>
                         </div>

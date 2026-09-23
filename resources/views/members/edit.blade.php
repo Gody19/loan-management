@@ -22,8 +22,8 @@
     @csrf
     @method('PUT')
 
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
+    <div class="row">
+        <div class="col-12">
 
             {{-- Membership --}}
             <div class="card border-0 shadow-sm mb-4">

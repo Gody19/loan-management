@@ -8,16 +8,22 @@ use App\Http\Requests\MemberSharePurchaseRequest;
 use App\Http\Requests\MemberShareRedemptionRequest;
 use App\Http\Requests\MemberWelfareBenefitRequest;
 use App\Http\Requests\MemberWelfareContributionRequest;
+use App\Http\Requests\StoreMemberDocumentRequest;
+use App\Http\Requests\StoreNextOfKinRequest;
 use App\Http\Requests\UpdateMemberProfileRequest;
+use App\Models\MemberDocument;
+use App\Models\MemberNextOfKin;
 use App\Models\PaymentMethod;
 use App\Services\AuditService;
 use App\Services\MemberDashboardService;
+use App\Services\MemberService;
 use App\Services\SavingsTransactionService;
 use App\Services\ShareTransactionService;
 use App\Services\WelfareBenefitRequestService;
 use App\Services\WelfareTransactionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class MemberPortalController extends Controller
@@ -27,6 +33,7 @@ class MemberPortalController extends Controller
         protected ShareTransactionService $shareService,
         protected WelfareTransactionService $welfareService,
         protected WelfareBenefitRequestService $benefitRequestService,
+        protected MemberService $memberService,
     ) {}
 
     public function dashboard(Request $request): View
@@ -41,7 +48,48 @@ class MemberPortalController extends Controller
     {
         $member = $request->user()->member;
 
-        return view('member.profile', ['member' => $member]);
+        $member->load([
+            'organization',
+            'branch',
+            'vicobaGroup',
+            'nextOfKins',
+            'documents',
+            'statusHistories.changer',
+            'savingsAccounts.product',
+            'shareAccounts.product',
+            'welfareAccounts.fund',
+            'loans.loanPlan',
+        ]);
+
+        $savingsSummary = [
+            'total_balance' => (float) $member->savingsAccounts->sum('current_balance'),
+            'accounts' => $member->savingsAccounts,
+        ];
+
+        $sharesSummary = [
+            'total_shares' => (int) $member->shareAccounts->sum('total_shares'),
+            'total_value' => (float) $member->shareAccounts->sum('total_value'),
+            'accounts' => $member->shareAccounts,
+        ];
+
+        $welfareSummary = [
+            'total_balance' => (float) $member->welfareAccounts->sum('current_balance'),
+            'accounts' => $member->welfareAccounts,
+        ];
+
+        $activeLoans = $member->loans->filter(fn ($l) => in_array($l->status->value, ['active', 'disbursed']));
+        $completedLoans = $member->loans->filter(fn ($l) => $l->status->value === 'completed');
+
+        $loanSummary = [
+            'active_count' => $activeLoans->count(),
+            'completed_count' => $completedLoans->count(),
+            'total_outstanding' => (float) $activeLoans->sum('outstanding_balance'),
+            'total_paid' => (float) $activeLoans->sum('amount_paid'),
+        ];
+
+        return view('member.profile', compact(
+            'member', 'savingsSummary', 'sharesSummary', 'welfareSummary', 'loanSummary'
+        ));
     }
 
     public function editProfile(Request $request): View
@@ -67,6 +115,82 @@ class MemberPortalController extends Controller
 
         return redirect()->route('member.profile')
             ->with('success', 'Your profile has been updated successfully.');
+    }
+
+    // ==================== Profile: Next of Kin (CRUD) ====================
+
+    public function storeNextOfKin(StoreNextOfKinRequest $request): RedirectResponse
+    {
+        $member = $request->user()->member;
+
+        $this->memberService->addNextOfKin($member, $request->validated());
+
+        return redirect()->route('member.profile', ['tab' => 'next-of-kin'])
+            ->with('success', 'Next of kin added successfully.');
+    }
+
+    public function updateNextOfKin(StoreNextOfKinRequest $request, MemberNextOfKin $kin): RedirectResponse
+    {
+        $member = $request->user()->member;
+
+        abort_unless($kin->member_id === $member->id, 403, 'You cannot edit this record.');
+
+        $this->memberService->updateNextOfKin($kin, $request->validated());
+
+        return redirect()->route('member.profile', ['tab' => 'next-of-kin'])
+            ->with('success', 'Next of kin updated successfully.');
+    }
+
+    public function destroyNextOfKin(Request $request, MemberNextOfKin $kin): RedirectResponse
+    {
+        $member = $request->user()->member;
+
+        abort_unless($kin->member_id === $member->id, 403, 'You cannot delete this record.');
+
+        $this->memberService->removeNextOfKin($kin);
+
+        return redirect()->route('member.profile', ['tab' => 'next-of-kin'])
+            ->with('success', 'Next of kin removed successfully.');
+    }
+
+    // ==================== Profile: Documents (CRUD) ====================
+
+    public function storeDocument(StoreMemberDocumentRequest $request): RedirectResponse
+    {
+        $member = $request->user()->member;
+
+        $this->memberService->uploadDocument($member, $request->validated());
+
+        return redirect()->route('member.profile', ['tab' => 'documents'])
+            ->with('success', 'Document uploaded successfully.');
+    }
+
+    public function downloadDocument(Request $request, MemberDocument $document)
+    {
+        $member = $request->user()->member;
+
+        abort_unless($document->member_id === $member->id, 403, 'You cannot access this document.');
+
+        if (! Storage::disk('private')->exists($document->file_path)) {
+            abort(404, 'Document file not found.');
+        }
+
+        return Storage::disk('private')->download(
+            $document->file_path,
+            $document->original_filename
+        );
+    }
+
+    public function destroyDocument(Request $request, MemberDocument $document): RedirectResponse
+    {
+        $member = $request->user()->member;
+
+        abort_unless($document->member_id === $member->id, 403, 'You cannot delete this document.');
+
+        $this->memberService->deleteDocument($document);
+
+        return redirect()->route('member.profile', ['tab' => 'documents'])
+            ->with('success', 'Document deleted successfully.');
     }
 
     // ==================== Savings ====================

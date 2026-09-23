@@ -632,7 +632,7 @@
             </div>
             <div class="col-lg-7">
                 <div class="bg-light rounded-4 p-4">
-                    <form method="POST" action="#" id="contactForm">
+                    <form method="POST" action="{{ route('contact.store') }}" id="contactForm">
                         @csrf
                         <div class="row g-3">
                             <div class="col-md-6">

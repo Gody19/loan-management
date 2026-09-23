@@ -41,7 +41,7 @@
 </div>
 
 {{-- My Loans --}}
-<h6 class="mb-3 fw-semibold"><i class="bi bi-cash-coin me-2"></i>My Loans</h6>
+{{-- <h6 class="mb-3 fw-semibold"><i class="bi bi-cash-coin me-2"></i>My Loans</h6> --}}
 
 {{-- Loan Financial Summary Cards --}}
 <div class="row g-3 mb-4">

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDocumentController;
@@ -66,6 +67,9 @@ Route::get('/register-organization', [LandingPageController::class, 'showRegistr
 Route::post('/register-organization', [LandingPageController::class, 'storeRegistration'])
     ->name('register-organization.store');
 
+Route::post('/contact', [ContactMessageController::class, 'store'])
+    ->name('contact.store');
+
 /*
 |--------------------------------------------------------------------------
 | Authentication Routes
@@ -113,6 +117,18 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])
         ->name('dashboard');
 
+    // Contact Messages (admin)
+    Route::middleware('permission:contact_message.view')->prefix('contact-messages')->name('contact-messages.')->group(function () {
+        Route::get('/', [ContactMessageController::class, 'index'])
+            ->name('index');
+        Route::patch('/{message}/read', [ContactMessageController::class, 'markRead'])
+            ->name('read');
+        Route::patch('/{message}/unread', [ContactMessageController::class, 'markUnread'])
+            ->name('unread');
+        Route::delete('/{message}', [ContactMessageController::class, 'destroy'])
+            ->name('destroy');
+    });
+
     // Member Portal
     Route::prefix('member')->name('member.')->middleware('member')->group(function () {
         Route::get('/dashboard', [MemberPortalController::class, 'dashboard'])
@@ -123,6 +139,20 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('profile.edit');
         Route::post('/profile/update', [MemberPortalController::class, 'updateProfile'])
             ->name('profile.update');
+        // Profile: Next of Kin CRUD (member manages own)
+        Route::post('/profile/next-of-kin', [MemberPortalController::class, 'storeNextOfKin'])
+            ->name('next-of-kin.store');
+        Route::put('/profile/next-of-kin/{kin}', [MemberPortalController::class, 'updateNextOfKin'])
+            ->name('next-of-kin.update');
+        Route::delete('/profile/next-of-kin/{kin}', [MemberPortalController::class, 'destroyNextOfKin'])
+            ->name('next-of-kin.destroy');
+        // Profile: Documents CRUD (member manages own)
+        Route::post('/profile/documents', [MemberPortalController::class, 'storeDocument'])
+            ->name('documents.store');
+        Route::get('/profile/documents/{document}/download', [MemberPortalController::class, 'downloadDocument'])
+            ->name('documents.download');
+        Route::delete('/profile/documents/{document}', [MemberPortalController::class, 'destroyDocument'])
+            ->name('documents.destroy');
         Route::get('/savings', [MemberPortalController::class, 'savings'])
             ->name('savings');
         Route::post('/savings/deposit', [MemberPortalController::class, 'depositSavings'])

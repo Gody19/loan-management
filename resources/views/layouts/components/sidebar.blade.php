@@ -300,10 +300,17 @@
 
         {{-- Administration Section --}}
         @php
-            $hasAdminMenu = auth()->check() && (auth()->user()->can('user.view') || auth()->user()->can('role.view') || auth()->user()->can('permission.view') || auth()->user()->can('audit.view'));
+            $hasAdminMenu = auth()->check() && (auth()->user()->can('user.view') || auth()->user()->can('role.view') || auth()->user()->can('permission.view') || auth()->user()->can('audit.view') || auth()->user()->can('contact_message.view'));
         @endphp
         @if($hasAdminMenu)
         <div class="sidebar-section mt-3">Administration</div>
+
+        @if(auth()->user()->can('contact_message.view'))
+        <a href="{{ route('contact-messages.index') }}" class="nav-link {{ request()->routeIs('contact-messages.*') ? 'active' : '' }}">
+            <i class="bi bi-envelope"></i>
+            <span>Contact Messages</span>
+        </a>
+        @endif
 
         @if(auth()->user()->can('user.view'))
         <a href="{{ route('users.index') }}" class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}">

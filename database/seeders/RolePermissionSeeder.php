@@ -56,6 +56,7 @@ class RolePermissionSeeder extends Seeder
             'reports',
             'settings',
             'audit',
+            'contact_message',
         ];
 
         $actions = [
