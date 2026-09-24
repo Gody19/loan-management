@@ -382,7 +382,7 @@ class MemberRepaymentTest extends TestCase
             'branch_id' => $this->branch->id,
             'member_id' => $this->member->id,
             'loan_plan_id' => $this->plan->id,
-            'status' => LoanStatus::PendingDisbursement,
+            'status' => LoanStatus::Cancelled,
             'outstanding_balance' => 500000,
         ]);
 

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\UserStatus;
 use App\Models\User;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Hash;
 
@@ -96,6 +97,44 @@ class UserService
     {
         $user->update(['last_login_at' => now()]);
         $this->audit->logLogin($user);
+    }
+
+    /**
+     * Sync roles for a user.
+     *
+     * Assigning or modifying the Super Administrator role is a global,
+     * cross-tenant concern. Only a Super Administrator may do so.
+     */
+    public function syncRoles(User $user, array $roles): User
+    {
+        $actor = auth()->user();
+
+        $guard = $actor && $actor->hasRole('Super Administrator');
+
+        if (! $guard && in_array('Super Administrator', $roles, true)) {
+            throw new AuthorizationException(
+                'Only a Super Administrator may assign the Super Administrator role.'
+            );
+        }
+
+        if (! $guard && $user->hasRole('Super Administrator')) {
+            throw new AuthorizationException(
+                'Only a Super Administrator may modify a Super Administrator account.'
+            );
+        }
+
+        $oldRoles = $user->roles()->pluck('name')->sort()->values()->all();
+        $user->syncRoles($roles);
+        $newRoles = $user->roles()->pluck('name')->sort()->values()->all();
+
+        $this->audit->log(
+            'user.roles_synced',
+            $user,
+            ['roles' => $oldRoles],
+            ['roles' => $newRoles]
+        );
+
+        return $user;
     }
 
     /**

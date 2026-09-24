@@ -10,6 +10,7 @@ class AuditLog extends Model
 {
     protected $fillable = [
         'user_id',
+        'organization_id',
         'event',
         'auditable_type',
         'auditable_id',
@@ -30,6 +31,14 @@ class AuditLog extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the organization this audit event belongs to.
+     */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     /**

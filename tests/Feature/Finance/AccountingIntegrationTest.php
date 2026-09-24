@@ -298,40 +298,27 @@ class AccountingIntegrationTest extends TestCase
 
     public function test_savings_deposit_accounting_failure_rolls_back(): void
     {
-        $otherOrg = Organization::factory()->create(['status' => 'active']);
-        $chartService = app(ChartOfAccountsService::class);
-        $chartService->initializeDefaultChart($otherOrg->id, $this->admin->id);
+        $periodService = app(AccountingPeriodService::class);
+        $period = $periodService->createPeriod($this->organization->id, 'Closed', '2025-01-01', '2025-12-31', $this->admin->id);
+        $periodService->closePeriod($period, $this->admin->id);
 
-        $otherMember = Member::factory()->create(['organization_id' => $otherOrg->id]);
-        $otherSavingsProduct = SavingsProduct::factory()->create(['organization_id' => $otherOrg->id]);
-        $otherBranch = Branch::factory()->create(['organization_id' => $otherOrg->id]);
-        $otherGroup = VicobaGroup::factory()->create(['branch_id' => $otherBranch->id]);
-        $otherAccount = SavingsAccount::createQuietly([
-            'member_id' => $otherMember->id,
-            'organization_id' => $otherOrg->id,
-            'branch_id' => $otherBranch->id,
-            'vicoba_group_id' => $otherGroup->id,
-            'savings_product_id' => $otherSavingsProduct->id,
-            'account_number' => 'SAV-OTHER-0001',
-            'current_balance' => 0,
-            'opening_date' => now(),
-            'status' => SavingsAccountStatus::Active,
-        ]);
-
-        $otherPm = PaymentMethod::factory()->create(['organization_id' => $otherOrg->id, 'status' => 'active']);
+        $balanceBefore = (float) $this->savingsAccount->fresh()->current_balance;
 
         $service = app(SavingsTransactionService::class);
 
         try {
-            $service->deposit($otherAccount, [
+            $service->deposit($this->savingsAccount, [
                 'amount' => 100000,
-                'payment_method_id' => $otherPm->id,
-                'transaction_date' => now()->toDateString(),
+                'payment_method_id' => $this->paymentMethod->id,
+                'transaction_date' => '2025-06-15',
             ]);
             $this->fail('Expected exception was not thrown.');
         } catch (\Throwable $e) {
             $this->assertDatabaseCount('savings_transactions', 0);
+            $this->assertDatabaseCount('journal_entries', 0);
         }
+
+        $this->assertEqualsWithDelta($balanceBefore, (float) $this->savingsAccount->fresh()->current_balance, 0.01);
     }
 
     // ===== 6. Share Purchase Creates Journal =====

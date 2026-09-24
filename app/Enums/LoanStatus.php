@@ -42,7 +42,7 @@ enum LoanStatus: string
             self::PendingDisbursement => in_array($newStatus, [self::Disbursed, self::Cancelled]),
             self::Disbursed => $newStatus === self::Active,
             self::Active => $newStatus === self::Completed,
-            self::Completed => false,
+            self::Completed => $newStatus === self::Active,
             self::Cancelled => false,
         };
     }

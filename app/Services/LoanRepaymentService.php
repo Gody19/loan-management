@@ -97,6 +97,7 @@ class LoanRepaymentService
                 'installments_paid' => $loan->repaymentSchedule()
                     ->where('status', LoanScheduleInstallmentStatus::Paid)
                     ->count(),
+                'status' => $newOutstanding <= 0 ? LoanStatus::Completed : LoanStatus::Active,
             ]);
 
             $this->auditService->log('loan.repayment.posted', $repayment, [], $repayment->toArray());
@@ -133,9 +134,29 @@ class LoanRepaymentService
             $newAmountPaid = (float) $totalReversed;
             $newOutstanding = (float) $loan->principal_amount - $newAmountPaid;
 
+            $openStatuses = [
+                LoanScheduleInstallmentStatus::Pending->value,
+                LoanScheduleInstallmentStatus::Partial->value,
+                LoanScheduleInstallmentStatus::Overdue->value,
+            ];
+
+            $nextPayment = $loan->repaymentSchedule()
+                ->whereIn('status', $openStatuses)
+                ->orderBy('due_date')
+                ->first();
+
+            $installmentsPaid = $loan->repaymentSchedule()
+                ->where('status', LoanScheduleInstallmentStatus::Paid)
+                ->count();
+
+            $reopenedToActive = $loan->status === LoanStatus::Completed && $newOutstanding > 0;
+
             $loan->update([
                 'amount_paid' => round($newAmountPaid, 2),
                 'outstanding_balance' => round(max(0, $newOutstanding), 2),
+                'installments_paid' => $installmentsPaid,
+                'next_payment_date' => $nextPayment?->due_date,
+                'status' => $reopenedToActive ? LoanStatus::Active : $loan->status,
             ]);
 
             $this->auditService->log('loan.repayment.reversed', $repayment, [

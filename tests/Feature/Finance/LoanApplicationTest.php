@@ -238,6 +238,7 @@ class LoanApplicationTest extends TestCase
         $guarantorMember = Member::factory()->create([
             'organization_id' => $this->organization->id,
             'membership_status' => 'active',
+            'national_id' => '8765432109876543',
         ]);
 
         $response = $this->actingAs($this->admin)->post(route('loan-applications.guarantors.store', $application), [
@@ -286,6 +287,7 @@ class LoanApplicationTest extends TestCase
         $guarantorMember = Member::factory()->create([
             'organization_id' => $this->organization->id,
             'membership_status' => 'active',
+            'national_id' => '2233445566778899',
         ]);
 
         $this->actingAs($this->admin)->post(route('loan-applications.guarantors.store', $application), [
@@ -313,6 +315,7 @@ class LoanApplicationTest extends TestCase
         $guarantorMember = Member::factory()->create([
             'organization_id' => $this->organization->id,
             'membership_status' => 'active',
+            'national_id' => '1122334455667788',
         ]);
 
         $this->actingAs($this->admin)->post(route('loan-applications.guarantors.store', $application), [
@@ -546,6 +549,19 @@ class LoanApplicationTest extends TestCase
             'loan_plan_id' => $plan->id,
             'branch_id' => $this->branch->id,
             'requested_amount' => 100000,
+        ]);
+
+        $guarantorMember = Member::factory()->create([
+            'organization_id' => $this->organization->id,
+            'membership_status' => 'active',
+            'national_id' => '3344556677889900',
+        ]);
+
+        LoanApplicationGuarantor::factory()->create([
+            'loan_application_id' => $application->id,
+            'guarantor_member_id' => $guarantorMember->id,
+            'guaranteed_amount' => 100000,
+            'status' => GuarantorStatus::Accepted,
         ]);
 
         $response = $this->actingAs($this->admin)->post(route('loan-applications.submit', $application));

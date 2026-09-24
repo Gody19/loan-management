@@ -242,6 +242,7 @@ class LoanApprovalTest extends TestCase
         $guarantorMember = Member::factory()->create([
             'organization_id' => $this->organization->id,
             'membership_status' => 'active',
+            'national_id' => '6677889900112233',
         ]);
 
         // Create a user linked to the guarantor member
@@ -279,6 +280,7 @@ class LoanApprovalTest extends TestCase
         $guarantorMember = Member::factory()->create([
             'organization_id' => $this->organization->id,
             'membership_status' => 'active',
+            'national_id' => '6677889900112233',
         ]);
 
         $guarantorUser = User::factory()->create();

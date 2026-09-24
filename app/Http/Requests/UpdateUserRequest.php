@@ -9,9 +9,28 @@ class UpdateUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Only a Super Administrator may assign the Super Administrator role or
+     * modify an account that already holds it (global, cross-tenant concern).
      */
     public function authorize(): bool
     {
+        $actor = $this->user();
+
+        if ($actor && $actor->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        if (in_array('Super Administrator', $this->input('roles', []), true)) {
+            return false;
+        }
+
+        $target = $this->route('user');
+
+        if ($target && $target->hasRole('Super Administrator')) {
+            return false;
+        }
+
         return true;
     }
 

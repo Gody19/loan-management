@@ -7,6 +7,7 @@ use App\Enums\LoanStatus;
 use App\Enums\MemberStatus;
 use App\Models\Branch;
 use App\Models\Loan;
+use App\Models\LoanApplication;
 use App\Models\LoanPlan;
 use App\Models\Member;
 use App\Models\Organization;
@@ -79,6 +80,20 @@ class LoanEligibilityTest extends TestCase
             'vicoba_group_id' => $this->group->id,
             'membership_status' => MemberStatus::Active,
         ], $overrides));
+    }
+
+    private function makeApplication(Member $member, LoanPlan $plan): LoanApplication
+    {
+        return LoanApplication::factory()->create([
+            'organization_id' => $this->orgA->id,
+            'branch_id' => $this->branch->id,
+            'member_id' => $member->id,
+            'loan_plan_id' => $plan->id,
+            'requested_amount' => 500000,
+            'requested_term' => 12,
+            'repayment_frequency' => 'monthly',
+            'status' => 'approved',
+        ]);
     }
 
     // ─────────────────────────────────────────────
@@ -165,6 +180,7 @@ class LoanEligibilityTest extends TestCase
             'branch_id' => $this->branch->id,
             'member_id' => $member->id,
             'loan_plan_id' => $plan->id,
+            'loan_application_id' => $this->makeApplication($member, $plan)->id,
             'loan_number' => 'LN-TEST-001',
             'principal_amount' => 1000000,
             'disbursed_amount' => 1000000,
@@ -201,6 +217,7 @@ class LoanEligibilityTest extends TestCase
             'branch_id' => $this->branch->id,
             'member_id' => $member->id,
             'loan_plan_id' => $plan->id,
+            'loan_application_id' => $this->makeApplication($member, $plan)->id,
             'loan_number' => 'LN-TEST-002',
             'principal_amount' => 1000000,
             'disbursed_amount' => 1000000,
@@ -234,6 +251,7 @@ class LoanEligibilityTest extends TestCase
             'branch_id' => $this->branch->id,
             'member_id' => $member->id,
             'loan_plan_id' => $plan->id,
+            'loan_application_id' => $this->makeApplication($member, $plan)->id,
             'loan_number' => 'LN-TEST-003',
             'principal_amount' => 1000000,
             'disbursed_amount' => 1000000,
@@ -269,6 +287,7 @@ class LoanEligibilityTest extends TestCase
             'branch_id' => $this->branch->id,
             'member_id' => $member->id,
             'loan_plan_id' => $plan->id,
+            'loan_application_id' => $this->makeApplication($member, $plan)->id,
             'loan_number' => 'LN-TEST-004',
             'principal_amount' => 1000000,
             'disbursed_amount' => 1000000,

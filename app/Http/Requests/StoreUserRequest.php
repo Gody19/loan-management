@@ -9,9 +9,22 @@ class StoreUserRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
+     *
+     * Assigning the Super Administrator role is a global (cross-tenant)
+     * privilege escalation, so only a Super Administrator may request it.
      */
     public function authorize(): bool
     {
+        $actor = $this->user();
+
+        if ($actor && $actor->hasRole('Super Administrator')) {
+            return true;
+        }
+
+        if (in_array('Super Administrator', $this->input('roles', []), true)) {
+            return false;
+        }
+
         return true;
     }
 

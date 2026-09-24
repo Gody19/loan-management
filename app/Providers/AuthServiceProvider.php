@@ -103,9 +103,11 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Super Administrator can do everything
+        // Only the Super Administrator bypasses all authorization checks.
+        // Organization Administrators are scoped through OrganizationContext
+        // and their organization's permission assignments like every other role.
         Gate::before(function (User $user) {
-            if ($user->hasRole('Super Administrator') || $user->hasRole('Organization Administrator')) {
+            if ($user->hasRole('Super Administrator')) {
                 return true;
             }
         });

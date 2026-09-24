@@ -615,6 +615,7 @@ class MemberLoanTest extends TestCase
             'branch_id' => $this->member->branch_id,
             'vicoba_group_id' => $this->member->vicoba_group_id,
             'membership_status' => MemberStatus::Active,
+            'national_id' => '5566778899001122',
         ]);
 
         $this->actingAs($this->memberUser);
@@ -709,6 +710,7 @@ class MemberLoanTest extends TestCase
             'branch_id' => $this->member->branch_id,
             'vicoba_group_id' => $this->member->vicoba_group_id,
             'membership_status' => MemberStatus::Active,
+            'national_id' => '5566778899001122',
         ]);
 
         $this->actingAs($this->memberUser);

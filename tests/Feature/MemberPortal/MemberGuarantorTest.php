@@ -3,6 +3,7 @@
 namespace Tests\Feature\MemberPortal;
 
 use App\Enums\GuarantorStatus;
+use App\Enums\LoanApplicationStatus;
 use App\Enums\LoanPurpose;
 use App\Enums\LoanStatus;
 use App\Enums\MemberStatus;
@@ -262,7 +263,7 @@ class MemberGuarantorTest extends TestCase
         $response->assertStatus(404);
     }
 
-    // ==================== Accept Tests (Phase 10.6: stays Pending for org review) ====================
+    // ==================== Accept Tests (guarantor confirms request -> status Accepted) ====================
 
     public function test_guarantor_can_accept_pending_request(): void
     {
@@ -276,7 +277,7 @@ class MemberGuarantorTest extends TestCase
         $response->assertSessionHas('success');
 
         $guarantorRequest->refresh();
-        $this->assertEquals('pending', $guarantorRequest->status->value);
+        $this->assertEquals('accepted', $guarantorRequest->status->value);
         $this->assertNotNull($guarantorRequest->confirmed_at);
     }
 
@@ -410,7 +411,7 @@ class MemberGuarantorTest extends TestCase
         $this->actingAs($this->applicantUser);
         $response = $this->get(route('member.loans.application', $this->application));
         $response->assertStatus(200);
-        $response->assertSee('Pending');
+        $response->assertSee('Accepted');
     }
 
     public function test_applicant_cannot_manipulate_guarantor_status(): void
@@ -517,6 +518,8 @@ class MemberGuarantorTest extends TestCase
 
     public function test_search_returns_eligibility_status(): void
     {
+        $this->applicant->update(['national_id' => '0987654321098765']);
+
         $this->actingAs($this->guarantorUser);
         $response = $this->getJson(route('member.guarantor.search', ['q' => $this->applicant->first_name]));
         $response->assertStatus(200);
@@ -552,16 +555,39 @@ class MemberGuarantorTest extends TestCase
 
     public function test_member_can_offer_as_guarantor(): void
     {
+        $targetApp = LoanApplication::factory()->submitted()->create([
+            'organization_id' => $this->applicant->organization_id,
+            'branch_id' => $this->applicant->branch_id,
+            'member_id' => $this->applicant->id,
+            'loan_plan_id' => $this->plan->id,
+            'application_number' => 'LN-OPT-' . uniqid(),
+        ]);
         $this->actingAs($this->guarantorUser);
         $response = $this->post(route('member.guarantor.store-offer'), [
-            'loan_application_id' => $this->application->id,
+            'loan_application_id' => $targetApp->id,
             'guaranteed_amount' => 250000,
         ]);
         $response->assertRedirect();
         $response->assertSessionHas('success');
 
         $this->assertDatabaseHas('loan_application_guarantors', [
+            'loan_application_id' => $targetApp->id,
+            'guarantor_member_id' => $this->guarantor->id,
+            'guaranteed_amount' => 250000,
+            'status' => 'pending',
+        ]);
+    }
+
+    public function test_member_cannot_offer_to_unsolicited_draft_application(): void
+    {
+        $this->actingAs($this->guarantorUser);
+        $response = $this->post(route('member.guarantor.store-offer'), [
             'loan_application_id' => $this->application->id,
+            'guaranteed_amount' => 250000,
+        ]);
+        $response->assertSessionHasErrors('error');
+
+        $this->assertDatabaseMissing('loan_application_guarantors', [
             'guarantor_member_id' => $this->guarantor->id,
             'guaranteed_amount' => 250000,
             'status' => 'pending',
@@ -592,8 +618,16 @@ class MemberGuarantorTest extends TestCase
 
     public function test_eligibility_service_allows_new_guarantee(): void
     {
+        $freshApp = LoanApplication::factory()->submitted()->create([
+            'organization_id' => $this->applicant->organization_id,
+            'branch_id' => $this->applicant->branch_id,
+            'member_id' => $this->applicant->id,
+            'loan_plan_id' => $this->plan->id,
+            'application_number' => 'LN-ELG-' . uniqid(),
+        ]);
+
         $service = app(GuarantorEligibilityService::class);
-        $result = $service->canGuarantee($this->guarantor, $this->application);
+        $result = $service->canGuarantee($this->guarantor, $freshApp);
 
         $this->assertTrue($result['eligible']);
     }
@@ -638,7 +672,7 @@ class MemberGuarantorTest extends TestCase
 
     // ==================== Phase 10.6: Organization Review Flow Tests ====================
 
-    public function test_guarantor_remains_pending_after_member_acceptance(): void
+    public function test_guarantor_is_accepted_after_member_acceptance(): void
     {
         $guarantorRequest = LoanApplicationGuarantor::where('guarantor_member_id', $this->guarantor->id)->first();
         $this->actingAs($this->guarantorUser);
@@ -647,17 +681,13 @@ class MemberGuarantorTest extends TestCase
         ]);
 
         $guarantorRequest->refresh();
-        $this->assertEquals('pending', $guarantorRequest->status->value);
+        $this->assertEquals('accepted', $guarantorRequest->status->value);
         $this->assertNotNull($guarantorRequest->confirmed_at);
     }
 
     public function test_admin_can_approve_pending_guarantor(): void
     {
         $guarantorRequest = LoanApplicationGuarantor::where('guarantor_member_id', $this->guarantor->id)->first();
-        $this->actingAs($this->guarantorUser);
-        $this->post(route('member.guarantor.accept', $guarantorRequest), [
-            'guaranteed_amount' => 500000,
-        ]);
 
         $this->actingAs($this->admin);
         $response = $this->post(route('loan-guarantors.approve', $guarantorRequest));
@@ -671,10 +701,6 @@ class MemberGuarantorTest extends TestCase
     public function test_admin_can_reject_pending_guarantor(): void
     {
         $guarantorRequest = LoanApplicationGuarantor::where('guarantor_member_id', $this->guarantor->id)->first();
-        $this->actingAs($this->guarantorUser);
-        $this->post(route('member.guarantor.accept', $guarantorRequest), [
-            'guaranteed_amount' => 500000,
-        ]);
 
         $this->actingAs($this->admin);
         $response = $this->post(route('loan-guarantors.reject', $guarantorRequest), [
@@ -705,11 +731,11 @@ class MemberGuarantorTest extends TestCase
 
     public function test_admin_review_queue_shows_pending_guarantors(): void
     {
-        $guarantorRequest = LoanApplicationGuarantor::where('guarantor_member_id', $this->guarantor->id)->first();
-        $this->actingAs($this->guarantorUser);
-        $this->post(route('member.guarantor.accept', $guarantorRequest), [
-            'guaranteed_amount' => 500000,
+        $this->application->update([
+            'status' => LoanApplicationStatus::Submitted,
+            'submitted_at' => now(),
         ]);
+        $this->application->refresh();
 
         $this->actingAs($this->admin);
         $response = $this->get(route('guarantor-reviews.index'));

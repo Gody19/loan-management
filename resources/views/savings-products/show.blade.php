@@ -5,7 +5,7 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => $product->name,
-        'subtitle' => 'Plan Code: ' . $product->code . ' | ' . ucfirst($product->status),
+        'subtitle' => 'Plan Code: ' . $product->code . ' | ' . $product->status->label(),
         'breadcrumb' => [
             ['label' => 'Savings Plans', 'url' => route('savings-products.index')],
             ['label' => $product->name],
@@ -34,7 +34,7 @@
                         <h4 class="mb-0 fw-bold">{{ $product->name }}</h4>
                         <div class="d-flex align-items-center gap-3 mt-1">
                             <span class="badge bg-primary">{{ $product->code }}</span>
-                            <span class="badge bg-{{ $product->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($product->status) }}</span>
+<span class="badge bg-{{ $product->status->value === 'active' ? 'success' : 'secondary' }}">{{ $product->status->label() }}</span>
                         </div>
                     </div>
                     <div class="text-end">
@@ -59,7 +59,7 @@
                             <tr><td class="text-muted">Code</td><td class="fw-medium">{{ $product->code }}</td></tr>
                             <tr><td class="text-muted">Organization</td><td class="fw-medium">{{ $product->organization->name ?? '—' }}</td></tr>
                             <tr><td class="text-muted">Description</td><td class="fw-medium">{{ $product->description ?? '—' }}</td></tr>
-                            <tr><td class="text-muted">Status</td><td><span class="badge bg-{{ $product->status === 'active' ? 'success' : 'secondary' }}">{{ ucfirst($product->status) }}</span></td></tr>
+                            <tr><td class="text-muted">Status</td><td><span class="badge bg-{{ $product->status->value === 'active' ? 'success' : 'secondary' }}">{{ $product->status->label() }}</span></td></tr>
                         </table>
                     </div>
                 </div>
@@ -122,8 +122,8 @@
                                                 <td>{{ $account->member->full_name ?? '—' }}</td>
                                                 <td class="fw-medium">{{ number_format($account->balance, 2) }}</td>
                                                 <td>
-                                                    <span class="badge bg-{{ $account->status === 'active' ? 'success' : 'secondary' }}">
-                                                        {{ ucfirst($account->status) }}
+                                                    <span class="badge bg-{{ $account->status->value === 'active' ? 'success' : 'secondary' }}">
+                                                        {{ $account->status->label() }}
                                                     </span>
                                                 </td>
                                                 <td class="text-end">

@@ -17,10 +17,13 @@ class RolePolicy
 
     /**
      * Determine whether the user can create models.
+     *
+     * Role definitions are global (not tenant scoped), so only a
+     * Super Administrator may mutate them.
      */
     public function create(User $auth): bool
     {
-        return $auth->can('role.create');
+        return $auth->hasRole('Super Administrator') && $auth->can('role.create');
     }
 
     /**
@@ -28,7 +31,7 @@ class RolePolicy
      */
     public function update(User $auth, Role $role): bool
     {
-        return $auth->can('role.update');
+        return $auth->hasRole('Super Administrator') && $auth->can('role.update');
     }
 
     /**
@@ -36,6 +39,6 @@ class RolePolicy
      */
     public function delete(User $auth, Role $role): bool
     {
-        return $auth->can('role.delete');
+        return $auth->hasRole('Super Administrator') && $auth->can('role.delete');
     }
 }

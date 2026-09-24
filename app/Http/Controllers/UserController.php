@@ -56,7 +56,7 @@ class UserController extends Controller
         $this->authorize('create', User::class);
 
         $user = $this->userService->create($request->validated());
-        $user->syncRoles($request->roles);
+        $this->userService->syncRoles($user, $request->roles);
 
         return redirect()->route('users.index')
             ->with('success', 'User created successfully.');
@@ -95,7 +95,7 @@ class UserController extends Controller
         $this->authorize('update', $user);
 
         $this->userService->update($user, $request->validated());
-        $user->syncRoles($request->roles);
+        $this->userService->syncRoles($user, $request->roles);
 
         return redirect()->route('users.index')
             ->with('success', 'User updated successfully.');

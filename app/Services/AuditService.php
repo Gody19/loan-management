@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -15,6 +16,7 @@ class AuditService
     {
         return AuditLog::create([
             'user_id' => auth()->id(),
+            'organization_id' => $this->resolveOrganizationId($model),
             'event' => $event,
             'auditable_type' => $model ? get_class($model) : null,
             'auditable_id' => $model?->id,
@@ -23,6 +25,36 @@ class AuditService
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
+    }
+
+    /**
+     * Resolve the organization an audit event belongs to.
+     *
+     * Uses the auditable model's organization where available, falling back
+     * to the acting user when they belong to exactly one organization.
+     * Returns null for platform-level or ambiguous events.
+     */
+    protected function resolveOrganizationId(?Model $model): ?int
+    {
+        if ($model instanceof Organization) {
+            return $model->id;
+        }
+
+        if ($model && $model->organization_id !== null) {
+            return (int) $model->organization_id;
+        }
+
+        $user = $model instanceof User
+            ? $model
+            : User::find(auth()->id());
+
+        if (! $user) {
+            return null;
+        }
+
+        $orgIds = $user->organizations()->pluck('organizations.id')->all();
+
+        return count($orgIds) === 1 ? (int) reset($orgIds) : null;
     }
 
     /**
