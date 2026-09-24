@@ -57,6 +57,7 @@ class RolePermissionSeeder extends Seeder
             'settings',
             'audit',
             'contact_message',
+            'ai',
         ];
 
         $actions = [
@@ -81,6 +82,14 @@ class RolePermissionSeeder extends Seeder
                 ]);
             }
         }
+
+        // The 'ai' module adds a 'use' action not in the shared action list. It
+        // is created here explicitly so that only the AI capability is affected;
+        // other modules keep their existing action matrix.
+        Permission::firstOrCreate([
+            'name' => 'ai.use',
+            'guard_name' => 'web',
+        ]);
 
         /*
         |--------------------------------------------------------------------------

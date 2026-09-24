@@ -45,6 +45,7 @@ use App\Http\Controllers\MemberLoanController;
 use App\Http\Controllers\MemberGuarantorController;
 use App\Http\Controllers\MemberRepaymentController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\AiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -513,4 +514,16 @@ Route::middleware(['auth', 'suspended'])->group(function () {
 
     Route::post('/permissions/{role}', [PermissionController::class, 'update'])
         ->name('permissions.update');
+
+    // AI Foundation (minimal internal endpoints, no chat UI yet)
+    Route::prefix('ai')->name('ai.')->middleware('permission:ai.view')->group(function () {
+        Route::get('/conversations', [AiController::class, 'index'])
+            ->name('conversations.index');
+        Route::get('/conversations/{conversation}', [AiController::class, 'show'])
+            ->name('conversations.show');
+    });
+
+    Route::post('/ai/chat', [AiController::class, 'store'])
+        ->name('ai.chat')
+        ->middleware('permission:ai.use');
 });
