@@ -26,6 +26,13 @@
             <span>Dashboard</span>
         </a>
 
+        @if(auth()->check() && auth()->user()->can('ai.use'))
+        <a href="{{ route('ai.index') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
+            <i class="bi bi-stars"></i>
+            <span>AI Assistant</span>
+        </a>
+        @endif
+
         {{-- My Finance --}}
         <div class="sidebar-section mt-3">My Finance</div>
 

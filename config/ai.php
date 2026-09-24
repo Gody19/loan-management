@@ -51,6 +51,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Rate Limiting
+    |--------------------------------------------------------------------------
+    |
+    | Named Laravel rate limiters applied to POST /ai/chat and POST /ai/tool.
+    | These bound per-user (or per-IP when unauthenticated, which the routes
+    | never allow in practice) request rates to keep abuse cheap to handle.
+    |
+    */
+
+    'chat_rate_limit' => (int) env('AI_CHAT_RATE_LIMIT', 30),
+
+    'tool_rate_limit' => (int) env('AI_TOOL_RATE_LIMIT', 30),
+
+    /*
+    |--------------------------------------------------------------------------
     | System Instructions
     |--------------------------------------------------------------------------
     |

@@ -7,13 +7,17 @@ use App\AI\DTOs\AiMessageData;
 use App\AI\Exceptions\AiToolException;
 use App\AI\Exceptions\AiUnavailableException;
 use App\AI\Policies\AiToolPolicy;
+use App\AI\Services\AiChatOrchestrationService;
 use App\AI\Services\AiConversationService;
 use App\AI\Services\AiGuardrailService;
+use App\AI\Services\AiToolRegistry;
+use App\AI\Services\AiToolResultFormatter;
 use App\AI\Services\AiToolRunnerService;
-use App\Enums\AiMessageRole;
 use App\Models\AiConversation;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 /**
  * Minimal internal JSON endpoints for the AI foundation. There is no public
@@ -31,6 +35,8 @@ class AiController extends Controller
         private readonly AiConversationService $conversations,
         private readonly AiGuardrailService $guardrail,
         private readonly AiToolRunnerService $tools,
+        private readonly AiToolRegistry $registry,
+        private readonly AiChatOrchestrationService $orchestrator,
     ) {}
 
     protected function ensureAvailable(): bool
@@ -150,12 +156,14 @@ class AiController extends Controller
             $conversation = $this->conversations->create(
                 user: $user,
                 organizationId: $organizationId,
-                title: $validated['title'] ?? null,
+                title: $this->newConversationTitle($validated),
             );
         }
 
         try {
-            $response = $this->conversations->send($conversation, $validated['message']);
+            $systemContext = $this->orchestratedContext($context, $user, (string) $validated['message']);
+
+            $response = $this->conversations->send($conversation, (string) $validated['message'], $systemContext);
         } catch (AiUnavailableException) {
             return $this->unavailable();
         }
@@ -253,11 +261,7 @@ class AiController extends Controller
                 $conversation,
                 (string) $validated['question'],
                 [
-                    new AiMessageData(
-                        AiMessageRole::System,
-                        'Authoritative FinancePro tool result for capability "'.$capability.'": '
-                        .json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
-                    ),
+                    AiToolResultFormatter::format($capability, $result),
                 ],
             );
         } catch (AiToolException $exception) {
@@ -284,6 +288,56 @@ class AiController extends Controller
                 ],
             ],
         ], 200);
+    }
+
+    /**
+     * Server-side orchestration for the normal chat flow. When the trusted
+     * context and the plain question match one of the registered member-scoped
+     * capabilities, the authorized tool is executed and its authoritative data
+     * is packaged (never as instructions) for the provider. Denylisted tool
+     * failures (unauthorized / not_found) deliberately fall through to plain
+     * conversation so nothing about record existence is disclosed.
+     *
+     * @return AiMessageData[]
+     */
+    protected function orchestratedContext(AiContextData $context, User $user, string $message): array
+    {
+        $plan = $this->orchestrator->plan($context, $message);
+
+        if ($plan === null || ! $plan->permittedFor($context, $this->registry)) {
+            return [];
+        }
+
+        try {
+            $result = $this->tools->run($context, $plan->capability, $plan->arguments, $user);
+
+            return [AiToolResultFormatter::format($plan->capability, $result)];
+        } catch (AiToolException $exception) {
+            if (in_array($exception->category, ['unauthorized', 'not_found'], true)) {
+                return [];
+            }
+
+            return [AiToolResultFormatter::failure($plan->label, $exception->category)];
+        }
+    }
+
+    /**
+     * Human-readable title for a brand-new conversation: the caller's explicit
+     * title when given, otherwise a compact excerpt of the first message.
+     */
+    protected function newConversationTitle(array $validated): ?string
+    {
+        if (! empty($validated['title'])) {
+            return (string) $validated['title'];
+        }
+
+        $message = trim((string) ($validated['message'] ?? ''));
+
+        if ($message === '') {
+            return null;
+        }
+
+        return Str::limit((string) preg_replace('/\s+/u', ' ', $message), 60);
     }
 
     protected function presentConversation(AiConversation $conversation): array

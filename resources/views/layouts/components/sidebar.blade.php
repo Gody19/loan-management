@@ -28,6 +28,13 @@
             <span>Dashboard</span>
         </a>
 
+        @if(auth()->check() && auth()->user()->can('ai.use'))
+        <a href="{{ route('ai.index') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
+            <i class="bi bi-stars"></i>
+            <span>AI Assistant</span>
+        </a>
+        @endif
+
         {{-- Organization Section --}}
         @php
             $hasOrgSection = auth()->check() && (auth()->user()->can('organization.view') || auth()->user()->can('branch.view') || auth()->user()->can('group.view'));

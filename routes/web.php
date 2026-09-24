@@ -45,6 +45,7 @@ use App\Http\Controllers\MemberLoanController;
 use App\Http\Controllers\MemberGuarantorController;
 use App\Http\Controllers\MemberRepaymentController;
 use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiController;
 use Illuminate\Support\Facades\Route;
 
@@ -515,8 +516,11 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::post('/permissions/{role}', [PermissionController::class, 'update'])
         ->name('permissions.update');
 
-    // AI Foundation (minimal internal endpoints, no chat UI yet)
+    // AI Assistant: chat UI page + minimal server-consumed JSON endpoints.
+    // POST endpoints are throttled and authorization is enforced server-side.
     Route::prefix('ai')->name('ai.')->middleware('permission:ai.view')->group(function () {
+        Route::get('/', [AiChatController::class, 'index'])
+            ->name('index');
         Route::get('/conversations', [AiController::class, 'index'])
             ->name('conversations.index');
         Route::get('/conversations/{conversation}', [AiController::class, 'show'])
@@ -525,9 +529,9 @@ Route::middleware(['auth', 'suspended'])->group(function () {
 
     Route::post('/ai/chat', [AiController::class, 'store'])
         ->name('ai.chat')
-        ->middleware('permission:ai.use');
+        ->middleware('permission:ai.use', 'throttle:ai.chat');
 
     Route::post('/ai/tool', [AiController::class, 'tool'])
         ->name('ai.tool')
-        ->middleware('permission:ai.use');
+        ->middleware('permission:ai.use', 'throttle:ai.tool');
 });
