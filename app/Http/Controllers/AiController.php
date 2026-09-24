@@ -3,22 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\AI\Exceptions\AiUnavailableException;
+use App\AI\Policies\AiToolPolicy;
 use App\AI\Services\AiConversationService;
+use App\AI\Services\AiGuardrailService;
 use App\Models\AiConversation;
-use App\Services\OrganizationContext;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
  * Minimal internal JSON endpoints for the AI foundation. There is no public
  * API surface here: every route requires an authenticated user with the ai.*
- * permission. Responses never echo provider internals and always return a
- * controlled 503 payload when the AI capability is unavailable.
+ * permission, and every request passes through AiGuardrailService (which
+ * builds the trusted context, applies the default-deny AiToolPolicy, audits
+ * the decision, and revalidates conversation ownership/tenant scope).
+ *
+ * Responses never echo provider internals and always return a controlled 503
+ * payload when the AI capability is unavailable.
  */
 class AiController extends Controller
 {
     public function __construct(
         private readonly AiConversationService $conversations,
+        private readonly AiGuardrailService $guardrail,
     ) {}
 
     protected function ensureAvailable(): bool
@@ -43,6 +49,8 @@ class AiController extends Controller
             return $this->unavailable();
         }
 
+        $this->guardrail->authorize('ai.conversation.list', [], $request->user());
+
         $conversations = $this->conversations->listForUser($request->user())->map(
             fn (AiConversation $conversation) => $this->presentConversation($conversation)
         );
@@ -59,7 +67,13 @@ class AiController extends Controller
             return $this->unavailable();
         }
 
-        $this->conversations->findForUser((int) $conversation->id, $request->user());
+        $context = $this->guardrail->authorize(
+            'ai.conversation.read',
+            ['conversation_id' => (int) $conversation->id],
+            $request->user()
+        );
+
+        $this->guardrail->checkConversationAccess($conversation, $context);
 
         $messages = $this->conversations->messages($conversation)->map(
             fn ($message) => [
@@ -84,6 +98,10 @@ class AiController extends Controller
      * POST /ai/chat
      *
      * Body: { message: string, title?: string, conversation_id?: int }
+     *
+     * Privilege-influencing keys (organization_id, member_id, role, ...) are
+     * rejected outright; tenant and member scope can never be supplied by the
+     * client — they are always taken from the trusted context.
      */
     public function store(Request $request): JsonResponse
     {
@@ -91,22 +109,38 @@ class AiController extends Controller
             return $this->unavailable();
         }
 
-        $validated = $request->validate([
+        $rules = [
             'message' => ['required', 'string', 'max:4000'],
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
             'conversation_id' => ['sometimes', 'nullable', 'integer'],
-        ]);
+        ];
+
+        foreach (AiToolPolicy::FORBIDDEN_ARGUMENT_KEYS as $key) {
+            $rules[$key] = 'prohibited';
+        }
+
+        $validated = $request->validate($rules);
+
+        $arguments = [];
+        if (! empty($validated['conversation_id'])) {
+            $arguments['conversation_id'] = (int) $validated['conversation_id'];
+        }
 
         $user = $request->user();
+        $context = $this->guardrail->authorize('ai.chat', $arguments, $user);
+
         $conversation = null;
 
         if (! empty($validated['conversation_id'])) {
             $conversation = $this->conversations->findForUser((int) $validated['conversation_id'], $user);
+            $this->guardrail->checkConversationAccess($conversation, $context);
         }
 
         if (! $conversation) {
-            $orgIds = OrganizationContext::getUserOrganizationIds($user);
-            $organizationId = count($orgIds) === 1 ? (int) reset($orgIds) : null;
+            $organizationId = count($context->organizationIds) === 1
+                ? (int) $context->organizationIds[0]
+                : null;
+
             $conversation = $this->conversations->create(
                 user: $user,
                 organizationId: $organizationId,

@@ -68,6 +68,7 @@ class AiConversationService
     /**
      * Conversations the user is allowed to list: their own, or conversations
      * belonging to an organization they belong to. Super Administrators see all.
+     * VICOBA Members are held to the strictest scope and only see their own.
      */
     public function listForUser(?User $user = null): Collection
     {
@@ -79,7 +80,9 @@ class AiConversationService
 
         $query = AiConversation::query()->orderByDesc('updated_at');
 
-        if (! $user->hasRole('Super Administrator')) {
+        if ($user->hasRole('VICOBA Member')) {
+            $query->where('user_id', $user->id);
+        } elseif (! $user->hasRole('Super Administrator')) {
             $orgIds = OrganizationContext::getUserOrganizationIds($user);
 
             $query->where(function ($q) use ($user, $orgIds) {
@@ -177,14 +180,19 @@ class AiConversationService
      * Closed-loop action: append the user message, ask the provider, persist the
      * assistant reply together with usage, and update conversation metadata.
      *
+     * A configured system instruction is prepended to the provider request.
+     * It is guidance only and is never persisted as a conversation message.
+     *
      * @throws \App\AI\Exceptions\AiUnavailableException
      */
     public function send(AiConversation $conversation, string $content): AiResponseData
     {
         $this->appendMessage($conversation, AiMessageRole::User, $content);
 
+        $messages = $this->withSystemInstruction($this->history($conversation));
+
         $request = new AiRequestData(
-            messages: $this->history($conversation),
+            messages: $messages,
             model: $this->providerService->defaultModel(),
             temperature: config('ai.temperature') !== null ? (float) config('ai.temperature') : null,
             maxOutputTokens: config('ai.max_output_tokens') !== null ? (int) config('ai.max_output_tokens') : null,
@@ -245,6 +253,26 @@ class AiConversationService
     }
 
     /**
+     * Prepend the configured system instruction when present.
+     *
+     * @param  AiMessageData[]  $messages
+     * @return AiMessageData[]
+     */
+    protected function withSystemInstruction(array $messages): array
+    {
+        $instructions = trim((string) config('ai.system_instructions', ''));
+
+        if ($instructions === '') {
+            return $messages;
+        }
+
+        return array_merge(
+            [new AiMessageData(AiMessageRole::System, $instructions)],
+            $messages,
+        );
+    }
+
+    /**
      * Ownership and tenant enforcement. A conversation belonging to Organization
      * A is never visible to a user of Organization B.
      */
@@ -262,6 +290,11 @@ class AiConversationService
 
         if ($conversation->user_id !== null && (int) $conversation->user_id === (int) $user->id) {
             return;
+        }
+
+        // VICOBA Members: strictest scope — owner-only, never org-shared.
+        if ($user->hasRole('VICOBA Member')) {
+            abort(403, 'Unauthorized access to this conversation.');
         }
 
         if ($conversation->organization_id !== null

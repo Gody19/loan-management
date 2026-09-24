@@ -175,6 +175,38 @@ class RolePermissionSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
+        | AI Chat Permissions
+        |--------------------------------------------------------------------------
+        |
+        | Every role may use the conversation/chat capabilities (ai.view,
+        | ai.use). Access is still capability-gated in Laravel via the
+        | AiToolPolicy / AiGuardrailService and scoped to each user's trusted
+        | context (own conversations & own organizations; VICOBA Members are
+        | owner-only). No business-data AI tools exist yet, so no ai.*
+        | permission beyond chat is granted to any role.
+        |--------------------------------------------------------------------------
+        */
+        $aiChatRoles = [
+            'Organization Administrator',
+            'Branch Manager',
+            'Loan Officer',
+            'Credit Officer',
+            'Treasurer',
+            'Accountant',
+            'Secretary',
+            'Collection Officer',
+            'Auditor',
+            'VICOBA Member',
+        ];
+
+        foreach ($aiChatRoles as $aiRoleName) {
+            Role::where('name', $aiRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo(['ai.view', 'ai.use']);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
         | Create Default Super Administrator
         |--------------------------------------------------------------------------
         */
