@@ -123,8 +123,6 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('index');
         Route::patch('/{message}/read', [ContactMessageController::class, 'markRead'])
             ->name('read');
-        Route::patch('/{message}/unread', [ContactMessageController::class, 'markUnread'])
-            ->name('unread');
         Route::delete('/{message}', [ContactMessageController::class, 'destroy'])
             ->name('destroy');
     });

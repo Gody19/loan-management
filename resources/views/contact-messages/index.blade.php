@@ -27,7 +27,7 @@
                 </div>
                 <div>
                     <div class="text-muted small">Unread</div>
-                    <div class="fw-bold fs-4">{{ $unreadCount }}</div>
+                    <div class="fw-bold fs-4" id="unreadCount">{{ $unreadCount }}</div>
                 </div>
             </div>
         </div>
@@ -105,6 +105,8 @@
                                                 class="btn btn-outline-primary"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#viewMessageModal"
+                                                data-id="{{ $message->id }}"
+                                                data-read="{{ $message->is_read ? '1' : '0' }}"
                                                 data-name="{{ $message->name }}"
                                                 data-email="{{ $message->email }}"
                                                 data-phone="{{ $message->phone }}"
@@ -114,19 +116,6 @@
                                                 title="View">
                                             <i class="bi bi-eye"></i>
                                         </button>
-                                        @if($message->is_read)
-                                            <form method="POST" action="{{ route('contact-messages.unread', $message) }}" class="d-inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="btn btn-outline-warning" title="Mark as unread"><i class="bi bi-envelope-plus"></i></button>
-                                            </form>
-                                        @else
-                                            <form method="POST" action="{{ route('contact-messages.read', $message) }}" class="d-inline">
-                                                @csrf
-                                                @method('PATCH')
-                                                <button type="submit" class="btn btn-outline-success" title="Mark as read"><i class="bi bi-envelope-open"></i></button>
-                                            </form>
-                                        @endif
                                         <form method="POST" action="{{ route('contact-messages.destroy', $message) }}" class="d-inline" data-confirm="Delete this contact message?">
                                             @csrf
                                             @method('DELETE')
@@ -190,17 +179,43 @@
                 document.getElementById('view_subject').textContent = button.dataset.subject || '—';
                 document.getElementById('view_date').textContent = button.dataset.date || '—';
                 document.getElementById('view_message').textContent = button.dataset.message || '—';
+
+                if (button.dataset.read === '0' && button.dataset.id) {
+                    button.dataset.read = '1';
+                    markAsRead(button.dataset.id, button.closest('tr'));
+                }
             });
         }
 
-        document.querySelectorAll('form[data-confirm]').forEach(function(form) {
-            form.addEventListener('submit', function(e) {
-                var message = form.dataset.confirm || 'Are you sure?';
-                if (!confirm(message)) {
-                    e.preventDefault();
+        function markAsRead(id, row) {
+            fetch('{{ route('contact-messages.read', ':id') }}'.replace(':id', id), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Accept': 'application/json'
+                },
+                body: '_method=PATCH'
+            }).then(function(response) {
+                if (!response.ok) {
+                    return;
+                }
+                var unreadEl = document.getElementById('unreadCount');
+                if (unreadEl) {
+                    var n = parseInt(unreadEl.textContent, 10) || 0;
+                    unreadEl.textContent = Math.max(0, n - 1);
+                }
+                if (row) {
+                    row.classList.remove('table-info');
+                    var badge = row.querySelector('.badge');
+                    if (badge) {
+                        badge.className = 'badge bg-success';
+                        badge.textContent = 'Read';
+                    }
                 }
             });
-        });
+        }
     });
 </script>
 @endpush
