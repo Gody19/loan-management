@@ -526,4 +526,8 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::post('/ai/chat', [AiController::class, 'store'])
         ->name('ai.chat')
         ->middleware('permission:ai.use');
+
+    Route::post('/ai/tool', [AiController::class, 'tool'])
+        ->name('ai.tool')
+        ->middleware('permission:ai.use');
 });

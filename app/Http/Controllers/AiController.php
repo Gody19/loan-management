@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\AI\DTOs\AiContextData;
+use App\AI\DTOs\AiMessageData;
+use App\AI\Exceptions\AiToolException;
 use App\AI\Exceptions\AiUnavailableException;
 use App\AI\Policies\AiToolPolicy;
 use App\AI\Services\AiConversationService;
 use App\AI\Services\AiGuardrailService;
+use App\AI\Services\AiToolRunnerService;
+use App\Enums\AiMessageRole;
 use App\Models\AiConversation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,6 +30,7 @@ class AiController extends Controller
     public function __construct(
         private readonly AiConversationService $conversations,
         private readonly AiGuardrailService $guardrail,
+        private readonly AiToolRunnerService $tools,
     ) {}
 
     protected function ensureAvailable(): bool
@@ -157,6 +163,117 @@ class AiController extends Controller
         return response()->json([
             'data' => [
                 'conversation_id' => $conversation->id,
+                'provider' => $response->provider,
+                'model' => $response->model,
+                'content' => $response->content,
+                'usage' => [
+                    'input_tokens' => $response->inputTokens,
+                    'output_tokens' => $response->outputTokens,
+                    'total_tokens' => $response->totalTokens,
+                ],
+            ],
+        ], 200);
+    }
+
+    /**
+     * POST /ai/tool
+     *
+     * Body: { capability: string, arguments?: object, question: string,
+     *         conversation_id?: int }
+     *
+     * Privilege-influencing keys (organization_id, member_id, role, ...) are
+     * rejected outright — tenant and member scope can never be supplied by
+     * the client; they always come from the trusted context. The capability
+     * must be registered in the explicit AiToolRegistry; unknown capabilities
+     * are denied by the AiToolPolicy before any tool logic runs.
+     *
+     * The authoritative tool result is injected into the provider request as a
+     * System message (never persisted). The user's question and the assistant
+     * answer are persisted as ordinary conversation messages.
+     */
+    public function tool(Request $request): JsonResponse
+    {
+        if (! $this->ensureAvailable()) {
+            return $this->unavailable();
+        }
+
+        $rules = [
+            'capability' => ['required', 'string'],
+            'arguments' => ['sometimes', 'array'],
+            'question' => ['required', 'string', 'max:4000'],
+            'conversation_id' => ['sometimes', 'nullable', 'integer'],
+        ];
+
+        foreach (AiToolPolicy::FORBIDDEN_ARGUMENT_KEYS as $key) {
+            $rules['arguments.'.$key] = 'prohibited';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Laravel's validated() drops the parent 'arguments' array whenever
+        // wildcard prohibited child rules exist, even though those rules are
+        // still enforced. The arguments are therefore taken from the raw
+        // input after validation: they are guaranteed to be an array free of
+        // forbidden privilege-escalation keys, and the capability-specific
+        // schema is re-enforced strictly by AiToolPolicy before any tool runs.
+        $arguments = $request->input('arguments');
+
+        if (! is_array($arguments)) {
+            $arguments = [];
+        }
+
+        $capability = (string) $validated['capability'];
+
+        $user = $request->user();
+        $context = $this->guardrail->authorize($capability, $arguments, $user);
+
+        $conversation = null;
+
+        if (! empty($validated['conversation_id'])) {
+            $conversation = $this->conversations->findForUser((int) $validated['conversation_id'], $user);
+            $this->guardrail->checkConversationAccess($conversation, $context);
+        }
+
+        if (! $conversation) {
+            $organizationId = count($context->organizationIds) === 1
+                ? (int) $context->organizationIds[0]
+                : null;
+
+            $conversation = $this->conversations->create(
+                user: $user,
+                organizationId: $organizationId,
+                title: 'AI business data query',
+            );
+        }
+
+        try {
+            $result = $this->tools->run($context, $capability, $arguments, $user);
+
+            $response = $this->conversations->send(
+                $conversation,
+                (string) $validated['question'],
+                [
+                    new AiMessageData(
+                        AiMessageRole::System,
+                        'Authoritative FinancePro tool result for capability "'.$capability.'": '
+                        .json_encode($result, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+                    ),
+                ],
+            );
+        } catch (AiToolException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+                'category' => $exception->category,
+            ], $exception->statusCode());
+        } catch (AiUnavailableException) {
+            return $this->unavailable();
+        }
+
+        return response()->json([
+            'data' => [
+                'conversation_id' => $conversation->id,
+                'capability' => $capability,
+                'result' => $result,
                 'provider' => $response->provider,
                 'model' => $response->model,
                 'content' => $response->content,

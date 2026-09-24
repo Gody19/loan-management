@@ -91,6 +91,24 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        // AI business-data tool permissions (Phase 11.3). These gate the
+        // read-only business capabilities registered in the AiToolRegistry.
+        // They deliberately mirror the existing module stems so capability and
+        // screen access stay aligned. No new or broadened permissions are
+        // introduced for these surfaces; deliberate grants are applied below.
+        foreach ([
+            'ai.member.view',
+            'ai.loan.view',
+            'ai.loan-repayments.view',
+            'ai.loan-application.view',
+            'ai.loan-eligibility.view',
+        ] as $aiBusinessPermission) {
+            Permission::firstOrCreate([
+                'name' => $aiBusinessPermission,
+                'guard_name' => 'web',
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -182,8 +200,7 @@ class RolePermissionSeeder extends Seeder
         | ai.use). Access is still capability-gated in Laravel via the
         | AiToolPolicy / AiGuardrailService and scoped to each user's trusted
         | context (own conversations & own organizations; VICOBA Members are
-        | owner-only). No business-data AI tools exist yet, so no ai.*
-        | permission beyond chat is granted to any role.
+        | owner-only).
         |--------------------------------------------------------------------------
         */
         $aiChatRoles = [
@@ -203,6 +220,55 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo(['ai.view', 'ai.use']);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AI Business-Data Tool Permissions
+        |--------------------------------------------------------------------------
+        |
+        | Read-only AI business tools are gated by five capabilities that map
+        | to module stems: ai.member.view, ai.loan.view,
+        | ai.loan-repayments.view, ai.loan-application.view,
+        | ai.loan-eligibility.view. Grants are deliberate and documented:
+        |
+        |   Organization Administrator  all five
+        |   Branch Manager              all five
+        |   Loan Officer                all five
+        |   Credit Officer              all five
+        |   Collection Officer          member + loan + loan-repayments
+        |   Secretary                   member only
+        |   VICOBA Member               all five (owner-only scope in tools)
+        |   Treasurer / Accountant / Auditor   none
+        |
+        | Super Administrator receives every permission (including these) via
+        | the syncPermissions(Permission::all()) above. Scope is always
+        | enforced by AiGuardrailService / AiToolAccessService on top of the
+        | existing FinancePro policies.
+        |--------------------------------------------------------------------------
+        */
+        $aiAllFive = [
+            'ai.member.view',
+            'ai.loan.view',
+            'ai.loan-repayments.view',
+            'ai.loan-application.view',
+            'ai.loan-eligibility.view',
+        ];
+
+        $aiBusinessGrants = [
+            'Organization Administrator' => $aiAllFive,
+            'Branch Manager' => $aiAllFive,
+            'Loan Officer' => $aiAllFive,
+            'Credit Officer' => $aiAllFive,
+            'Collection Officer' => ['ai.member.view', 'ai.loan.view', 'ai.loan-repayments.view'],
+            'Secretary' => ['ai.member.view'],
+            'VICOBA Member' => $aiAllFive,
+        ];
+
+        foreach ($aiBusinessGrants as $aiRoleName => $aiPermissions) {
+            Role::where('name', $aiRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo($aiPermissions);
         }
 
         /*

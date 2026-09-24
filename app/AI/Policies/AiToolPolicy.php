@@ -115,6 +115,10 @@ class AiToolPolicy
                 return ['allowed' => false, 'reason' => AiAuthorizationCategory::MalformedArgument->value, 'denied_key' => $key];
             }
 
+            if ($rule === 'float' && ! $this->isFloatLike($value)) {
+                return ['allowed' => false, 'reason' => AiAuthorizationCategory::MalformedArgument->value, 'denied_key' => $key];
+            }
+
             if ($rule === 'string' && ! is_string($value)) {
                 return ['allowed' => false, 'reason' => AiAuthorizationCategory::MalformedArgument->value, 'denied_key' => $key];
             }
@@ -130,5 +134,10 @@ class AiToolPolicy
         }
 
         return is_string($value) && $value !== '' && ctype_digit($value);
+    }
+
+    private function isFloatLike(mixed $value): bool
+    {
+        return is_numeric($value);
     }
 }

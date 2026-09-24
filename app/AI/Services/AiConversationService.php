@@ -183,13 +183,20 @@ class AiConversationService
      * A configured system instruction is prepended to the provider request.
      * It is guidance only and is never persisted as a conversation message.
      *
+     * Optional $systemContext carries additional System messages into the
+     * provider request (e.g. an authoritative tool result for the model to
+     * summarize). Like the system instruction, these are never persisted as
+     * conversation messages.
+     *
+     * @param  AiMessageData[]  $systemContext
+     *
      * @throws \App\AI\Exceptions\AiUnavailableException
      */
-    public function send(AiConversation $conversation, string $content): AiResponseData
+    public function send(AiConversation $conversation, string $content, array $systemContext = []): AiResponseData
     {
         $this->appendMessage($conversation, AiMessageRole::User, $content);
 
-        $messages = $this->withSystemInstruction($this->history($conversation));
+        $messages = $this->withSystemInstruction($this->history($conversation), $systemContext);
 
         $request = new AiRequestData(
             messages: $messages,
@@ -253,23 +260,34 @@ class AiConversationService
     }
 
     /**
-     * Prepend the configured system instruction when present.
+     * Prepend the configured system instruction when present, followed by any
+     * caller-supplied system context (e.g. tool results), then the history.
      *
      * @param  AiMessageData[]  $messages
+     * @param  AiMessageData[]  $systemContext
      * @return AiMessageData[]
      */
-    protected function withSystemInstruction(array $messages): array
+    protected function withSystemInstruction(array $messages, array $systemContext = []): array
     {
         $instructions = trim((string) config('ai.system_instructions', ''));
 
-        if ($instructions === '') {
+        $context = array_values(array_filter(
+            $systemContext,
+            fn ($message) => $message instanceof AiMessageData,
+        ));
+
+        if ($instructions !== '') {
+            $context = array_merge(
+                [new AiMessageData(AiMessageRole::System, $instructions)],
+                $context,
+            );
+        }
+
+        if ($context === []) {
             return $messages;
         }
 
-        return array_merge(
-            [new AiMessageData(AiMessageRole::System, $instructions)],
-            $messages,
-        );
+        return array_merge($context, $messages);
     }
 
     /**
