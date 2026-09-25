@@ -36,6 +36,6 @@ class AiMessage extends Model
 
     public function conversation(): BelongsTo
     {
-        return $this->belongsTo(AiConversation::class);
+        return $this->belongsTo(AiConversation::class, 'ai_conversation_id');
     }
 }

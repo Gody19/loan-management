@@ -120,6 +120,26 @@ class RolePermissionSeeder extends Seeder
             ]);
         }
 
+        // AI feedback, evaluation and learning-dataset permissions (Phase 11.6).
+        // Four deliberately separate capabilities, so that receiving feedback,
+        // reviewing it, approving it into the dataset, and exporting the
+        // dataset are four independent grants:
+        //   ai.feedback.submit   react to an AI response
+        //   ai.feedback.review   read the tenant-scoped review queue
+        //   ai.feedback.approve  approve/reject and admit to the dataset
+        //   ai.feedback.export   download the approved dataset
+        foreach ([
+            'ai.feedback.submit',
+            'ai.feedback.review',
+            'ai.feedback.approve',
+            'ai.feedback.export',
+        ] as $aiFeedbackPermission) {
+            Permission::firstOrCreate([
+                'name' => $aiFeedbackPermission,
+                'guard_name' => 'web',
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -315,6 +335,62 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiManageRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo('ai.knowledge.manage');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AI Feedback / Evaluation / Learning-Dataset Grants (Phase 11.6)
+        |--------------------------------------------------------------------------
+        |
+        | ai.feedback.submit    Every role that can chat may react to a response
+        |                       in their own conversation, so this mirrors the
+        |                       aiChatRoles list exactly.
+        |
+        | ai.feedback.review    Organization Administrator, Branch Manager,
+        |                       Credit Officer and Auditor. Review is an
+        |                       oversight activity scoped to the reviewer's own
+        |                       organization (and branch, when branch scoped).
+        |                       Deliberately withheld from VICOBA Member,
+        |                       Treasurer, Accountant, Secretary and
+        |                       Collection Officer.
+        |
+        | ai.feedback.approve   Organization Administrator and Branch Manager
+        |                       only. Approval is the single gate that admits an
+        |                       example into the learning dataset, so it is kept
+        |                       to the two most trusted operational roles.
+        |
+        | ai.feedback.export    Organization Administrator and Branch Manager
+        |                       only, matching approval — a reviewer who cannot
+        |                       approve an example cannot export the dataset
+        |                       either.
+        |
+        | No VICOBA Member receives review, approve, or export. VICOBA Members
+        | can never review another member's feedback, approve a training
+        | example, or download the dataset. Super Administrator receives all
+        | four via syncPermissions(Permission::all()) above.
+        |--------------------------------------------------------------------------
+        */
+        foreach ($aiChatRoles as $aiFeedbackSubmitRoleName) {
+            Role::where('name', $aiFeedbackSubmitRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo('ai.feedback.submit');
+        }
+
+        foreach ([
+            'Organization Administrator',
+            'Branch Manager',
+            'Credit Officer',
+            'Auditor',
+        ] as $aiFeedbackReviewRoleName) {
+            Role::where('name', $aiFeedbackReviewRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo('ai.feedback.review');
+        }
+
+        foreach (['Organization Administrator', 'Branch Manager'] as $aiFeedbackApproveRoleName) {
+            Role::where('name', $aiFeedbackApproveRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo(['ai.feedback.approve', 'ai.feedback.export']);
         }
 
         /*

@@ -29,9 +29,16 @@
         </a>
 
         @if(auth()->check() && auth()->user()->can('ai.use'))
-        <a href="{{ route('ai.index') }}" class="nav-link {{ request()->routeIs('ai.*') ? 'active' : '' }}">
+        <a href="{{ route('ai.index') }}" class="nav-link {{ request()->routeIs('ai.index', 'ai.chat', 'ai.conversations.*', 'ai.tool') ? 'active' : '' }}">
             <i class="bi bi-stars"></i>
             <span>AI Assistant</span>
+        </a>
+        @endif
+
+        @if(auth()->check() && auth()->user()->can('ai.feedback.review'))
+        <a href="{{ route('ai.evaluations.queue') }}" class="nav-link {{ request()->routeIs('ai.evaluations.*', 'ai.dataset.*') ? 'active' : '' }}">
+            <i class="bi bi-clipboard2-check"></i>
+            <span>AI Feedback Review</span>
         </a>
         @endif
 

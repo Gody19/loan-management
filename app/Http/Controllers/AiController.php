@@ -16,6 +16,7 @@ use App\AI\Services\AiToolRegistry;
 use App\AI\Services\AiToolResultFormatter;
 use App\AI\Services\AiToolRunnerService;
 use App\Models\AiConversation;
+use App\Models\AiFeedback;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -92,6 +93,7 @@ class AiController extends Controller
 
         $messages = $this->conversations->messages($conversation)->map(
             fn ($message) => [
+                'id' => $message->id,
                 'role' => $message->role->value,
                 'content' => $message->content,
                 'provider_message_id' => $message->provider_message_id,
@@ -99,6 +101,7 @@ class AiController extends Controller
                 'input_tokens' => $message->input_tokens,
                 'output_tokens' => $message->output_tokens,
                 'total_tokens' => $message->total_tokens,
+                'feedback' => $this->presentOwnFeedback($request->user(), $message->id),
                 'created_at' => $message->created_at?->toISOString(),
             ]
         );
@@ -107,6 +110,36 @@ class AiController extends Controller
             'data' => $this->presentConversation($conversation),
             'messages' => $messages,
         ]);
+    }
+
+    /**
+     * The acting user's own feedback for one message, if any. This is the
+     * submitter's own record only; a reviewer never sees it through the chat
+     * surface.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function presentOwnFeedback(?User $user, int $messageId): ?array
+    {
+        if ($user === null) {
+            return null;
+        }
+
+        $feedback = AiFeedback::where('ai_message_id', $messageId)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (! $feedback) {
+            return null;
+        }
+
+        return [
+            'id' => $feedback->id,
+            'type' => $feedback->type->value,
+            'status' => $feedback->status->value,
+            'correction' => $feedback->correction,
+            'reason' => $feedback->reason,
+        ];
     }
 
     /**
@@ -171,9 +204,15 @@ class AiController extends Controller
             return $this->unavailable();
         }
 
+        $assistantMessageId = $this->conversations->lastAssistantMessage($conversation)?->id;
+
         return response()->json([
             'data' => [
                 'conversation_id' => $conversation->id,
+                // The assistant message id lets the chat surface attach
+                // feedback to the exact response that was just produced. It is
+                // derived server-side, never accepted from the browser.
+                'message_id' => $assistantMessageId,
                 'provider' => $response->provider,
                 'model' => $response->model,
                 'content' => $response->content,

@@ -63,6 +63,17 @@
         .ai-suggestion:hover { background: #f8f9fa; }
         .ai-suggestion:focus-visible { outline: 2px solid #0d6efd; outline-offset: 2px; }
         .ai-input { resize: none; }
+        .ai-feedback {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.375rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        .ai-feedback-btn { font-size: 0.75rem; padding: 0.2rem 0.55rem; }
+        .ai-feedback-btn.active { background: #0d6efd; border-color: #0d6efd; color: #fff; }
+        .ai-feedback-label { margin-inline-start: 0.25rem; }
     </style>
 
     <div class="row g-3">
@@ -157,6 +168,8 @@
                 listUrl: @json(route('ai.conversations.index')),
                 showTmpl: @json(route('ai.conversations.show', '__ID__')),
                 chatUrl: @json(route('ai.chat')),
+                feedbackUrl: @json(route('ai.feedback.store')),
+                canGiveFeedback: @json(auth()->check() && auth()->user()->can('ai.feedback.submit')),
                 loginUrl: @json(route('login'))
             };
 
@@ -233,6 +246,133 @@
                 return wrap;
             }
 
+            // Phase 11.6: feedback controls hang off an assistant bubble. The
+            // message id is written as a data attribute from the server
+            // response — never built from user input — and every label is
+            // written with textContent so neither the AI response nor a stored
+            // correction can inject markup.
+            function feedbackControls(messageId, existing) {
+                if (!ENDPOINTS.canGiveFeedback || !messageId) {
+                    return null;
+                }
+
+                var row = document.createElement('div');
+                row.className = 'ai-feedback';
+
+                var selected = existing ? existing.type : null;
+
+                var choices = [
+                    { value: 'positive', label: 'Helpful', icon: 'bi-hand-thumbs-up' },
+                    { value: 'negative', label: 'Not helpful', icon: 'bi-hand-thumbs-down' },
+                    { value: 'correction', label: 'Correct / Explain', icon: 'bi-pencil-square' }
+                ];
+
+                choices.forEach(function (choice) {
+                    var button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = 'btn btn-sm btn-outline-secondary ai-feedback-btn' +
+                        (selected === choice.value ? ' active' : '');
+                    button.setAttribute('data-ai-feedback', choice.value);
+
+                    var icon = document.createElement('i');
+                    icon.className = 'bi ' + choice.icon;
+                    button.appendChild(icon);
+
+                    addEl(button, 'span', 'ai-feedback-label', choice.label);
+
+                    button.addEventListener('click', function () {
+                        submitFeedback(messageId, choice.value, button, row);
+                    });
+
+                    row.appendChild(button);
+                });
+
+                return row;
+            }
+
+            function submitFeedback(messageId, type, button, row) {
+                var body = { message_id: messageId, type: type };
+
+                if (type === 'correction') {
+                    var correction = window.prompt(
+                        'What was wrong with this answer? Your note is stored as data only and is reviewed by a human before it can be used.'
+                    );
+
+                    if (correction === null) {
+                        return;
+                    }
+
+                    if (!correction.trim()) {
+                        showError('A correction needs some text, or choose another option.');
+                        return;
+                    }
+
+                    body.correction = correction;
+                }
+
+                Array.prototype.forEach.call(row.querySelectorAll('.ai-feedback-btn'), function (other) {
+                    other.disabled = true;
+                });
+
+                fetch(ENDPOINTS.feedbackUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(body)
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        return { ok: response.ok, status: response.status, payload: payload };
+                    });
+                }).then(function (result) {
+                    if (result.ok && result.payload && result.payload.data) {
+                        Array.prototype.forEach.call(row.querySelectorAll('.ai-feedback-btn'), function (other) {
+                            other.classList.remove('active');
+                            other.disabled = false;
+                        });
+                        button.classList.add('active');
+                        setStatus('Thanks — your feedback was recorded.');
+                        return;
+                    }
+
+                    if (result.status === 401) {
+                        redirectLogin();
+                        return;
+                    }
+
+                    Array.prototype.forEach.call(row.querySelectorAll('.ai-feedback-btn'), function (other) {
+                        other.disabled = false;
+                    });
+                    showError(httpMessage(result.status, result.payload));
+                }).catch(function () {
+                    Array.prototype.forEach.call(row.querySelectorAll('.ai-feedback-btn'), function (other) {
+                        other.disabled = false;
+                    });
+                    showError('Your feedback could not be sent. Please try again.');
+                }).then(function () {
+                    setStatus('');
+                });
+            }
+
+            function assistantBubble(message) {
+                var wrap = bubble('assistant', message.content || '', formatTime(message.created_at));
+
+                if (message.id) {
+                    wrap.setAttribute('data-ai-message-id', String(message.id));
+
+                    var controls = feedbackControls(message.id, message.feedback);
+
+                    if (controls) {
+                        wrap.appendChild(controls);
+                    }
+                }
+
+                return wrap;
+            }
+
             function appendThinking() {
                 var wrap = document.createElement('div');
                 wrap.className = 'ai-bubble-row ai-row-assistant';
@@ -279,10 +419,16 @@
                     return;
                 }
                 messages.forEach(function (message) {
-                    if (!message || (message.role !== 'user' && message.role !== 'assistant')) {
+                    if (!message) {
                         return;
                     }
-                    bubble(message.role, message.content || '', formatTime(message.created_at));
+                    if (message.role === 'assistant') {
+                        assistantBubble(message);
+                        return;
+                    }
+                    if (message.role === 'user') {
+                        bubble('user', message.content || '', formatTime(message.created_at));
+                    }
                 });
                 setThreadVisibility();
                 scrollBottom();
@@ -482,7 +628,7 @@
                         if (!state.currentId || state.currentId !== data.conversation_id) {
                             state.currentId = data.conversation_id;
                         }
-                        bubble('assistant', data.content || '');
+                        assistantBubble({ id: data.message_id, content: data.content || '' });
                         el.input.value = '';
                         refreshConversations();
                         scrollBottom();

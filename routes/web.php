@@ -47,7 +47,10 @@ use App\Http\Controllers\MemberRepaymentController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiController;
+use App\Http\Controllers\AiEvaluationController;
+use App\Http\Controllers\AiFeedbackController;
 use App\Http\Controllers\AiKnowledgeDocumentController;
+use App\Http\Controllers\AiLearningDatasetController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -551,4 +554,71 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             Route::post('/documents/{document}/archive', [AiKnowledgeDocumentController::class, 'archive'])
                 ->name('documents.archive');
         });
+
+    // AI Feedback, Evaluation & Learning Dataset (Phase 11.6).
+    //
+    // These routes implement the governance pipeline, not a public API. Every
+    // tenant value is derived server-side from the trusted AI context; the
+    // browser never supplies an organization, branch, reviewer, or status.
+    // There is deliberately no public dataset route: export is an authenticated
+    // JSONL download behind ai.feedback.export.
+    Route::prefix('ai/feedback')->name('ai.feedback.')->group(function () {
+        // Submission is available to anyone who can chat, but only for a
+        // message inside a conversation they already own or may read.
+        Route::post('/', [AiFeedbackController::class, 'store'])
+            ->middleware('permission:ai.feedback.submit', 'throttle:ai.tool')
+            ->name('store');
+
+        Route::get('/', [AiFeedbackController::class, 'index'])
+            ->middleware('permission:ai.use')
+            ->name('index');
+
+        Route::get('/{feedback}', [AiFeedbackController::class, 'show'])
+            ->middleware('permission:ai.use')
+            ->name('show');
+
+        Route::post('/{feedback}/withdraw', [AiFeedbackController::class, 'withdraw'])
+            ->middleware('permission:ai.use', 'throttle:ai.tool')
+            ->name('withdraw');
+    });
+
+    // Reviewer surfaces: opening and deciding an evaluation require the review
+    // capability; approval additionally re-checks ai.feedback.approve in the
+    // evaluation service so a reviewer-only account can never admit an example
+    // to the dataset.
+    Route::prefix('ai/evaluations')->name('ai.evaluations.')
+        ->middleware('permission:ai.feedback.review')
+        ->group(function () {
+            Route::get('/', [AiEvaluationController::class, 'index'])
+                ->name('index');
+            Route::get('/queue', [AiEvaluationController::class, 'queue'])
+                ->name('queue');
+            Route::post('/{evaluation}', [AiEvaluationController::class, 'update'])
+                ->middleware('throttle:ai.tool')
+                ->name('update');
+        });
+
+    Route::post('/ai/feedback/{feedback}/evaluation', [AiEvaluationController::class, 'store'])
+        ->middleware('permission:ai.feedback.review', 'throttle:ai.tool')
+        ->name('ai.feedback.evaluation.store');
+
+    // Approved learning dataset. Browsing is a review capability; export is a
+    // separate, stricter grant (ai.feedback.export) and returns JSONL only.
+    Route::prefix('ai/dataset')->name('ai.dataset.')->group(function () {
+        Route::get('/', [AiLearningDatasetController::class, 'index'])
+            ->middleware('permission:ai.feedback.review')
+            ->name('index');
+
+        Route::get('/analytics', [AiLearningDatasetController::class, 'analytics'])
+            ->middleware('permission:ai.feedback.review')
+            ->name('analytics');
+
+        Route::get('/export', [AiLearningDatasetController::class, 'export'])
+            ->middleware('permission:ai.feedback.export', 'throttle:ai.tool')
+            ->name('export');
+
+        Route::post('/examples/{example}/revoke', [AiLearningDatasetController::class, 'revoke'])
+            ->middleware('permission:ai.feedback.approve', 'throttle:ai.tool')
+            ->name('examples.revoke');
+    });
 });

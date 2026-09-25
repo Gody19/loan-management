@@ -135,6 +135,19 @@ class AiConversationService
     }
 
     /**
+     * The most recent assistant message on a conversation. Callers that need
+     * to address the response they just received use this instead of trusting
+     * an id supplied by the client.
+     */
+    public function lastAssistantMessage(AiConversation $conversation): ?AiMessage
+    {
+        return $conversation->messages()
+            ->where('role', AiMessageRole::Assistant->value)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    /**
      * Bounded conversation history as normalized message data. Never sends an
      * unbounded number of messages to a provider.
      */
