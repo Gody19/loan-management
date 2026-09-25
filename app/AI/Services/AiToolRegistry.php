@@ -137,6 +137,13 @@ class AiToolRegistry
             'handler' => \App\AI\Tools\CollateralRequirementTool::class,
             'description' => 'Read the collateral requirement for a loan plan and amount.',
         ],
+        'ai.knowledge.search' => [
+            'permissions' => ['ai.knowledge.search'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['search_term' => 'string', 'top_k' => 'integer'],
+            'handler' => \App\AI\Tools\KnowledgeSearchTool::class,
+            'description' => 'Search the approved FinancePro knowledge base (policies, procedures, handbooks, FAQs) within the authorized scope.',
+        ],
     ];
 
     public function registeredCapabilities(): array

@@ -109,6 +109,17 @@ class RolePermissionSeeder extends Seeder
             ]);
         }
 
+        // AI knowledge-base permissions (Phase 11.5). ai.knowledge.search gates
+        // approved-knowledge retrieval for anyone holding the chat capability;
+        // ai.knowledge.manage gates the creation/archival of knowledge
+        // documents and is deliberately withheld from VICOBA Members.
+        foreach (['ai.knowledge.search', 'ai.knowledge.manage'] as $aiKnowledgePermission) {
+            Permission::firstOrCreate([
+                'name' => $aiKnowledgePermission,
+                'guard_name' => 'web',
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -269,6 +280,41 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo($aiPermissions);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AI Knowledge-Base Permission Grants
+        |--------------------------------------------------------------------------
+        |
+        | Retrieval (ai.knowledge.search) is a read-only surface served to the
+        | same staff/member roles that already hold read business tools.
+        | Management (ai.knowledge.manage) is limited to Organization
+        | Administrators and Branch Managers; VICOBA Members can never
+        | administer the knowledge base. Super Administrator receives both via
+        | syncPermissions(Permission::all()) above.
+        |--------------------------------------------------------------------------
+        */
+        $aiKnowledgeRoles = [
+            'Organization Administrator',
+            'Branch Manager',
+            'Loan Officer',
+            'Credit Officer',
+            'Collection Officer',
+            'Secretary',
+            'VICOBA Member',
+        ];
+
+        foreach ($aiKnowledgeRoles as $aiRoleName) {
+            Role::where('name', $aiRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo('ai.knowledge.search');
+        }
+
+        foreach (['Organization Administrator', 'Branch Manager'] as $aiManageRoleName) {
+            Role::where('name', $aiManageRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo('ai.knowledge.manage');
         }
 
         /*

@@ -66,6 +66,63 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Knowledge Base (RAG)
+    |--------------------------------------------------------------------------
+    |
+    | Phase 11.5: an approved-knowledge retrieval layer. When enabled, the AI
+    | may be served previously approved FinancePro policies, procedures,
+    | handbooks and FAQs. Retrieval is permission-gated (ai.knowledge.search),
+    | scope-filtered from the trusted tenant context, and the model is never
+    | given authority by document content.
+    |
+    | chunk_size / chunk_overlap  deterministic text chunking parameters used
+    |                            at ingestion time.
+    | top_k                      maximum number of chunks returned per retrieval.
+    | max_context_tokens         server-side cap on the knowledge context handed
+    |                            to a provider in one request.
+    |
+    */
+
+    'knowledge' => [
+        'enabled' => (bool) env('AI_KNOWLEDGE_ENABLED', true),
+
+        'chunk_size' => (int) env('AI_KNOWLEDGE_CHUNK_SIZE', 1200),
+
+        'chunk_overlap' => (int) env('AI_KNOWLEDGE_CHUNK_OVERLAP', 150),
+
+        'top_k' => (int) env('AI_RAG_TOP_K', 5),
+
+        'max_context_tokens' => (int) env('AI_RAG_MAX_CONTEXT_TOKENS', 2000),
+
+        'min_similarity' => (float) env('AI_RAG_MIN_SIMILARITY', 0.0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Embedding Providers
+    |--------------------------------------------------------------------------
+    |
+    | Embedding vectors are produced by an isolated provider behind
+    | AiEmbeddingProviderInterface and stored inside the existing database
+    | (MySQL 8+ and SQLite ':memory:' compatible). The 'fake' provider is a
+    | deterministic offline implementation used by the test suite and as a safe
+    | default when no embedding credentials are configured. Provider keys come
+    | exclusively from environment variables.
+    |
+    */
+
+    'embeddings' => [
+        'provider' => env('AI_EMBEDDING_PROVIDER', 'fake'),
+
+        'model' => env('AI_EMBEDDING_MODEL', 'text-embedding-3-small'),
+
+        'dimensions' => (int) env('AI_EMBEDDING_DIMENSIONS', 256),
+
+        'timeout' => (int) env('AI_EMBEDDING_TIMEOUT', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | System Instructions
     |--------------------------------------------------------------------------
     |

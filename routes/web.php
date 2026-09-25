@@ -47,6 +47,7 @@ use App\Http\Controllers\MemberRepaymentController;
 use App\Http\Controllers\LandingPageController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiController;
+use App\Http\Controllers\AiKnowledgeDocumentController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -534,4 +535,20 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::post('/ai/tool', [AiController::class, 'tool'])
         ->name('ai.tool')
         ->middleware('permission:ai.use', 'throttle:ai.tool');
+
+    // AI Knowledge Base administration (Phase 11.5): minimal, secured backend.
+    // Every route is permission-gated (ai.knowledge.manage) and re-validates
+    // tenant scope server-side from the trusted context. VICOBA Members can
+    // never administer the knowledge base.
+    Route::prefix('ai/knowledge')->name('ai.knowledge.')
+        ->middleware('permission:ai.knowledge.manage')
+        ->group(function () {
+            Route::get('/documents', [AiKnowledgeDocumentController::class, 'index'])
+                ->name('documents.index');
+            Route::post('/documents', [AiKnowledgeDocumentController::class, 'store'])
+                ->middleware('throttle:ai.tool')
+                ->name('documents.store');
+            Route::post('/documents/{document}/archive', [AiKnowledgeDocumentController::class, 'archive'])
+                ->name('documents.archive');
+        });
 });

@@ -10,6 +10,8 @@ use App\AI\Policies\AiToolPolicy;
 use App\AI\Services\AiChatOrchestrationService;
 use App\AI\Services\AiConversationService;
 use App\AI\Services\AiGuardrailService;
+use App\AI\Services\AiKnowledgeResultFormatter;
+use App\AI\Services\AiKnowledgeRetrievalService;
 use App\AI\Services\AiToolRegistry;
 use App\AI\Services\AiToolResultFormatter;
 use App\AI\Services\AiToolRunnerService;
@@ -37,6 +39,7 @@ class AiController extends Controller
         private readonly AiToolRunnerService $tools,
         private readonly AiToolRegistry $registry,
         private readonly AiChatOrchestrationService $orchestrator,
+        private readonly AiKnowledgeRetrievalService $knowledge,
     ) {}
 
     protected function ensureAvailable(): bool
@@ -305,7 +308,7 @@ class AiController extends Controller
         $plan = $this->orchestrator->plan($context, $message);
 
         if ($plan === null || ! $plan->permittedFor($context, $this->registry)) {
-            return [];
+            return $this->knowledgeContext($context, $message);
         }
 
         try {
@@ -318,6 +321,39 @@ class AiController extends Controller
             }
 
             return [AiToolResultFormatter::failure($plan->label, $exception->category)];
+        }
+    }
+
+    /**
+     * RAG hook for the plain chat flow. When the question is not matched to a
+     * business capability, the server — never the browser — searches the
+     * approved knowledge base using the trusted context. Retrieved knowledge
+     * is injected as a delimited, read-only System message (never persisted).
+     *
+     * Permission, tenant scope, top-K and the similarity floor are all
+     * enforced server-side inside AiKnowledgeRetrievalService. Unauthorized or
+     * unavailable retrieval falls through to plain conversation, and when no
+     * relevant knowledge is found nothing is injected at all — the system
+     * instructions already forbid inventing policies or figures.
+     *
+     * @return AiMessageData[]
+     */
+    protected function knowledgeContext(AiContextData $context, string $message): array
+    {
+        try {
+            if (! $context->hasPermission('ai.knowledge.search')) {
+                return [];
+            }
+
+            $results = $this->knowledge->search($context, $message);
+
+            if ($results === []) {
+                return [];
+            }
+
+            return [AiKnowledgeResultFormatter::format($results)];
+        } catch (AiToolException) {
+            return [];
         }
     }
 
