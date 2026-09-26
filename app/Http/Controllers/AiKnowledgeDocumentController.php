@@ -123,15 +123,15 @@ class AiKnowledgeDocumentController extends Controller
 
     /**
      * Tenant targets for the requested scope, validated against the acting
-     * user's trusted context. Global documents carry no tenant columns; all
-     * other scopes require an organization the user belongs to, plus the
-     * narrower branch/group when requested by the scope.
+     * user's trusted context. Global and Public documents carry no tenant
+     * columns; all other scopes require an organization the user belongs to,
+     * plus the narrower branch/group when requested by the scope.
      *
      * @return array{0: ?int, 1: ?int, 2: ?int}
      */
     protected function resolveScopeTargets(AiContextData $context, AiKnowledgeScope $scope, array $validated): array
     {
-        if ($scope === AiKnowledgeScope::Global) {
+        if ($scope === AiKnowledgeScope::Global || $scope === AiKnowledgeScope::Public) {
             return [null, null, null];
         }
 

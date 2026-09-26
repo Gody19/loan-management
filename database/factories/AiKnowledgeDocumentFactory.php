@@ -74,4 +74,18 @@ class AiKnowledgeDocumentFactory extends Factory
             'visibility' => AiKnowledgeScope::Group,
         ]);
     }
+
+    /**
+     * A document published to the public landing-page assistant: no tenant
+     * columns, retrievable by any visitor via AiKnowledgeRetrievalService.
+     */
+    public function forPublic(): static
+    {
+        return $this->state(fn () => [
+            'organization_id' => null,
+            'branch_id' => null,
+            'vicoba_group_id' => null,
+            'visibility' => AiKnowledgeScope::Public,
+        ]);
+    }
 }

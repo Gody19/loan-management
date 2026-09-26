@@ -7,6 +7,7 @@ use App\AI\DTOs\AiRequestData;
 use App\AI\DTOs\AiResponseData;
 use App\AI\Exceptions\AiUnavailableException;
 use App\Enums\AiConversationStatus;
+use App\Enums\AiConversationType;
 use App\Enums\AiMessageRole;
 use App\Models\AiConversation;
 use App\Models\AiMessage;
@@ -56,6 +57,45 @@ class AiConversationService
     }
 
     /**
+     * Create a public (anonymous, landing-page) conversation anchored to a
+     * server-generated uuid stored in the visitor session. The uuid is the
+     * only handle to the conversation and is never supplied by the browser.
+     */
+    public function createPublic(string $uuid): AiConversation
+    {
+        $conversation = AiConversation::create([
+            'user_id' => null,
+            'organization_id' => null,
+            'branch_id' => null,
+            'vicoba_group_id' => null,
+            'title' => 'Public visitor chat',
+            'status' => AiConversationStatus::Active,
+            'type' => AiConversationType::Public,
+            'uuid' => $uuid,
+        ]);
+
+        $this->audit->log('ai.conversation.created', $conversation, [], [
+            'conversation_id' => $conversation->id,
+            'type' => AiConversationType::Public->value,
+        ]);
+
+        return $conversation;
+    }
+
+    /**
+     * Locate a public conversation by its session-anchored uuid. Only public
+     * conversations are ever matched, so this can never resolve a private
+     * (owner/org) conversation.
+     */
+    public function findPublicByUuid(string $uuid): ?AiConversation
+    {
+        return AiConversation::query()
+            ->public()
+            ->where('uuid', $uuid)
+            ->first();
+    }
+
+    /**
      * Retrieve a conversation for a user with ownership/tenant enforcement.
      */
     public function findForUser(int $id, ?User $user = null): AiConversation
@@ -79,7 +119,9 @@ class AiConversationService
             return collect();
         }
 
-        $query = AiConversation::query()->orderByDesc('updated_at');
+        $query = AiConversation::query()
+            ->private()
+            ->orderByDesc('updated_at');
 
         if ($user->hasRole('VICOBA Member')) {
             $query->where('user_id', $user->id);

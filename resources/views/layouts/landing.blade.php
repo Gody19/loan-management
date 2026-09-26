@@ -268,7 +268,13 @@
         });
     </script>
 
-    @include('partials.ai-chat-widget')
+    @auth
+        @include('partials.ai-chat-widget')
+    @endauth
+
+    @guest
+        @include('partials.public-ai-chat')
+    @endguest
 
     @stack('scripts')
 </body>

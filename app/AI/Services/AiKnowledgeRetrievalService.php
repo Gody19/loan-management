@@ -84,6 +84,83 @@ class AiKnowledgeRetrievalService
             return [];
         }
 
+        $results = $this->rankChunks($chunks, $query, $topK);
+
+        $this->auditRetrieval($context, $results, count($results));
+
+        return $results;
+    }
+
+    /**
+     * Public knowledge retrieval for the landing-page assistant.
+     *
+     * Unlike search(), there is no signed-in user and therefore no permission
+     * check and no tenant context: only documents explicitly published with
+     * visibility=public (and all tenant columns null) are eligible, which are
+     * exactly the documents the public surface may answer general questions
+     * from. It shares the certified scoring pipeline and never throws — any
+     * retrieval failure simply yields no knowledge, so the public chat falls
+     * back to a plain conversational answer.
+     *
+     * @return AiKnowledgeResultData[]
+     */
+    public function searchPublic(string $query, ?int $topK = null): array
+    {
+        $query = trim($query);
+
+        if ($query === '' || ! $this->embeddings->isAvailable()) {
+            return [];
+        }
+
+        $topK = $this->boundedTopK($topK);
+
+        if ($topK < 1) {
+            return [];
+        }
+
+        $documentIds = AiKnowledgeDocument::query()
+            ->where('status', AiKnowledgeDocumentStatus::Active->value)
+            ->where('visibility', AiKnowledgeScope::Public->value)
+            ->whereNull('organization_id')
+            ->whereNull('branch_id')
+            ->whereNull('vicoba_group_id')
+            ->select('id')
+            ->pluck('id');
+
+        if ($documentIds->isEmpty()) {
+            $this->auditPublicRetrieval([], 0);
+
+            return [];
+        }
+
+        $chunks = AiKnowledgeChunk::query()
+            ->whereIn('ai_knowledge_document_id', $documentIds)
+            ->with('document')
+            ->get();
+
+        if ($chunks->isEmpty()) {
+            $this->auditPublicRetrieval([], 0);
+
+            return [];
+        }
+
+        $results = $this->rankChunks($chunks, $query, $topK);
+
+        $this->auditPublicRetrieval($results, count($results));
+
+        return $results;
+    }
+
+    /**
+     * Shared relevance pipeline: embed the query once, score every eligible
+     * chunk, apply the similarity floor, keep the top-K, then bound the total
+     * context tokens handed to a provider.
+     *
+     * @param  Collection<int, AiKnowledgeChunk>  $chunks
+     * @return AiKnowledgeResultData[]
+     */
+    protected function rankChunks(Collection $chunks, string $query, int $topK): array
+    {
         $queryVector = $this->embeddingVector($query);
 
         $results = $chunks
@@ -94,11 +171,7 @@ class AiKnowledgeRetrievalService
             ->values()
             ->all();
 
-        $results = $this->limitByContextTokens($results);
-
-        $this->auditRetrieval($context, $results, count($results));
-
-        return $results;
+        return $this->limitByContextTokens($results);
     }
 
     /**
@@ -120,7 +193,8 @@ class AiKnowledgeRetrievalService
         }
 
         $query->where(function (Builder $builder) use ($context) {
-            $builder->where('visibility', AiKnowledgeScope::Global->value);
+            $builder->where('visibility', AiKnowledgeScope::Global->value)
+                ->orWhere('visibility', AiKnowledgeScope::Public->value);
 
             if ($context->organizationIds !== []) {
                 $builder->orWhere(function (Builder $sub) use ($context) {
@@ -311,6 +385,25 @@ class AiKnowledgeRetrievalService
     {
         $this->audit->log('ai.knowledge.retrieved', null, [], [
             'user_id' => $context->userId,
+            'document_ids' => array_values(array_unique(array_map(
+                fn (AiKnowledgeResultData $result) => $result->documentId,
+                $results,
+            ))),
+            'result_count' => $count,
+            'top_k' => (int) config('ai.knowledge.top_k', 5),
+        ]);
+    }
+
+    /**
+     * Public-surface retrieval audit: never references a user, only which
+     * public documents were returned and how many.
+     *
+     * @param  AiKnowledgeResultData[]  $results
+     */
+    protected function auditPublicRetrieval(array $results, int $count): void
+    {
+        $this->audit->log('ai.knowledge.retrieved', null, [], [
+            'scope' => AiKnowledgeScope::Public->value,
             'document_ids' => array_values(array_unique(array_map(
                 fn (AiKnowledgeResultData $result) => $result->documentId,
                 $results,

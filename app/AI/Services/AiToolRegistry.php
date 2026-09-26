@@ -44,6 +44,8 @@ class AiToolRegistry
 
     public const SCOPE_PLATFORM = 'platform';
 
+    public const SCOPE_PUBLIC = 'public';
+
     /**
      * @var array<string, array{permissions: string[], scope: string, arguments: array<string, string>, handler: class-string<AiToolInterface>, description: string}>
      */
@@ -172,6 +174,20 @@ class AiToolRegistry
             'handler' => KnowledgeSearchTool::class,
             'description' => 'Search the approved FinancePro knowledge base (policies, procedures, handbooks, FAQs) within the authorized scope.',
         ],
+        'ai.public.chat' => [
+            'permissions' => [],
+            'scope' => self::SCOPE_PUBLIC,
+            'arguments' => ['message' => 'string'],
+            'handler' => NullTool::class,
+            'description' => 'Continue a public landing-page assistant conversation for an unauthenticated visitor.',
+        ],
+        'ai.public.knowledge.search' => [
+            'permissions' => [],
+            'scope' => self::SCOPE_PUBLIC,
+            'arguments' => ['search_term' => 'string', 'top_k' => 'integer'],
+            'handler' => NullTool::class,
+            'description' => 'Search only the public FinancePro knowledge documents published to the landing-page assistant.',
+        ],
         'ai.portfolio.view' => [
             'permissions' => ['ai.portfolio.view'],
             'scope' => self::SCOPE_USER_ORG,
@@ -226,6 +242,24 @@ class AiToolRegistry
         return array_values(array_filter(
             self::CAPABILITIES,
             fn (array $definition) => $definition['handler'] !== NullTool::class,
+        ));
+    }
+
+    /**
+     * Public capability allowlist exposed to the landing-page assistant. These
+     * are the only capabilities an unauthenticated visitor can ever trigger;
+     * everything else (all data tools and conversation management) stays
+     * explicitly out of the public surface. They carry no permission gates —
+     * there is no signed-in user to check — and all use the inert NullTool:
+     * the public controller drives them directly through server-side services,
+     * never through model-invoked tool execution.
+     */
+    public function publicCapabilities(): array
+    {
+        return array_values(array_filter(
+            self::CAPABILITIES,
+            fn (array $definition) => $definition['scope'] === self::SCOPE_PUBLIC
+                && $definition['handler'] === NullTool::class,
         ));
     }
 

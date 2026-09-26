@@ -10,6 +10,7 @@ use App\Http\Controllers\AiFeedbackController;
 use App\Http\Controllers\AiFinancialIntelligenceController;
 use App\Http\Controllers\AiKnowledgeDocumentController;
 use App\Http\Controllers\AiLearningDatasetController;
+use App\Http\Controllers\AiPublicChatController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -87,6 +88,23 @@ Route::post('/contact', [ContactMessageController::class, 'store'])
 Route::post('/ai/chat/guest', [AiController::class, 'storeGuest'])
     ->name('ai.chat.guest')
     ->middleware('throttle:ai.guest');
+
+/*
+ * Public landing-page assistant (Phase 11.7.1): a session-anchored, anonymous
+ * conversation surface. The visitor's conversation identity is a server-
+ * generated uuid stored only in the visitor session — the browser never
+ * supplies an id — so there is no enumeration or cross-visitor access surface.
+ * It may only answer from public knowledge (visibility=public RAG documents);
+ * nothing else is reachable. Throttled per (IP + session) via ai.public. The
+ * stateless guest FAQ chat above remains for backwards compatibility.
+ */
+Route::post('/ai/public/chat', [AiPublicChatController::class, 'store'])
+    ->name('ai.public.chat')
+    ->middleware('throttle:ai.public');
+
+Route::get('/ai/public/conversations/current', [AiPublicChatController::class, 'current'])
+    ->name('ai.public.conversations.current')
+    ->middleware('throttle:ai.public');
 
 /*
 |--------------------------------------------------------------------------

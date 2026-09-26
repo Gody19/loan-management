@@ -31,7 +31,7 @@ class AiKnowledgePolicy
 
         $scope = $document->visibility;
 
-        if ($scope === AiKnowledgeScope::Global) {
+        if ($scope === AiKnowledgeScope::Global || $scope === AiKnowledgeScope::Public) {
             return true;
         }
 

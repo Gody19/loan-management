@@ -8,6 +8,8 @@ namespace App\Enums;
  * Scope precedence is hierarchical: GLOBAL is visible to every authorized AI
  * user; ORGANIZATION narrows to a single organization; BRANCH narrows further
  * to a branch of an organization; GROUP narrows to a VICOBA group of a branch.
+ * PUBLIC is reserved for the landing-page assistant: it is visible to any
+ * visitor (no signed-in user) and stores no tenant columns, matching GLOBAL.
  *
  * The stored scope columns mirror the hierarchy: global documents keep all
  * three tenant columns null; group documents fill all three; branch documents
@@ -15,6 +17,7 @@ namespace App\Enums;
  */
 enum AiKnowledgeScope: string
 {
+    case Public = 'public';
     case Global = 'global';
     case Organization = 'organization';
     case Branch = 'branch';
@@ -23,6 +26,7 @@ enum AiKnowledgeScope: string
     public function label(): string
     {
         return match ($this) {
+            self::Public => 'Public',
             self::Global => 'Global',
             self::Organization => 'Organization',
             self::Branch => 'Branch',

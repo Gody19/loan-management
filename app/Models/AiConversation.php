@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AiConversationStatus;
+use App\Enums\AiConversationType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -20,6 +21,8 @@ class AiConversation extends Model
         'vicoba_group_id',
         'title',
         'status',
+        'type',
+        'uuid',
         'provider',
         'model',
     ];
@@ -28,6 +31,7 @@ class AiConversation extends Model
     {
         return [
             'status' => AiConversationStatus::class,
+            'type' => AiConversationType::class,
         ];
     }
 
@@ -69,5 +73,15 @@ class AiConversation extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', AiConversationStatus::Active->value);
+    }
+
+    public function scopePublic(Builder $query): Builder
+    {
+        return $query->where('type', AiConversationType::Public->value);
+    }
+
+    public function scopePrivate(Builder $query): Builder
+    {
+        return $query->where('type', AiConversationType::Private->value);
     }
 }
