@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\AI;
 
+use App\AI\Exceptions\AiUnavailableException;
 use App\Enums\UserStatus;
 use App\Models\AiConversation;
 use Illuminate\Support\Str;
@@ -93,6 +94,23 @@ class AiChatUiTest extends AiTestCase
         $html = $response->getContent();
         $this->assertStringContainsString('VICOBA System', $html);
         $this->assertStringNotContainsString('Member Portal', $html);
+    }
+
+    public function test_chat_page_binds_a_single_composer(): void
+    {
+        $org = $this->makeOrganization();
+        $staff = $this->staff($org, 'Loan Officer');
+        $this->actingAs($staff);
+
+        $response = $this->get('/ai')->assertOk();
+
+        // The floating widget and the full chat page both embed the same chat
+        // partial. The widget must be suppressed on the dedicated chat page so
+        // the composer and its script exist exactly once — otherwise every
+        // message would be sent twice (duplicate bubbles and responses).
+        $html = $response->getContent();
+        $this->assertSame(1, substr_count($html, 'id="aiComposer"'));
+        $this->assertStringNotContainsString('aiWidgetLauncher', $html);
     }
 
     public function test_treasurer_staff_sees_generic_suggestions_only(): void
@@ -188,7 +206,7 @@ class AiChatUiTest extends AiTestCase
             ->assertJsonFragment(['title' => 'Mine'])
             ->assertJsonMissing(['title' => 'Peer']);
 
-        $this->getJson('/ai/conversations/'.\App\Models\AiConversation::where('title', 'Peer')->first()->id)
+        $this->getJson('/ai/conversations/'.AiConversation::where('title', 'Peer')->first()->id)
             ->assertStatus(403);
     }
 
@@ -269,6 +287,6 @@ class AiChatUiTest extends AiTestCase
 
         $this->postJson('/ai/chat', ['message' => 'Hello'])
             ->assertStatus(503)
-            ->assertJsonPath('message', \App\AI\Exceptions\AiUnavailableException::SAFE_MESSAGE);
+            ->assertJsonPath('message', AiUnavailableException::SAFE_MESSAGE);
     }
 }

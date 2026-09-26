@@ -172,10 +172,19 @@
 </div>
 
 <script>
-    (function () {
-        'use strict';
+(function () {
+            'use strict';
 
-        function whenDocumentReady(fn) {
+            // The chat partial can be embedded more than once on a page (for
+            // example the floating widget beside a full chat page). Each copy
+            // would otherwise bind its own handlers to the same composer and
+            // double every submitted message, so initialise exactly once.
+            if (window.__financeProAiChatBound) {
+                return;
+            }
+            window.__financeProAiChatBound = true;
+
+            function whenDocumentReady(fn) {
             if (document.readyState !== 'loading') {
                 fn();
             } else {
@@ -190,7 +199,8 @@
                 chatUrl: @json(($guest ?? false) ? route('ai.chat.guest') : route('ai.chat')),
                 feedbackUrl: @json(route('ai.feedback.store')),
                 canGiveFeedback: @json((! ($guest ?? false)) && auth()->check() && auth()->user()->can('ai.feedback.submit')),
-                loginUrl: @json(route('login'))
+                loginUrl: @json(route('login')),
+                autoOpen: @json((bool) ($autoOpen ?? false))
             };
 
             var el = {
@@ -555,7 +565,17 @@
                         el.listLoading.parentNode && el.listLoading.parentNode.removeChild(el.listLoading);
                     }
                     if (result.ok) {
-                        renderConversationList(result.payload && result.payload.data ? result.payload.data : []);
+                        var conversations = result.payload && result.payload.data ? result.payload.data : [];
+                        renderConversationList(conversations);
+                        // The full chat page re-opens the most recent conversation
+                        // after a refresh so previous messages are not lost. The
+                        // floating widget keeps its compact single-chat surface.
+                        if (ENDPOINTS.autoOpen && !state.currentId && Array.isArray(conversations)) {
+                            var latest = conversations.find ? conversations.find(function (c) { return c && c.id; }) : null;
+                            if (latest) {
+                                openConversation(latest.id);
+                            }
+                        }
                         return;
                     }
                     addEl(el.list, 'div', 'text-center text-danger small py-4', 'Conversations could not be loaded. Please refresh the page.');
@@ -625,6 +645,7 @@
 
                 bubble('user', text);
                 appendThinking();
+                setThreadVisibility();
                 scrollBottom();
 
                 var body = { message: text };
