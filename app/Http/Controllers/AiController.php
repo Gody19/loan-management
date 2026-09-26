@@ -121,6 +121,33 @@ class AiController extends Controller
     }
 
     /**
+     * DELETE /ai/conversations/{conversation}
+     *
+     * Permanently removes a conversation the acting user owns (Super
+     * Administrators may remove any conversation). Read access to an
+     * organization-shared conversation never grants deletion — ownership is
+     * enforced in the service, strictly beyond the guardrail read scope.
+     */
+    public function destroy(Request $request, AiConversation $conversation): JsonResponse
+    {
+        if (! $this->ensureAvailable()) {
+            return $this->unavailable();
+        }
+
+        $this->guardrail->authorize(
+            'ai.conversation.delete',
+            ['conversation_id' => (int) $conversation->id],
+            $request->user(),
+        );
+
+        $this->conversations->destroy($conversation, $request->user());
+
+        return response()->json([
+            'data' => ['id' => $conversation->id],
+        ]);
+    }
+
+    /**
      * The acting user's own feedback for one message, if any. This is the
      * submitter's own record only; a reviewer never sees it through the chat
      * surface.

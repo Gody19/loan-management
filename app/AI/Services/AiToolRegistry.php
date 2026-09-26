@@ -62,6 +62,13 @@ class AiToolRegistry
             'handler' => NullTool::class,
             'description' => 'Read a conversation the user is allowed to see.',
         ],
+        'ai.conversation.delete' => [
+            'permissions' => ['ai.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['conversation_id' => 'integer'],
+            'handler' => NullTool::class,
+            'description' => 'Permanently delete a conversation the user owns.',
+        ],
         'ai.chat' => [
             'permissions' => ['ai.use'],
             'scope' => self::SCOPE_USER_ORG,

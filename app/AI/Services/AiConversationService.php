@@ -264,6 +264,31 @@ class AiConversationService
     }
 
     /**
+     * Permanently delete a conversation (messages, feedback and evaluations
+     * cascade). This is deliberately stricter than read access: only the owner
+     * (or a Super Administrator) may delete, so an organization-shared chat
+     * can never be removed by a colleague who merely holds read access.
+     */
+    public function destroy(AiConversation $conversation, ?User $user = null): void
+    {
+        $user = $user ?? auth()->user();
+
+        $isOwner = $conversation->user_id !== null
+            && $user !== null
+            && (int) $conversation->user_id === (int) $user->id;
+
+        if (! $user || ! ($isOwner || $user->hasRole('Super Administrator'))) {
+            abort(403, 'You may only delete conversations you own.');
+        }
+
+        $conversation->delete();
+
+        $this->audit->log('ai.conversation.deleted', $conversation, [], [
+            'conversation_id' => $conversation->id,
+        ]);
+    }
+
+    /**
      * Stateless completion for public, unauthenticated visitors (landing-page
      * FAQ chat). Deliberately no conversation: nothing is persisted, no member
      * data or knowledge base is reachable, and the reply is never personalized.

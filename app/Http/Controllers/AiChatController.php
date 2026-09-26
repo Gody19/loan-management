@@ -16,6 +16,7 @@ use Illuminate\View\View;
  *
  *   GET  /ai/conversations        list conversations
  *   GET  /ai/conversations/{id}   open a conversation (messages)
+ *   DELETE /ai/conversations/{id} delete an owned conversation
  *   POST /ai/chat                 send a message (server-orchestrated)
  *
  * The browser never selects capabilities, tool names, arguments, tenant ids,

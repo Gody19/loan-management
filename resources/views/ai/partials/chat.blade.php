@@ -6,6 +6,7 @@
 
       GET  /ai/conversations          -> ai.conversations.index
       GET  /ai/conversations/{id}     -> ai.conversations.show
+      DELETE /ai/conversations/{id}   -> ai.conversations.destroy
       POST /ai/chat                   -> ai.chat (server-side orchestration)
 
     Guest mode ($guest = true) is the public landing-page FAQ chat:
@@ -39,6 +40,17 @@
             border-radius: 0.5rem;
             padding: 0.5rem 0.625rem;
         }
+        .ai-conv-row { display: flex; align-items: center; }
+        .ai-conv-row .ai-conv-item { flex: 1 1 auto; width: auto; border-radius: 0.5rem 0 0 0.5rem; }
+        .ai-conv-delete {
+            border: 0;
+            background: transparent;
+            color: #adb5bd;
+            padding: 0.375rem 0.5rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+        .ai-conv-delete:hover { color: #dc3545; background: rgba(220, 53, 69, 0.08); }
+        .ai-conv-delete:focus-visible { outline: 2px solid #dc3545; outline-offset: -2px; }
         .ai-conv-item:hover { background: rgba(13, 110, 253, 0.06); }
         .ai-conv-item:focus-visible { outline: 2px solid #0d6efd; outline-offset: -2px; }
         .ai-conv-item.active { background: rgba(13, 110, 253, 0.12); }
@@ -196,6 +208,7 @@
             var ENDPOINTS = {
                 listUrl: @json(route('ai.conversations.index')),
                 showTmpl: @json(route('ai.conversations.show', '__ID__')),
+                deleteTmpl: @json(route('ai.conversations.destroy', '__ID__')),
                 chatUrl: @json(($guest ?? false) ? route('ai.chat.guest') : route('ai.chat')),
                 feedbackUrl: @json(route('ai.feedback.store')),
                 canGiveFeedback: @json((! ($guest ?? false)) && auth()->check() && auth()->user()->can('ai.feedback.submit')),
@@ -514,10 +527,14 @@
                     if (!item || !item.id) {
                         return;
                     }
+
+                    var row = document.createElement('div');
+                    row.className = 'ai-conv-row';
+                    row.setAttribute('role', 'listitem');
+
                     var button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'ai-conv-item';
-                    button.setAttribute('role', 'listitem');
                     button.dataset.conversationId = String(item.id);
 
                     var title = addEl(button, 'div', 'fw-medium text-truncate', item.title || 'Chat');
@@ -531,7 +548,25 @@
                         openConversation(item.id);
                     });
 
-                    el.list.appendChild(button);
+                    var del = document.createElement('button');
+                    del.type = 'button';
+                    del.className = 'ai-conv-delete';
+                    del.setAttribute('aria-label', 'Delete this chat');
+                    del.setAttribute('title', 'Delete chat');
+
+                    var delIcon = document.createElement('i');
+                    delIcon.className = 'bi bi-trash';
+                    delIcon.setAttribute('aria-hidden', 'true');
+                    del.appendChild(delIcon);
+
+                    del.addEventListener('click', function (event) {
+                        event.stopPropagation();
+                        deleteConversation(item.id);
+                    });
+
+                    row.appendChild(button);
+                    row.appendChild(del);
+                    el.list.appendChild(row);
                 });
 
                 highlightCurrent();
@@ -596,6 +631,48 @@
                 setStatus('');
                 el.input.value = '';
                 el.input.focus();
+            }
+
+            function deleteConversation(id) {
+                if (!window.confirm('Delete this chat and all of its messages? This cannot be undone.')) {
+                    return;
+                }
+
+                clearError();
+                setStatus('Deleting chat...');
+
+                fetch(ENDPOINTS.deleteTmpl.replace('__ID__', window.encodeURIComponent(String(id))), {
+                    method: 'DELETE',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrf(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        return { ok: response.ok, status: response.status, payload: payload };
+                    });
+                }).then(function (result) {
+                    if (result.ok) {
+                        if (String(state.currentId || '') === String(id)) {
+                            startNewConversation();
+                        }
+                        refreshConversations();
+                        setStatus('Chat deleted.');
+                        return;
+                    }
+                    if (result.status === 401) {
+                        redirectLogin();
+                        return;
+                    }
+                    if (result.status === 403) {
+                        showError('You can only delete chats you own.');
+                        return;
+                    }
+                    showError(httpMessage(result.status, result.payload));
+                }).catch(function () {
+                    showError('The chat could not be deleted. Please try again.');
+                });
             }
 
             function httpMessage(status, payload) {
