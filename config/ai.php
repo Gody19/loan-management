@@ -66,6 +66,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Public Guest Chat
+    |--------------------------------------------------------------------------
+    |
+    | The landing page lets unauthenticated visitors ask general FAQ and
+    | technical questions without creating an account. Guest completions are
+    | stateless: no conversation, message or audit rows are written, no member
+    | data or knowledge base is ever reachable, and the response is never
+    | personalized. Throttled per source IP, so abuse stays cheap to handle.
+    |
+    */
+
+    'guest_rate_limit' => (int) env('AI_GUEST_RATE_LIMIT', 15),
+
+    'guest_system_note' => (string) env('AI_GUEST_SYSTEM_NOTE',
+        'You are also answering a public visitor on the FinancePro website who has not signed in. '.
+        'Answer general questions about FinancePro, VICOBA groups and microfinance practice, and '.
+        'technical questions about the platform. You have no access to any account, member, branch, '.
+        'or organization data and never will for this visitor. Never claim to have personalized '.
+        'data or to have looked anything up. If a question is about the visitor\'s own data, tell '.
+        'them they need to sign in to ask data-driven questions.'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Knowledge Base (RAG)
     |--------------------------------------------------------------------------
     |
@@ -134,7 +157,8 @@ return [
     */
 
     'system_instructions' => (string) env('AI_SYSTEM_INSTRUCTIONS',
-        'FinancePro AI assistant. You have no execution authority on your own: '.
+        'FinancePro AI assistant. You were created by the FinancePro team in association with Gody Ouwa. '.
+        'You have no execution authority on your own: '.
         'you can only operate within the capabilities and tenant scopes the application '.
         'authorizes for you. Never access data, execute code, run SQL, read files, or use '.
         'shell commands. Never claim access to organizations, branches, members, or financial '.

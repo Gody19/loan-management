@@ -140,6 +140,29 @@ class RolePermissionSeeder extends Seeder
             ]);
         }
 
+        // AI Financial-Intelligence permissions (Phase 11.7). Six deliberate,
+        // read-only capabilities that mirror the intelligence domains, so a
+        // role can be given exactly the summaries it may see:
+        //   ai.portfolio.view    portfolio composition & maturities
+        //   ai.delinquency.view  PAR, aging buckets and delinquent loans
+        //   ai.collection.view   collection rate, due vs collected, reversals
+        //   ai.trend.view        monthly disbursement/collection series
+        //   ai.accounting.view   income statement, trial balance, liquidity
+        //   ai.anomaly.view      rule-based anomaly findings and their review
+        foreach ([
+            'ai.portfolio.view',
+            'ai.delinquency.view',
+            'ai.collection.view',
+            'ai.trend.view',
+            'ai.accounting.view',
+            'ai.anomaly.view',
+        ] as $aiFinancialIntelligencePermission) {
+            Permission::firstOrCreate([
+                'name' => $aiFinancialIntelligencePermission,
+                'guard_name' => 'web',
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -391,6 +414,59 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiFeedbackApproveRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo(['ai.feedback.approve', 'ai.feedback.export']);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | AI Financial-Intelligence Permission Grants (Phase 11.7)
+        |--------------------------------------------------------------------------
+        |
+        | Read-only intelligence summaries are granted per the access matrix
+        | from the Phase 11.7 specification. VICOBA Members never receive any
+        | of them — their AI scope stays owner-only. Super Administrator
+        | receives all six via syncPermissions(Permission::all()) above.
+        |
+        |   Organization Administrator  portfolio, delinquency, collection, trend, accounting, anomaly
+        |   Branch Manager              portfolio, delinquency, collection, trend, accounting, anomaly
+        |   Loan Officer                portfolio, delinquency, collection, trend
+        |   Credit Officer              portfolio, delinquency, collection, trend
+        |   Collection Officer          portfolio, delinquency, collection
+        |   Treasurer                   collection, trend, accounting
+        |   Accountant                  trend, accounting
+        |   Auditor                     portfolio, delinquency, collection, trend, accounting, anomaly
+        |   Secretary                   none
+        |   VICOBA Member               none
+        |
+        | Scope is always enforced server-side from the trusted AI context
+        | (organization / branch memberships); the browser never supplies a
+        | tenant. All six capabilities are read-only and re-gated by the
+        | AiToolPolicy before any tool runs.
+        |--------------------------------------------------------------------------
+        */
+        $aiIntelligenceAll = [
+            'ai.portfolio.view',
+            'ai.delinquency.view',
+            'ai.collection.view',
+            'ai.trend.view',
+            'ai.accounting.view',
+            'ai.anomaly.view',
+        ];
+
+        $aiIntelligenceGrants = [
+            'Organization Administrator' => $aiIntelligenceAll,
+            'Branch Manager' => $aiIntelligenceAll,
+            'Loan Officer' => ['ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view', 'ai.trend.view'],
+            'Credit Officer' => ['ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view', 'ai.trend.view'],
+            'Collection Officer' => ['ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view'],
+            'Treasurer' => ['ai.collection.view', 'ai.trend.view', 'ai.accounting.view'],
+            'Accountant' => ['ai.trend.view', 'ai.accounting.view'],
+            'Auditor' => $aiIntelligenceAll,
+        ];
+
+        foreach ($aiIntelligenceGrants as $aiIntelligenceRoleName => $aiIntelligencePermissions) {
+            Role::where('name', $aiIntelligenceRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo($aiIntelligencePermissions);
         }
 
         /*

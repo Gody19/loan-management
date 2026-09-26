@@ -42,6 +42,16 @@
         </a>
         @endif
 
+        @php
+            $hasIntelligence = auth()->check() && (auth()->user()->can('ai.portfolio.view') || auth()->user()->can('ai.delinquency.view') || auth()->user()->can('ai.collection.view') || auth()->user()->can('ai.trend.view') || auth()->user()->can('ai.accounting.view') || auth()->user()->can('ai.anomaly.view'));
+        @endphp
+        @if($hasIntelligence)
+        <a href="{{ route('ai.intelligence.index') }}" class="nav-link {{ request()->routeIs('ai.intelligence.*') ? 'active' : '' }}">
+            <i class="bi bi-graph-up-arrow"></i>
+            <span>Financial Intelligence</span>
+        </a>
+        @endif
+
         {{-- Organization Section --}}
         @php
             $hasOrgSection = auth()->check() && (auth()->user()->can('organization.view') || auth()->user()->can('branch.view') || auth()->user()->can('group.view'));

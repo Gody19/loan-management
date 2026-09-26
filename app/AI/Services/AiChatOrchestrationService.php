@@ -28,6 +28,12 @@ use App\Models\Member;
  *  - Questions that need values the server cannot derive safely (an eligibility
  *    requested amount, an arbitrary member/loan/application number for staff,
  *    guarantor/application references) are intentionally NOT orchestrated.
+ *  - After the member scope, an organization-level intelligence plan (Phase
+ *    11.7) is considered: a small keyword table maps org-level vocabulary
+ *    (portfolio, PAR, delinquency, collections, trends, accounting, anomalies)
+ *    to the six read-only ai.*.view capabilities. Tenants and scope are derived
+ *    exclusively from the trusted context, and permission-gating still applies
+ *    (VICOBA Members holding none of these capabilities fall through).
  *
  * This keeps the chat surface conversational while the AI, when a question is
  * orchestrated, answers from authoritative FinancePro data injected by
@@ -40,22 +46,63 @@ class AiChatOrchestrationService
         'repay', 'guarant', 'interest', 'collateral',
     ];
 
+    /**
+     * Capability => keyword patterns for organization-level financial
+     * intelligence (Phase 11.7). Every capability is permission-gated; the
+     * first matching capability wins.
+     */
+    private const ORGANIZATION_INTELLIGENCE = [
+        'ai.delinquency.view' => [
+            'portfolio at risk', 'delinquen', 'overdue', 'days past due', 'aging',
+        ],
+        'ai.portfolio.view' => [
+            'portfolio', 'loan book', 'loan composition', 'loan mix', 'maturit',
+        ],
+        'ai.collection.view' => [
+            'collect', 'recovery', 'arrear', 'repayment rate',
+        ],
+        'ai.trend.view' => [
+            'trend', 'growth', 'monthly performance', 'over time', 'month over month',
+            'month-on-month', 'last 3 months', 'last 6 months', 'last 12 months',
+        ],
+        'ai.accounting.view' => [
+            'income statement', 'profit and loss', 'profit', 'loss', 'net income',
+            'trial balance', 'balance sheet', 'accounting', 'expense', 'expenditure',
+            'liquidity', 'cash position', 'financial statement',
+        ],
+        'ai.anomaly.view' => [
+            'anomal', 'unusual', 'suspicious', 'red flag', 'irregular', 'alert',
+        ],
+    ];
+
     public function __construct(
         private readonly AiToolRegistry $registry,
     ) {}
 
     public function plan(AiContextData $context, string $message): ?AiChatToolPlan
     {
-        if ($context->memberId === null) {
-            return null;
-        }
-
         $text = mb_strtolower(trim($message));
 
         if ($text === '') {
             return null;
         }
 
+        if ($context->memberId !== null) {
+            $plan = $this->memberPlan($context, $text);
+
+            if ($plan !== null) {
+                return $plan;
+            }
+        }
+
+        return $this->organizationPlan($context, $text);
+    }
+
+    /**
+     * Record-specific planning for the acting user's own member scope.
+     */
+    protected function memberPlan(AiContextData $context, string $text): ?AiChatToolPlan
+    {
         $member = Member::withTrashed()->find($context->memberId);
 
         if (! $member || $member->member_number === null || $member->member_number === '') {
@@ -122,6 +169,37 @@ class AiChatOrchestrationService
     }
 
     /**
+     * Organization-level financial-intelligence planning (Phase 11.7). Scope
+     * and tenant are never read from message text; capabilities take no
+     * arguments and read everything from the trusted AiContextData. Users
+     * without the capability's permission (e.g. VICOBA Members) fall through.
+     */
+    protected function organizationPlan(AiContextData $context, string $text): ?AiChatToolPlan
+    {
+        $labels = [
+            'ai.portfolio.view' => 'organization portfolio summary',
+            'ai.delinquency.view' => 'portfolio-at-risk and delinquency summary',
+            'ai.collection.view' => 'collection summary',
+            'ai.trend.view' => 'trend series',
+            'ai.accounting.view' => 'accounting summary',
+            'ai.anomaly.view' => 'anomaly findings',
+        ];
+
+        foreach (self::ORGANIZATION_INTELLIGENCE as $capability => $keywords) {
+            if ($this->hasAny($text, $keywords)) {
+                return $this->planFor(
+                    $capability,
+                    $labels[$capability],
+                    [],
+                    $context,
+                );
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Member repayment question: use the member's most recent loan number. A
      * loan that does not exist (or repayment capability without permission)
      * falls through to plain chat rather than failing the conversation.
@@ -152,6 +230,13 @@ class AiChatOrchestrationService
     protected function loanIntent(string $text): bool
     {
         if (str_contains($text, 'loan')) {
+            // Organization-level intelligence phrases (Phase 11.7) are not a
+            // member "loan information" request — "loan portfolio" and
+            // "portfolio at risk" must reach the org planning stage.
+            if ($this->organizationLanguage($text)) {
+                return false;
+            }
+
             foreach (self::LOAN_EXCLUSIONS as $exclusion) {
                 if (str_contains($text, $exclusion)) {
                     return false;
@@ -159,6 +244,20 @@ class AiChatOrchestrationService
             }
 
             return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Whether the text speaks organization-level intelligence vocabulary.
+     */
+    protected function organizationLanguage(string $text): bool
+    {
+        foreach (self::ORGANIZATION_INTELLIGENCE as $keywords) {
+            if ($this->hasAny($text, $keywords)) {
+                return true;
+            }
         }
 
         return false;

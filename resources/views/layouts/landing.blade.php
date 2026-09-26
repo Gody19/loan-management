@@ -268,6 +268,8 @@
         });
     </script>
 
+    @include('partials.ai-chat-widget')
+
     @stack('scripts')
 </body>
 </html>

@@ -5,6 +5,7 @@ namespace App\AI\Services;
 use App\AI\DTOs\AiMessageData;
 use App\AI\DTOs\AiRequestData;
 use App\AI\DTOs\AiResponseData;
+use App\AI\Exceptions\AiUnavailableException;
 use App\Enums\AiConversationStatus;
 use App\Enums\AiMessageRole;
 use App\Models\AiConversation;
@@ -87,7 +88,7 @@ class AiConversationService
 
             $query->where(function ($q) use ($user, $orgIds) {
                 $q->where('user_id', $user->id)
-                  ->orWhereIn('organization_id', $orgIds);
+                    ->orWhereIn('organization_id', $orgIds);
             });
         }
 
@@ -203,7 +204,7 @@ class AiConversationService
      *
      * @param  AiMessageData[]  $systemContext
      *
-     * @throws \App\AI\Exceptions\AiUnavailableException
+     * @throws AiUnavailableException
      */
     public function send(AiConversation $conversation, string $content, array $systemContext = []): AiResponseData
     {
@@ -260,6 +261,42 @@ class AiConversationService
         ]);
 
         return $conversation;
+    }
+
+    /**
+     * Stateless completion for public, unauthenticated visitors (landing-page
+     * FAQ chat). Deliberately no conversation: nothing is persisted, no member
+     * data or knowledge base is reachable, and the reply is never personalized.
+     * The configured system instruction is kept, with a guest-scope note added
+     * so the model never claims access to account or organization data.
+     *
+     * @throws AiUnavailableException
+     */
+    public function guestCompletion(string $content): AiResponseData
+    {
+        $note = trim((string) config('ai.guest_system_note', ''));
+
+        $systemContext = $note !== ''
+            ? [new AiMessageData(AiMessageRole::System, $note)]
+            : [];
+
+        $messages = $this->withSystemInstruction(
+            [new AiMessageData(AiMessageRole::User, $content)],
+            $systemContext,
+        );
+
+        $request = new AiRequestData(
+            messages: $messages,
+            model: $this->providerService->defaultModel(),
+            temperature: config('ai.temperature') !== null ? (float) config('ai.temperature') : null,
+            maxOutputTokens: config('ai.max_output_tokens') !== null ? (int) config('ai.max_output_tokens') : null,
+            metadata: [
+                'scope' => 'public-guest',
+                'persisted' => false,
+            ],
+        );
+
+        return $this->providerService->generate($request);
     }
 
     public function isEnabled(): bool

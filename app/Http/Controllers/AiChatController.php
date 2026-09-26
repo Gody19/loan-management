@@ -69,6 +69,27 @@ class AiChatController extends Controller
             $suggestions[] = 'What can you help me with?';
         }
 
+        if (! $isMember && $user->can('ai.portfolio.view')) {
+            $suggestions[] = 'Show me our loan portfolio summary.';
+        }
+
+        if (! $isMember && $user->can('ai.delinquency.view')) {
+            $suggestions[] = 'What is our portfolio at risk?';
+            $suggestions[] = 'Which loans are delinquent?';
+        }
+
+        if (! $isMember && $user->can('ai.collection.view')) {
+            $suggestions[] = 'What is our collection rate?';
+        }
+
+        if (! $isMember && $user->can('ai.accounting.view')) {
+            $suggestions[] = 'Show me our income statement.';
+        }
+
+        if (! $isMember && $user->can('ai.anomaly.view')) {
+            $suggestions[] = 'Have any anomalies been detected?';
+        }
+
         return $suggestions;
     }
 }

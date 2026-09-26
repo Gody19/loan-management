@@ -8,6 +8,9 @@
       GET  /ai/conversations/{id}     -> ai.conversations.show
       POST /ai/chat                   -> ai.chat (server-side orchestration)
 
+    Guest mode ($guest = true) is the public landing-page FAQ chat:
+    POST /ai/chat/guest               -> ai.chat.guest (stateless, IP-throttled)
+
     Security expectations:
       * The browser never selects capabilities, tool names, tool arguments,
         tenant ids or model output. The server orchestrates what (if anything)
@@ -15,8 +18,9 @@
       * AI output is rendered as plain text via textContent — never via HTML
         string injection — so model output can never execute scripts or inject
         markup.
-      * Every POST carries the Laravel CSRF token from the meta tag and uses the
-        existing session-authenticated web route. No public API endpoint.
+      * Every POST carries the Laravel CSRF token from the meta tag. Guest mode
+        is the only public chat surface; it is stateless, holds no conversation
+        list and cannot reach member data or the knowledge base.
       * No financial value is computed client-side; numbers are only ever
         displayed verbatim as returned by the server.
 --}}
@@ -77,26 +81,28 @@
     </style>
 
     <div class="row g-3">
-        {{-- Conversation list --}}
-        <div class="col-12 col-lg-4 col-xl-3">
-            <div class="card vicoba-card h-100">
-                <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-semibold">
-                        <i class="bi bi-chat-dots me-2 text-primary"></i>Conversations
-                    </h6>
-                    <button type="button" id="aiNewChat" class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-plus-lg me-1"></i>New Chat
-                    </button>
-                </div>
-                <div class="card-body p-2">
-                    <div id="aiConversationList" class="ai-conv-list" role="list" aria-label="Previous conversations">
-                        <div id="aiConversationLoading" class="text-center text-muted small py-4">
-                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading conversations...
+        @if (! ($guest ?? false))
+            {{-- Conversation list --}}
+            <div class="col-12 col-lg-4 col-xl-3">
+                <div class="card vicoba-card h-100">
+                    <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0 fw-semibold">
+                            <i class="bi bi-chat-dots me-2 text-primary"></i>Conversations
+                        </h6>
+                        <button type="button" id="aiNewChat" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-plus-lg me-1"></i>New Chat
+                        </button>
+                    </div>
+                    <div class="card-body p-2">
+                        <div id="aiConversationList" class="ai-conv-list" role="list" aria-label="Previous conversations">
+                            <div id="aiConversationLoading" class="text-center text-muted small py-4">
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading conversations...
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        @endif
 
         {{-- Chat area --}}
         <div class="col-12 col-lg-8 col-xl-9">
@@ -114,17 +120,31 @@
                                 <i class="bi bi-stars"></i>
                             </div>
                             <h5 class="fw-semibold">Ask FinancePro AI</h5>
-                            <p class="text-muted small mb-3">You can ask questions such as:</p>
-                            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
-                                @forelse($suggestions as $suggestion)
-                                    <button type="button" class="ai-suggestion" data-ai-suggestion>{{ $suggestion }}</button>
-                                @empty
-                                    <span class="text-muted small">Start a new chat and type your question below.</span>
-                                @endforelse
-                            </div>
-                            <p class="text-muted small mb-0">
-                                Your questions are answered from the data you are authorized to see.
-                            </p>
+                            @if ($guest ?? false)
+                                <p class="text-muted small mb-3">You can ask general questions about FinancePro, VICOBA groups and microfinance:</p>
+                                <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                                    @forelse($suggestions as $suggestion)
+                                        <button type="button" class="ai-suggestion" data-ai-suggestion>{{ $suggestion }}</button>
+                                    @empty
+                                        <span class="text-muted small">Type your question below and press Enter.</span>
+                                    @endforelse
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    This is a public assistant with no access to your data. Sign in to ask questions about your own savings, shares, loans and welfare.
+                                </p>
+                            @else
+                                <p class="text-muted small mb-3">You can ask questions such as:</p>
+                                <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                                    @forelse($suggestions as $suggestion)
+                                        <button type="button" class="ai-suggestion" data-ai-suggestion>{{ $suggestion }}</button>
+                                    @empty
+                                        <span class="text-muted small">Start a new chat and type your question below.</span>
+                                    @endforelse
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    Your questions are answered from the data you are authorized to see.
+                                </p>
+                            @endif
                         </div>
                     </div>
 
@@ -167,9 +187,9 @@
             var ENDPOINTS = {
                 listUrl: @json(route('ai.conversations.index')),
                 showTmpl: @json(route('ai.conversations.show', '__ID__')),
-                chatUrl: @json(route('ai.chat')),
+                chatUrl: @json(($guest ?? false) ? route('ai.chat.guest') : route('ai.chat')),
                 feedbackUrl: @json(route('ai.feedback.store')),
-                canGiveFeedback: @json(auth()->check() && auth()->user()->can('ai.feedback.submit')),
+                canGiveFeedback: @json((! ($guest ?? false)) && auth()->check() && auth()->user()->can('ai.feedback.submit')),
                 loginUrl: @json(route('login'))
             };
 
@@ -187,7 +207,7 @@
                 status: document.getElementById('aiStatus')
             };
 
-            if (!el.list || !el.thread || !el.composer) {
+            if (!el.thread || !el.composer) {
                 return;
             }
 
@@ -508,6 +528,9 @@
             }
 
             function highlightCurrent() {
+                if (!el.list) {
+                    return;
+                }
                 var current = String(state.currentId || '');
                 Array.prototype.forEach.call(el.list.querySelectorAll('[data-conversation-id]'), function (button) {
                     button.classList.toggle('active', button.dataset.conversationId === current);
@@ -515,6 +538,9 @@
             }
 
             function refreshConversations() {
+                if (!el.list) {
+                    return;
+                }
                 fetch(ENDPOINTS.listUrl, {
                     headers: {
                         'Accept': 'application/json',
@@ -665,7 +691,9 @@
                 }
             });
 
-            el.newChat.addEventListener('click', startNewConversation);
+            if (el.newChat) {
+                el.newChat.addEventListener('click', startNewConversation);
+            }
 
             Array.prototype.forEach.call(el.empty.querySelectorAll('[data-ai-suggestion]'), function (button) {
                 button.addEventListener('click', function () {
@@ -674,7 +702,9 @@
                 });
             });
 
-            refreshConversations();
+            if (el.list) {
+                refreshConversations();
+            }
             el.input.focus();
         });
     })();

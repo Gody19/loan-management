@@ -24,10 +24,13 @@ use Illuminate\Support\Str;
 
 /**
  * Minimal internal JSON endpoints for the AI foundation. There is no public
- * API surface here: every route requires an authenticated user with the ai.*
- * permission, and every request passes through AiGuardrailService (which
- * builds the trusted context, applies the default-deny AiToolPolicy, audits
- * the decision, and revalidates conversation ownership/tenant scope).
+ * API surface here beyond a single, deliberate exception: POST /ai/chat/guest
+ * answers general FAQ questions for unauthenticated landing-page visitors and
+ * is stateless and IP-throttled. Every other route requires an authenticated
+ * user with the ai.* permission, and every request passes through
+ * AiGuardrailService (which builds the trusted context, applies the
+ * default-deny AiToolPolicy, audits the decision, and revalidates conversation
+ * ownership/tenant scope).
  *
  * Responses never echo provider internals and always return a controlled 503
  * payload when the AI capability is unavailable.
@@ -46,6 +49,11 @@ class AiController extends Controller
     protected function ensureAvailable(): bool
     {
         return $this->conversations->isEnabled() && $this->conversations->isAvailable();
+    }
+
+    protected function extendTimeLimit(): void
+    {
+        set_time_limit(600);
     }
 
     /**
@@ -157,6 +165,8 @@ class AiController extends Controller
             return $this->unavailable();
         }
 
+        $this->extendTimeLimit();
+
         $rules = [
             'message' => ['required', 'string', 'max:4000'],
             'title' => ['sometimes', 'nullable', 'string', 'max:255'],
@@ -226,6 +236,57 @@ class AiController extends Controller
     }
 
     /**
+     * POST /ai/chat/guest
+     *
+     * Public landing-page FAQ chat for unauthenticated visitors. The only AI
+     * surface that does not require a signed-in user: its deliberate minimum
+     * is the configured system instruction plus the guest-scope note. It is
+     * stateless — no conversation is created, nothing is persisted, no member
+     * data or knowledge base is reachable — and it is throttled per source IP.
+     *
+     * Body: { message: string }
+     */
+    public function storeGuest(Request $request): JsonResponse
+    {
+        if (! $this->ensureAvailable()) {
+            return $this->unavailable();
+        }
+
+        $this->extendTimeLimit();
+
+        $rules = [
+            'message' => ['required', 'string', 'max:4000'],
+        ];
+
+        foreach (AiToolPolicy::FORBIDDEN_ARGUMENT_KEYS as $key) {
+            $rules[$key] = 'prohibited';
+        }
+
+        $validated = $request->validate($rules);
+
+        try {
+            $response = $this->conversations->guestCompletion((string) $validated['message']);
+        } catch (AiUnavailableException) {
+            return $this->unavailable();
+        }
+
+        return response()->json([
+            'data' => [
+                'conversation_id' => null,
+                'message_id' => null,
+                'provider' => $response->provider,
+                'model' => $response->model,
+                'content' => $response->content,
+                'usage' => [
+                    'input_tokens' => $response->inputTokens,
+                    'output_tokens' => $response->outputTokens,
+                    'total_tokens' => $response->totalTokens,
+                ],
+            ],
+        ], 200);
+    }
+
+    /**
      * POST /ai/tool
      *
      * Body: { capability: string, arguments?: object, question: string,
@@ -246,6 +307,8 @@ class AiController extends Controller
         if (! $this->ensureAvailable()) {
             return $this->unavailable();
         }
+
+        $this->extendTimeLimit();
 
         $rules = [
             'capability' => ['required', 'string'],

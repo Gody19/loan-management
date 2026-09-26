@@ -146,6 +146,12 @@
         });
     </script>
 
+    @auth
+        @if (auth()->user()->can('ai.use'))
+            @include('partials.ai-chat-widget', ['suggestions' => ['What is my current loan balance?', 'Show me my recent savings', 'What is my shares summary?', 'Show my welfare balance']])
+        @endif
+    @endauth
+
     @stack('scripts')
 
 </body>

@@ -1,15 +1,42 @@
 <?php
 
+use App\Http\Controllers\AccountingConfigurationController;
+use App\Http\Controllers\AccountingPeriodController;
+use App\Http\Controllers\AccountingReportController;
+use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AiController;
+use App\Http\Controllers\AiEvaluationController;
+use App\Http\Controllers\AiFeedbackController;
+use App\Http\Controllers\AiFinancialIntelligenceController;
+use App\Http\Controllers\AiKnowledgeDocumentController;
+use App\Http\Controllers\AiLearningDatasetController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\ChartOfAccountController;
 use App\Http\Controllers\ContactMessageController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\JournalEntryController;
+use App\Http\Controllers\LandingPageController;
+use App\Http\Controllers\LoanApplicationCollateralController;
+use App\Http\Controllers\LoanApplicationController;
+use App\Http\Controllers\LoanApplicationGuarantorController;
+use App\Http\Controllers\LoanApprovalLevelController;
+use App\Http\Controllers\LoanCollectionController;
+use App\Http\Controllers\LoanController;
+use App\Http\Controllers\LoanDisbursementController;
+use App\Http\Controllers\LoanEligibilityController;
+use App\Http\Controllers\LoanPlanController;
+use App\Http\Controllers\LoanRepaymentCollectionController;
+use App\Http\Controllers\LoanRepaymentController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDocumentController;
+use App\Http\Controllers\MemberGuarantorController;
+use App\Http\Controllers\MemberLoanController;
 use App\Http\Controllers\MemberNextOfKinController;
 use App\Http\Controllers\MemberPortalController;
+use App\Http\Controllers\MemberRepaymentController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\PermissionController;
@@ -24,33 +51,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\VicobaGroupController;
 use App\Http\Controllers\WelfareAccountController;
 use App\Http\Controllers\WelfareFundController;
-use App\Http\Controllers\LoanEligibilityController;
-use App\Http\Controllers\LoanPlanController;
-use App\Http\Controllers\LoanApplicationController;
-use App\Http\Controllers\LoanApplicationGuarantorController;
-use App\Http\Controllers\LoanApplicationCollateralController;
-use App\Http\Controllers\LoanApprovalLevelController;
-use App\Http\Controllers\LoanController;
-use App\Http\Controllers\LoanDisbursementController;
-use App\Http\Controllers\LoanRepaymentController;
-use App\Http\Controllers\LoanRepaymentCollectionController;
-use App\Http\Controllers\LoanCollectionController;
 use App\Http\Controllers\WelfareTransactionController;
-use App\Http\Controllers\ChartOfAccountController;
-use App\Http\Controllers\AccountingPeriodController;
-use App\Http\Controllers\JournalEntryController;
-use App\Http\Controllers\AccountingReportController;
-use App\Http\Controllers\AccountingConfigurationController;
-use App\Http\Controllers\MemberLoanController;
-use App\Http\Controllers\MemberGuarantorController;
-use App\Http\Controllers\MemberRepaymentController;
-use App\Http\Controllers\LandingPageController;
-use App\Http\Controllers\AiChatController;
-use App\Http\Controllers\AiController;
-use App\Http\Controllers\AiEvaluationController;
-use App\Http\Controllers\AiFeedbackController;
-use App\Http\Controllers\AiKnowledgeDocumentController;
-use App\Http\Controllers\AiLearningDatasetController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -75,6 +76,17 @@ Route::post('/register-organization', [LandingPageController::class, 'storeRegis
 
 Route::post('/contact', [ContactMessageController::class, 'store'])
     ->name('contact.store');
+
+/*
+ * Public landing-page FAQ chat for unauthenticated visitors. Stateless and
+ * mechanically throttled per source IP (see the ai.guest limiter); answers
+ * come from the system instructions plus the guest-scope note, never from
+ * stored conversations, member data or the knowledge base. Signed-in chat
+ * continues to use the authenticated POST /ai/chat route.
+ */
+Route::post('/ai/chat/guest', [AiController::class, 'storeGuest'])
+    ->name('ai.chat.guest')
+    ->middleware('throttle:ai.guest');
 
 /*
 |--------------------------------------------------------------------------
@@ -492,7 +504,7 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('loans.statement');
 
     // Member Financial Summary
-    Route::get('/members/{member}/statement', [\App\Http\Controllers\MemberController::class, 'statement'])
+    Route::get('/members/{member}/statement', [MemberController::class, 'statement'])
         ->name('members.statement');
 
     // Accounting
@@ -538,6 +550,27 @@ Route::middleware(['auth', 'suspended'])->group(function () {
     Route::post('/ai/tool', [AiController::class, 'tool'])
         ->name('ai.tool')
         ->middleware('permission:ai.use', 'throttle:ai.tool');
+
+    // AI Financial Intelligence (Phase 11.7): a read-only descriptive
+    // dashboard over the trusted AI context. The route accepts any of the six
+    // ai.*.view capabilities (OR), the controller renders only the sections the
+    // acting user holds, and tenant/branch scope is always derived server-side
+    // (never from the request). Reviewing an anomaly finding is a human review
+    // marker behind ai.anomaly.view only, throttled like the tool endpoints.
+    Route::prefix('ai/intelligence')->name('ai.intelligence.')->group(function () {
+        $intelligencePermissions = implode(',', [
+            'ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view',
+            'ai.trend.view', 'ai.accounting.view', 'ai.anomaly.view',
+        ]);
+
+        Route::get('/', [AiFinancialIntelligenceController::class, 'index'])
+            ->middleware("permission:{$intelligencePermissions}")
+            ->name('index');
+
+        Route::post('/anomalies/{finding}/review', [AiFinancialIntelligenceController::class, 'review'])
+            ->middleware('permission:ai.anomaly.view', 'throttle:ai.tool')
+            ->name('anomalies.review');
+    });
 
     // AI Knowledge Base administration (Phase 11.5): minimal, secured backend.
     // Every route is permission-gated (ai.knowledge.manage) and re-validates
