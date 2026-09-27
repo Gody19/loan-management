@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    @if (! isset($portfolio) && ! isset($par) && ! isset($delinquency) && ! isset($collections) && ! isset($trends) && ! isset($accounting) && ! isset($findings))
+    @if (! isset($portfolio) && ! isset($par) && ! isset($delinquency) && ! isset($collections) && ! isset($trends) && ! isset($accounting) && ! isset($findings) && ! isset($predictive))
         <div class="row g-3">
             <div class="col-12">
                 <div class="vicoba-card">
@@ -46,6 +46,123 @@
             </div>
         </div>
     @endif
+
+    @isset($predictive)
+        <div class="vicoba-card mb-3">
+            <div class="card-header"><i class="bi bi-graph-up me-1"></i> Predictive outlook <span class="badge bg-warning text-dark ms-2">Advisory</span></div>
+            <div class="card-body">
+                <div class="small text-muted mb-3">
+                    Statistical indications computed from your organization's historical FinancePro records.
+                    They are estimates, not guarantees — they never affect loan decisions, rates or accounting,
+                    and they never include member-level detail.
+                </div>
+
+                @foreach ($predictive as $domain)
+                    <div class="border rounded p-3 mb-3">
+                        <div class="fw-bold mb-2">{{ $domain['label'] }}</div>
+
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Organization</th>
+                                        <th>Status</th>
+                                        <th>Quality</th>
+                                        <th>Confidence</th>
+                                        <th>Data through</th>
+                                        <th class="text-end">Outlook value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach ($domain['rows'] as $row)
+                                        @php
+    $prediction = $row['prediction'];
+@endphp
+                                        <tr>
+                                            <td>{{ $row['organization_name'] }}</td>
+                                            @if ($prediction === null)
+                                                <td colspan="5" class="text-muted">
+                                                    No prediction yet. Run <code>php artisan ai:refresh-predictions --organization={{ $row['organization_id'] }}</code> to generate the first outlook.
+                                                </td>
+                                            @else
+                                                <td>
+                                                    <span class="badge bg-{{ $prediction->status->color() }}">{{ $prediction->status->label() }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-{{ $prediction->data_quality->color() }}">{{ $prediction->data_quality->label() }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-{{ $prediction->confidence->color() }}">{{ $prediction->confidence->label() }}</span>
+                                                </td>
+                                                <td>{{ $prediction->data_through->toDateString() }}</td>
+                                                <td class="text-end">
+                                                    {{ $prediction->value_total === null ? '—' : number_format($prediction->value_total, 2) }}
+                                                    @if ($prediction->type->value === 'delinquency_risk' && $prediction->value_total !== null)
+                                                        <span class="ms-1 small">/ 100</span>
+                                                    @endif
+                                                </td>
+                                            @endif
+                                        </tr>
+                                        @if ($prediction !== null && $prediction->method !== '')
+                                            <tr>
+                                                <td colspan="6" class="small text-muted">
+                                                    <strong>Method:</strong> {{ $prediction->method }}
+                                                    &middot; <strong>Horizon:</strong> {{ $prediction->horizon }} month(s)
+                                                    &middot; <strong>Observed:</strong> {{ $prediction->assumptions['observation_count'] ?? $prediction->data_quality->value }}
+                                                    @if (($prediction->assumptions['incomplete_period_excluded'] ?? null) !== null)
+                                                        &middot; In-progress month excluded
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            @if ($prediction->series !== [])
+                                                <tr>
+                                                    <td colspan="6">
+                                                        <div class="table-responsive">
+                                                            <table class="table table-sm table-borderless mb-0 small">
+                                                                <thead>
+                                                                    <tr>
+                                                                        <th>Period</th>
+                                                                        <th class="text-end">Value</th>
+                                                                        <th></th>
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @php
+                                                                        $valueKey = $prediction->type->value === 'portfolio_forecast' ? 'outstanding_end' : ($prediction->type->value === 'cashflow_forecast' ? 'net' : 'collected');
+                                                                    @endphp
+                                                                    @foreach ($prediction->series as $point)
+                                                                        <tr>
+                                                                            <td>{{ $point['period'] }}</td>
+                                                                            <td class="text-end">{{ number_format((float) ($point[$valueKey] ?? ($point['value'] ?? 0)), 2) }}</td>
+                                                                            <td>
+                                                                                @if ($point['is_forecast'])
+                                                                                    <span class="badge bg-info text-dark">forecast</span>
+                                                                                @endif
+                                                                            </td>
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            @else
+                                                <tr>
+                                                    <td colspan="6" class="small text-muted">
+                                                        {{ $prediction->explanation }}
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        @endif
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endisset
 
     @isset($portfolio)
         <div class="vicoba-card mb-3">

@@ -20,6 +20,7 @@ use App\AI\Tools\MemberLoansTool;
 use App\AI\Tools\MemberViewTool;
 use App\AI\Tools\NullTool;
 use App\AI\Tools\PortfolioSummaryTool;
+use App\AI\Tools\PredictiveInsightTool;
 use App\AI\Tools\SavingsSummaryTool;
 use App\AI\Tools\ShareSummaryTool;
 use App\AI\Tools\WelfareSummaryTool;
@@ -229,6 +230,13 @@ class AiToolRegistry
             'arguments' => [],
             'handler' => FinancialAnomalyTool::class,
             'description' => 'Run the deterministic financial-anomaly rules against the user\'s organizations and report the detected findings.',
+        ],
+        'ai.predictive.view' => [
+            'permissions' => ['ai.predictive.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => [],
+            'handler' => PredictiveInsightTool::class,
+            'description' => 'Read predictive intelligence for the user\'s organizations: portfolio, delinquency-risk, cash-flow and collection outlooks. Advisory statistical indications computed from historical FinancePro records, never guarantees.',
         ],
     ];
 

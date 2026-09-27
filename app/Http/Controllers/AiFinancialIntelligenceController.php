@@ -9,6 +9,7 @@ use App\AI\FinancialIntelligence\Services\FinancialAnomalyDetectionService;
 use App\AI\FinancialIntelligence\Services\FinancialTrendService;
 use App\AI\FinancialIntelligence\Services\ParIntelligenceService;
 use App\AI\FinancialIntelligence\Services\PortfolioIntelligenceService;
+use App\AI\PredictiveIntelligence\Services\PredictiveIntelligenceService;
 use App\AI\Services\AiContextBuilderService;
 use App\Models\AiAnomalyFinding;
 use App\Services\AuditService;
@@ -37,6 +38,7 @@ class AiFinancialIntelligenceController extends Controller
         private readonly FinancialTrendService $trends,
         private readonly AccountingIntelligenceService $accounting,
         private readonly FinancialAnomalyDetectionService $detection,
+        private readonly PredictiveIntelligenceService $predictive,
         private readonly AuditService $audit,
     ) {}
 
@@ -70,6 +72,10 @@ class AiFinancialIntelligenceController extends Controller
 
         if ($user->can('ai.anomaly.view')) {
             $data['findings'] = $this->detection->detect($context->organizationIds);
+        }
+
+        if ($user->can('ai.predictive.view')) {
+            $data['predictive'] = $this->predictive->forDashboard($context);
         }
 
         $this->audit->log('ai.financial_intelligence.viewed', null, [], [

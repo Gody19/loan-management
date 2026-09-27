@@ -14,3 +14,7 @@ Schedule::command('loans:update-delinquency')->dailyAt('01:00');
 // window removes them (and their messages) daily so public chats are never
 // kept indefinitely. Private member conversations are never affected.
 Schedule::command('ai:cleanup-public-conversations')->dailyAt('02:00');
+
+// Predictive Intelligence (Phase 11.8): a scheduled, audited daily snapshot of
+// the statistical outlooks for every organization. Idempotent per snapshot.
+Schedule::command('ai:refresh-predictions')->dailyAt('03:00');

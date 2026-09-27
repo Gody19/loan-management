@@ -571,16 +571,18 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->name('ai.tool')
         ->middleware('permission:ai.use', 'throttle:ai.tool');
 
-    // AI Financial Intelligence (Phase 11.7): a read-only descriptive
-    // dashboard over the trusted AI context. The route accepts any of the six
-    // ai.*.view capabilities (OR), the controller renders only the sections the
-    // acting user holds, and tenant/branch scope is always derived server-side
-    // (never from the request). Reviewing an anomaly finding is a human review
-    // marker behind ai.anomaly.view only, throttled like the tool endpoints.
+    // AI Financial Intelligence (Phase 11.7) + Predictive Intelligence
+    // (Phase 11.8): read-only advisory dashboards over the trusted AI context.
+    // The route accepts any of the seven ai.*.view capabilities (OR), the
+    // controller renders only the sections the acting user holds, and
+    // tenant/branch scope is always derived server-side (never from the
+    // request). Reviewing an anomaly finding is a human review marker behind
+    // ai.anomaly.view only, throttled like the tool endpoints.
     Route::prefix('ai/intelligence')->name('ai.intelligence.')->group(function () {
         $intelligencePermissions = implode(',', [
             'ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view',
             'ai.trend.view', 'ai.accounting.view', 'ai.anomaly.view',
+            'ai.predictive.view',
         ]);
 
         Route::get('/', [AiFinancialIntelligenceController::class, 'index'])

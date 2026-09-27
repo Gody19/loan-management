@@ -163,6 +163,16 @@ class RolePermissionSeeder extends Seeder
             ]);
         }
 
+        // AI Predictive Intelligence permission (Phase 11.8). A single,
+        // read-only advisory capability covering all four statistical domains
+        // (portfolio / delinquency-risk / cash-flow / collection outlooks).
+        // Predictions never feed business rules and never expose member-level
+        // detail. Disabled roles (Secretary, VICOBA Member) are granted nothing.
+        Permission::firstOrCreate([
+            'name' => 'ai.predictive.view',
+            'guard_name' => 'web',
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -467,6 +477,30 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiIntelligenceRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo($aiIntelligencePermissions);
+        }
+
+        /*
+        | Predictive Intelligence grants (Phase 11.8): the staff roles that can
+        | already read their organizations' financial intelligence may also
+        | read the advisory predictive outlooks. Secretary and VICOBA Member
+        | hold none — predictions are staff-facing aggregate signal only.
+        |--------------------------------------------------------------------------
+        */
+        $aiPredictiveGrants = [
+            'Organization Administrator' => ['ai.predictive.view'],
+            'Branch Manager' => ['ai.predictive.view'],
+            'Loan Officer' => ['ai.predictive.view'],
+            'Credit Officer' => ['ai.predictive.view'],
+            'Collection Officer' => ['ai.predictive.view'],
+            'Treasurer' => ['ai.predictive.view'],
+            'Accountant' => ['ai.predictive.view'],
+            'Auditor' => ['ai.predictive.view'],
+        ];
+
+        foreach ($aiPredictiveGrants as $aiPredictiveRoleName => $aiPredictivePermissions) {
+            Role::where('name', $aiPredictiveRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo($aiPredictivePermissions);
         }
 
         /*

@@ -43,7 +43,7 @@
         @endif
 
         @php
-            $hasIntelligence = auth()->check() && (auth()->user()->can('ai.portfolio.view') || auth()->user()->can('ai.delinquency.view') || auth()->user()->can('ai.collection.view') || auth()->user()->can('ai.trend.view') || auth()->user()->can('ai.accounting.view') || auth()->user()->can('ai.anomaly.view'));
+            $hasIntelligence = auth()->check() && (auth()->user()->can('ai.portfolio.view') || auth()->user()->can('ai.delinquency.view') || auth()->user()->can('ai.collection.view') || auth()->user()->can('ai.trend.view') || auth()->user()->can('ai.accounting.view') || auth()->user()->can('ai.anomaly.view') || auth()->user()->can('ai.predictive.view'));
         @endphp
         @if($hasIntelligence)
         <a href="{{ route('ai.intelligence.index') }}" class="nav-link {{ request()->routeIs('ai.intelligence.*') ? 'active' : '' }}">

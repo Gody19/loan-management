@@ -48,8 +48,8 @@ class AiChatOrchestrationService
 
     /**
      * Capability => keyword patterns for organization-level financial
-     * intelligence (Phase 11.7). Every capability is permission-gated; the
-     * first matching capability wins.
+     * intelligence (Phase 11.7) and predictive outlooks (Phase 11.8). Every
+     * capability is permission-gated; the first matching capability wins.
      */
     private const ORGANIZATION_INTELLIGENCE = [
         'ai.delinquency.view' => [
@@ -72,6 +72,9 @@ class AiChatOrchestrationService
         ],
         'ai.anomaly.view' => [
             'anomal', 'unusual', 'suspicious', 'red flag', 'irregular', 'alert',
+        ],
+        'ai.predictive.view' => [
+            'forecast', 'predict', 'projection', 'outlook', 'what to expect',
         ],
     ];
 
@@ -183,6 +186,7 @@ class AiChatOrchestrationService
             'ai.trend.view' => 'trend series',
             'ai.accounting.view' => 'accounting summary',
             'ai.anomaly.view' => 'anomaly findings',
+            'ai.predictive.view' => 'predictive intelligence outlook',
         ];
 
         foreach (self::ORGANIZATION_INTELLIGENCE as $capability => $keywords) {

@@ -12,6 +12,7 @@ use App\AI\Services\AiConversationService;
 use App\AI\Services\AiGuardrailService;
 use App\AI\Services\AiKnowledgeResultFormatter;
 use App\AI\Services\AiKnowledgeRetrievalService;
+use App\AI\Services\AiPredictionResultFormatter;
 use App\AI\Services\AiToolRegistry;
 use App\AI\Services\AiToolResultFormatter;
 use App\AI\Services\AiToolRunnerService;
@@ -393,7 +394,7 @@ class AiController extends Controller
                 $conversation,
                 (string) $validated['question'],
                 [
-                    AiToolResultFormatter::format($capability, $result),
+                    $this->formatResult($capability, $result),
                 ],
             );
         } catch (AiToolException $exception) {
@@ -443,7 +444,7 @@ class AiController extends Controller
         try {
             $result = $this->tools->run($context, $plan->capability, $plan->arguments, $user);
 
-            return [AiToolResultFormatter::format($plan->capability, $result)];
+            return [$this->formatResult($plan->capability, $result)];
         } catch (AiToolException $exception) {
             if (in_array($exception->category, ['unauthorized', 'not_found'], true)) {
                 return [];
@@ -484,6 +485,21 @@ class AiController extends Controller
         } catch (AiToolException) {
             return [];
         }
+    }
+
+    /**
+     * Package a tool result for the provider. Predictive intelligence gets its
+     * own delimited block and disclaimer (predictions are indications, never
+     * guarantees); every other capability uses the standard authoritative
+     * datum envelope.
+     */
+    protected function formatResult(string $capability, array $result): AiMessageData
+    {
+        if ($capability === 'ai.predictive.view') {
+            return AiPredictionResultFormatter::format($result);
+        }
+
+        return AiToolResultFormatter::format($capability, $result);
     }
 
     /**

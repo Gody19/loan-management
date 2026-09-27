@@ -5,6 +5,8 @@ namespace Tests\Unit;
 use App\AI\Contracts\AiToolInterface;
 use App\AI\Policies\AiToolPolicy;
 use App\AI\Services\AiToolRegistry;
+use App\AI\Tools\LoanViewTool;
+use App\AI\Tools\MemberViewTool;
 use App\AI\Tools\NullTool;
 use PHPUnit\Framework\TestCase;
 
@@ -41,7 +43,7 @@ class AiToolRegistryTest extends TestCase
         }
 
         $this->assertSame(
-            19,
+            20,
             count($this->registry->businessCapabilities()),
         );
     }
@@ -110,8 +112,8 @@ class AiToolRegistryTest extends TestCase
     public function test_no_capability_denies_a_real_class_path_or_sql(): void
     {
         foreach ([
-            \App\AI\Tools\MemberViewTool::class,
-            \App\AI\Tools\LoanViewTool::class,
+            MemberViewTool::class,
+            LoanViewTool::class,
             'App\\AI\\Services\\AiToolRunnerService',
             'select * from loans',
             'exec()',
