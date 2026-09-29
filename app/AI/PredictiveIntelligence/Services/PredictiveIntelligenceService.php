@@ -12,6 +12,7 @@ use App\Models\Loan;
 use App\Models\LoanRepayment;
 use App\Models\User;
 use App\Services\AuditService;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -41,11 +42,16 @@ class PredictiveIntelligenceService
      * the given organizations and branches. Returns one current AiPrediction
      * per organization per domain, ordered by organization.
      *
+     * When $force is true the snapshot is always regenerated (used by the
+     * manual refresh endpoint so the data-quality gate is re-evaluated even
+     * when no new source activity has arrived); generation stays idempotent
+     * per (type, method, data snapshot).
+     *
      * @param  int[]  $organizationIds
      * @param  int[]  $branchIds
      * @return Collection<int, AiPrediction>
      */
-    public function refresh(PredictiveInsightType $type, array $organizationIds, array $branchIds = [], ?User $caller = null)
+    public function refresh(PredictiveInsightType $type, array $organizationIds, array $branchIds = [], ?User $caller = null, bool $force = false)
     {
         $predictions = collect();
 
@@ -64,9 +70,10 @@ class PredictiveIntelligenceService
 
                 $last = $latest->data_through->toDateString();
 
-                // Snapshot already reflects the newest observable activity and
-                // has not aged — reuse the stored snapshot.
-                if (! $aged && ($newestSource === null || $newestSource <= $last)) {
+                // Snapshot already reflects the newest observable activity,
+                // has not aged and was generated for the same branch scope —
+                // reuse the stored snapshot.
+                if (! $aged && ! $force && $this->sameBranchScope($latest, $branchIds) && ($newestSource === null || $newestSource <= $last)) {
                     $predictions->push($latest);
 
                     continue;
@@ -100,18 +107,35 @@ class PredictiveIntelligenceService
             PredictiveInsightType::CollectionForecast => $this->collection->predict($organizationId, $branchIds, $horizon),
         };
 
+        // Quality gate: a baseline that generated cleanly but stands on
+        // inconsistent source records is surfaced honestly as poor quality
+        // instead of being presented as a trustworthy number. The gate never
+        // edits source data; it only annotates the snapshot.
+        $qualityIssues = [];
+
+        if ($outcome['status'] === PredictiveInsightStatus::Generated->value) {
+            $qualityIssues = $this->quality->issues($organizationId, $branchIds);
+
+            if ($qualityIssues !== []) {
+                $outcome['status'] = PredictiveInsightStatus::PoorQualityData->value;
+                $outcome['factors'][] = 'Quality gate: '.implode(' ', $qualityIssues);
+                $outcome['assumptions']['quality_gates'] = $qualityIssues;
+            }
+        }
+
         $prediction = AiPrediction::updateOrCreate(
             [
                 'organization_id' => $organizationId,
                 'type' => $type->value,
                 'method' => $outcome['method'],
-                'data_through' => $outcome['data_through'],
+                'data_through' => CarbonImmutable::parse($outcome['data_through']),
             ],
             [
                 'status' => $outcome['status'],
                 'scope' => 'organization',
                 'model_version' => (string) config('predictive-intelligence.model_version', 'statistical-baseline-v1'),
                 'target_period' => $outcome['target_period'],
+                'data_from' => $outcome['data_from'] ?? null,
                 'horizon' => $outcome['horizon'],
                 'confidence' => $outcome['confidence'],
                 'data_quality' => $outcome['data_quality'],
@@ -119,7 +143,7 @@ class PredictiveIntelligenceService
                 'currency' => $outcome['currency'],
                 'series' => $outcome['series'],
                 'factors' => $outcome['factors'],
-                'assumptions' => $outcome['assumptions'],
+                'assumptions' => $outcome['assumptions'] + ['branch_ids' => array_values(array_map('intval', $branchIds))],
                 'explanation' => $outcome['explanation'],
                 'generated_by' => $caller?->id,
                 'generated_at' => now(),
@@ -131,7 +155,11 @@ class PredictiveIntelligenceService
         AiPrediction::where('organization_id', $organizationId)
             ->where('type', $type->value)
             ->whereKeyNot($prediction->id)
-            ->whereIn('status', [PredictiveInsightStatus::Generated->value, PredictiveInsightStatus::Stale->value])
+            ->whereIn('status', [
+                PredictiveInsightStatus::Generated->value,
+                PredictiveInsightStatus::PoorQualityData->value,
+                PredictiveInsightStatus::Stale->value,
+            ])
             ->update(['status' => PredictiveInsightStatus::Superseded->value]);
 
         $this->audit->log('ai.predictive.generated', $prediction, [], [
@@ -139,6 +167,8 @@ class PredictiveIntelligenceService
             'status' => $outcome['status'],
             'method' => $outcome['method'],
             'data_quality' => $outcome['data_quality'],
+            'data_from' => $outcome['data_from'] ?? null,
+            'data_quality_issue_count' => count($qualityIssues),
             'organization_id' => $organizationId,
         ]);
 
@@ -153,7 +183,11 @@ class PredictiveIntelligenceService
         return AiPrediction::query()
             ->forOrganization($organizationId)
             ->ofType($type)
-            ->whereIn('status', [PredictiveInsightStatus::Generated->value, PredictiveInsightStatus::Stale->value])
+            ->whereIn('status', [
+                PredictiveInsightStatus::Generated->value,
+                PredictiveInsightStatus::PoorQualityData->value,
+                PredictiveInsightStatus::Stale->value,
+            ])
             ->orderByDesc('generated_at')
             ->first();
     }
@@ -237,5 +271,22 @@ class PredictiveIntelligenceService
     protected function organizationName(int $organizationId): string
     {
         return (string) DB::table('organizations')->where('id', $organizationId)->value('name');
+    }
+
+    /**
+     * Whether a stored snapshot covers exactly the requested branch scope.
+     * Order-insensitive.
+     *
+     * @param  int[]  $branchIds
+     */
+    protected function sameBranchScope(AiPrediction $prediction, array $branchIds): bool
+    {
+        $stored = array_values(array_map('intval', (array) ($prediction->assumptions['branch_ids'] ?? [])));
+        $requested = array_values(array_map('intval', $branchIds));
+
+        sort($stored);
+        sort($requested);
+
+        return $stored === $requested;
     }
 }

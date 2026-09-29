@@ -5,6 +5,7 @@ namespace App\AI\Tools;
 use App\AI\Contracts\AiToolInterface;
 use App\AI\DTOs\AiContextData;
 use App\AI\PredictiveIntelligence\Services\PredictiveIntelligenceService;
+use App\Enums\PredictiveInsightStatus;
 use App\Enums\PredictiveInsightType;
 use App\Models\AiPrediction;
 use App\Models\User;
@@ -61,7 +62,12 @@ class PredictiveInsightTool implements AiToolInterface
             'method' => $prediction->method,
             'confidence' => $prediction->confidence->value,
             'data_quality' => $prediction->data_quality->value,
-            'data_through' => $prediction->data_through->toDateString(),
+            'data_window' => [
+                'from' => $prediction->data_from?->toDateString(),
+                'through' => $prediction->data_through->toDateString(),
+            ],
+            'generated_at' => $prediction->generated_at?->toISOString(),
+            'fresh' => $prediction->status !== PredictiveInsightStatus::Stale,
             'horizon' => $prediction->horizon,
             'value_total' => $prediction->value_total === null ? null : (float) $prediction->value_total,
             'currency' => $prediction->currency,

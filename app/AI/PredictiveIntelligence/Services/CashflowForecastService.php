@@ -70,8 +70,9 @@ class CashflowForecastService
             return $this->insufficient($organizationId, $currency, $observationCount, $today);
         }
 
-        $inflowValues = array_map(fn (array $row) => (float) $row['inflows'], $series);
-        $outflowValues = array_map(fn (array $row) => (float) $row['outflows'], $series);
+        $expanded = $this->quality->trimLeadingInactive($series, ['inflows', 'outflows']);
+        $inflowValues = array_map(fn (array $row) => (float) $row['inflows'], $expanded !== [] ? $expanded : $series);
+        $outflowValues = array_map(fn (array $row) => (float) $row['outflows'], $expanded !== [] ? $expanded : $series);
 
         $inflowMethod = $this->statistics->methodFor($observationCount, $inflowValues);
         $outflowMethod = $this->statistics->methodFor($observationCount, $outflowValues);
@@ -108,6 +109,7 @@ class CashflowForecastService
             'method' => $method,
             'target_period' => $forecast[0]['period'],
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => $horizon,
             'confidence' => $confidence,
             'data_quality' => $grade->value,
@@ -174,12 +176,14 @@ class CashflowForecastService
     protected function insufficient(int $organizationId, string $currency, int $observationCount, CarbonImmutable $today): array
     {
         $minimum = max(1, (int) config('predictive-intelligence.minimum_history_periods', 3));
+        $months = max(1, (int) config('predictive-intelligence.history_months', 12));
 
         return [
             'status' => 'insufficient_data',
             'method' => 'naive',
             'target_period' => $today->addMonth()->format('Y-m'),
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => 3,
             'confidence' => 'low',
             'data_quality' => 'insufficient',

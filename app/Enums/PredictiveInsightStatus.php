@@ -14,6 +14,7 @@ enum PredictiveInsightStatus: string
 {
     case Generated = 'generated';
     case InsufficientData = 'insufficient_data';
+    case PoorQualityData = 'poor_quality_data';
     case Failed = 'failed';
     case Stale = 'stale';
     case Superseded = 'superseded';
@@ -23,6 +24,7 @@ enum PredictiveInsightStatus: string
         return match ($this) {
             self::Generated => 'Generated',
             self::InsufficientData => 'Insufficient data',
+            self::PoorQualityData => 'Poor data quality',
             self::Failed => 'Failed',
             self::Stale => 'Stale',
             self::Superseded => 'Superseded',
@@ -34,6 +36,7 @@ enum PredictiveInsightStatus: string
         return match ($this) {
             self::Generated => 'success',
             self::InsufficientData => 'warning',
+            self::PoorQualityData => 'warning',
             self::Failed => 'danger',
             self::Stale => 'warning',
             self::Superseded => 'secondary',
@@ -42,7 +45,7 @@ enum PredictiveInsightStatus: string
 
     public function isCurrent(): bool
     {
-        return $this === self::Generated || $this === self::Stale;
+        return in_array($this, [self::Generated, self::PoorQualityData, self::Stale], true);
     }
 
     public static function values(): array

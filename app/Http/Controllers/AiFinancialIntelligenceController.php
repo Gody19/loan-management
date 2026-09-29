@@ -11,6 +11,7 @@ use App\AI\FinancialIntelligence\Services\ParIntelligenceService;
 use App\AI\FinancialIntelligence\Services\PortfolioIntelligenceService;
 use App\AI\PredictiveIntelligence\Services\PredictiveIntelligenceService;
 use App\AI\Services\AiContextBuilderService;
+use App\Enums\PredictiveInsightType;
 use App\Models\AiAnomalyFinding;
 use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
@@ -115,5 +116,40 @@ class AiFinancialIntelligenceController extends Controller
         ]);
 
         return back()->with('success', 'Anomaly finding marked as reviewed.');
+    }
+
+    /**
+     * Force a predictive-intelligence refresh across every domain for the
+     * acting user's organizations/branches. Tenant scope always comes from
+     * the trusted context (never from the request), the route is gated by
+     * ai.predictive.view, and the action is throttled and audited. The
+     * service keeps the operation idempotent per data snapshot.
+     */
+    public function refreshPredictions(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $context = $this->contextBuilder->build($user);
+
+        $snapshots = 0;
+        $current = 0;
+
+        foreach (PredictiveInsightType::cases() as $type) {
+            foreach ($this->predictive->refresh($type, $context->organizationIds, $context->branchIds, $user, true) as $prediction) {
+                $snapshots++;
+                $current += (int) $prediction->status->isCurrent();
+            }
+        }
+
+        $this->audit->log('ai.predictive.refreshed', null, [], [
+            'organization_count' => count($context->organizationIds),
+            'branch_count' => count($context->branchIds),
+            'snapshots' => $snapshots,
+            'current_snapshots' => $current,
+        ]);
+
+        return back()->with(
+            'success',
+            'Predictive intelligence refreshed for '.count($context->organizationIds).' organization(s); '.$current.' current snapshot(s) across '.$snapshots.' generated/refreshed.'
+        );
     }
 }

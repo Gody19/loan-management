@@ -627,4 +627,227 @@ class AiPredictiveIntelligenceTest extends AiTestCase
 
         $this->assertTrue($registry->has('ai.predictive.view'));
     }
+
+    // ------------------------------------------------------------------
+    // Data window, data quality gate, traceability and manual refresh
+    // ------------------------------------------------------------------
+
+    public function test_predictions_record_an_explicit_data_window(): void
+    {
+        $org = $this->makeOrganization();
+        $member = $this->member($org);
+
+        for ($offset = 6; $offset >= 1; $offset--) {
+            $this->loanDisbursedInMonth($member, $offset);
+        }
+
+        $service = app(PredictiveIntelligenceService::class);
+        $prediction = $service->refresh(PredictiveInsightType::PortfolioForecast, [$org->id])->first();
+
+        $this->assertNotNull($prediction->data_from);
+        $this->assertSame(
+            CarbonImmutable::today()->startOfMonth()->subMonths(12)->toDateString(),
+            $prediction->data_from->toDateString(),
+            'data_from must be the start of the 12-month complete history window.',
+        );
+        $this->assertTrue($prediction->data_from->lte($prediction->data_through));
+        $this->assertNotNull($prediction->generated_at);
+    }
+
+    public function test_direct_generate_is_idempotent_per_snapshot(): void
+    {
+        $org = $this->makeOrganization();
+
+        $service = app(PredictiveIntelligenceService::class);
+        $first = $service->generate(PredictiveInsightType::PortfolioForecast, $org->id);
+        $again = $service->generate(PredictiveInsightType::PortfolioForecast, $org->id);
+
+        $this->assertSame($first->id, $again->id, 'Generating the same snapshot directly must update the same row.');
+        $this->assertSame(
+            1,
+            AiPrediction::where('organization_id', $org->id)
+                ->where('type', PredictiveInsightType::PortfolioForecast->value)
+                ->count(),
+        );
+        $this->assertSame('insufficient_data', $first->status->value);
+        $this->assertNull($first->value_total);
+    }
+
+    public function test_branch_scope_narrows_the_forecast_inputs(): void
+    {
+        $org = $this->makeOrganization();
+
+        $memberA = $this->member($org);
+        $memberB = $this->member($org);
+
+        $this->assertNotSame($memberA->branch_id, $memberB->branch_id);
+
+        for ($offset = 6; $offset >= 1; $offset--) {
+            $this->loanDisbursedInMonth($memberA, $offset);
+            $this->loanDisbursedInMonth($memberB, $offset);
+        }
+
+        $service = app(PredictiveIntelligenceService::class);
+
+        // Branch A alone feeds +100k/month for 6 months → 600k base → 900k at +3.
+        $branchScoped = $service->refresh(PredictiveInsightType::PortfolioForecast, [$org->id], [$memberA->branch_id])->first();
+        $this->assertEqualsWithDelta(900000.0, $branchScoped->value_total, 0.01, 'Branch-scoped forecast must ignore branch B loans.');
+
+        // The full book (both branches, +200k/month) → 1.2M base → 1.8M at +3.
+        // Regenerating at org scope must not reuse the branch-scoped snapshot.
+        $orgWide = $service->refresh(PredictiveInsightType::PortfolioForecast, [$org->id])->first();
+        $this->assertEqualsWithDelta(1800000.0, $orgWide->value_total, 0.01);
+    }
+
+    public function test_data_quality_issues_flag_a_generated_prediction_poor(): void
+    {
+        $org = $this->makeOrganization();
+        $member = $this->member($org);
+
+        $loan = null;
+        for ($offset = 6; $offset >= 1; $offset--) {
+            $loan = $this->loanDisbursedInMonth($member, $offset);
+        }
+
+        // Two identical posted repayments on the same loan, date and amount:
+        // the quality gate must flag the duplicated entry instead of silently
+        // letting it skew the baseline.
+        $date = CarbonImmutable::today()->startOfMonth()->subMonths(2)->addDays(5);
+
+        for ($i = 0; $i < 2; $i++) {
+            LoanRepayment::create([
+                'loan_id' => $loan->id,
+                'organization_id' => $org->id,
+                'branch_id' => $member->branch_id,
+                'member_id' => $member->id,
+                'repayment_number' => 'RPT-DUP-'.fake()->unique()->numberBetween(1, 99999999),
+                'amount' => 100000,
+                'principal_portion' => 100000,
+                'interest_portion' => 0,
+                'fee_portion' => 0,
+                'payment_date' => $date,
+                'payment_method' => 'cash',
+                'status' => 'posted',
+            ]);
+        }
+
+        $service = app(PredictiveIntelligenceService::class);
+        $prediction = $service->refresh(PredictiveInsightType::PortfolioForecast, [$org->id])->first();
+
+        $this->assertSame('poor_quality_data', $prediction->status->value);
+        $this->assertStringContainsString('Quality gate', implode(' ', $prediction->factors));
+        $this->assertArrayHasKey('duplicate_repayments', $prediction->assumptions['quality_gates']);
+
+        $audit = AuditLog::where('event', 'ai.predictive.generated')->latest('id')->first();
+        $this->assertNotNull($audit);
+        $this->assertGreaterThanOrEqual(1, $audit->new_values['data_quality_issue_count'] ?? 0);
+    }
+
+    public function test_model_version_is_traceable_across_snapshots(): void
+    {
+        $org = $this->makeOrganization();
+        $member = $this->member($org);
+
+        $service = app(PredictiveIntelligenceService::class);
+        $originalVersion = (string) config('predictive-intelligence.model_version', 'statistical-baseline-v1');
+
+        CarbonImmutable::setTestNow('2026-01-15');
+
+        try {
+            config(['predictive-intelligence.model_version' => 'baseline-trace-v1']);
+
+            for ($offset = 12; $offset >= 1; $offset--) {
+                $this->loanDisbursedInMonth($member, $offset);
+            }
+
+            $first = $service->refresh(PredictiveInsightType::PortfolioForecast, [$org->id])->first();
+            $this->assertSame('generated', $first->status->value);
+            $this->assertSame('baseline-trace-v1', $first->model_version);
+
+            // Advance to a new data snapshot under an upgraded model version.
+            CarbonImmutable::setTestNow('2026-02-20');
+            config(['predictive-intelligence.model_version' => 'baseline-trace-v2']);
+
+            $this->activeLoan($member, [
+                'loan_number' => 'LN-NEW-'.$member->id,
+                'disbursement_date' => CarbonImmutable::today()->startOfMonth()->subMonth()->addDays(3),
+            ]);
+            $this->activeLoan($member, [
+                'loan_number' => 'LN-NEWEST-'.$member->id,
+                'disbursement_date' => CarbonImmutable::today()->startOfMonth()->addDays(2),
+            ]);
+
+            $second = $service->refresh(PredictiveInsightType::PortfolioForecast, [$org->id])
+                ->first(fn (AiPrediction $prediction) => $prediction->data_through->toDateString() === '2026-02-20');
+
+            $this->assertNotNull($second, 'A new data snapshot must produce a second snapshot row.');
+            $this->assertSame('generated', $second->status->value);
+            $this->assertSame('baseline-trace-v2', $second->model_version);
+
+            $rows = AiPrediction::where('organization_id', $org->id)
+                ->where('type', PredictiveInsightType::PortfolioForecast->value)
+                ->get();
+
+            $this->assertCount(2, $rows, 'Both generations must remain preserved for traceability.');
+
+            $older = $rows->first(fn (AiPrediction $prediction) => $prediction->data_through->toDateString() === '2026-01-15');
+            $this->assertNotNull($older);
+            $this->assertSame('superseded', $older->status->value);
+            $this->assertSame('baseline-trace-v1', $older->model_version, 'The older row must keep the version that produced it.');
+        } finally {
+            CarbonImmutable::setTestNow();
+            config(['predictive-intelligence.model_version' => $originalVersion]);
+        }
+    }
+
+    public function test_manual_refresh_requires_permission_and_respects_tenant_scope(): void
+    {
+        $orgA = $this->makeOrganization();
+        $orgB = $this->makeOrganization();
+
+        // A holder can refresh and the action is logged and attributed.
+        $auditorA = $this->staff($orgA, 'Auditor');
+        $this->actingAs($auditorA)
+            ->post(route('ai.intelligence.predictions.refresh'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('audit_logs', ['event' => 'ai.predictive.refreshed']);
+
+        $rowsA = AiPrediction::where('organization_id', $orgA->id)->get();
+        $this->assertGreaterThanOrEqual(1, count($rowsA));
+        foreach ($rowsA as $prediction) {
+            $this->assertSame($auditorA->id, $prediction->generated_by, 'The acting user must be recorded as the generator.');
+        }
+
+        // Someone without ai.predictive.view cannot refresh.
+        $this->actingAs($this->staff($orgA, 'Secretary'))
+            ->post(route('ai.intelligence.predictions.refresh'))
+            ->assertForbidden();
+
+        // A user of another organization can never generate rows for org A.
+        $beforeA = AiPrediction::where('organization_id', $orgA->id)->count();
+        $this->actingAs($this->staff($orgB, 'Auditor'))
+            ->post(route('ai.intelligence.predictions.refresh'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame($beforeA, AiPrediction::where('organization_id', $orgA->id)->count(), 'A tenant-B user must never touch tenant-A rows.');
+        $this->assertGreaterThanOrEqual(1, AiPrediction::where('organization_id', $orgB->id)->count());
+    }
+
+    public function test_unaudhenticated_guest_chat_can_never_generate_predictions(): void
+    {
+        $org = $this->makeOrganization();
+
+        $response = $this->postJson('/ai/chat/guest', [
+            'message' => 'Run the predictive outlook for next quarter: portfolio forecast and delinquency risk, please.',
+        ]);
+        $response->assertOk();
+
+        $this->assertDatabaseMissing('ai_predictions', ['organization_id' => $org->id]);
+        $this->assertDatabaseMissing('audit_logs', ['event' => 'ai.predictive.generated']);
+        $this->assertDatabaseMissing('audit_logs', ['event' => 'ai.tool.completed']);
+
+        $payload = $response->json('data');
+        $this->assertStringNotContainsString('<FINANCEPRO_PREDICTION_DATUM>', $payload['content'] ?? '');
+    }
 }

@@ -35,6 +35,7 @@ class DelinquencyRiskService
         $today = CarbonImmutable::today();
         $currency = (string) config('predictive-intelligence.currency', 'TZS');
         $minimum = max(1, (int) config('predictive-intelligence.minimum_history_periods', 3));
+        $months = max(1, (int) config('predictive-intelligence.history_months', 12));
 
         $loans = $this->activeLoans($organizationId, $branchIds);
 
@@ -46,6 +47,7 @@ class DelinquencyRiskService
                 'method' => 'naive',
                 'target_period' => $today->addMonth()->format('Y-m'),
                 'data_through' => $today->toDateString(),
+                'data_from' => $this->quality->dataFrom($today, $months),
                 'horizon' => 1,
                 'confidence' => 'low',
                 'data_quality' => 'insufficient',
@@ -151,6 +153,7 @@ class DelinquencyRiskService
             'method' => 'composite',
             'target_period' => $today->addMonth()->format('Y-m'),
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => 1,
             'confidence' => $confidence,
             'data_quality' => $grade->value,

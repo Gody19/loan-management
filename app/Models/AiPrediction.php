@@ -24,7 +24,7 @@ class AiPrediction extends Model
 
     protected $fillable = [
         'organization_id', 'type', 'status', 'scope', 'method', 'model_version',
-        'target_period', 'data_through', 'horizon', 'confidence', 'data_quality',
+        'target_period', 'data_through', 'data_from', 'horizon', 'confidence', 'data_quality',
         'value_total', 'currency', 'series', 'factors', 'assumptions', 'explanation',
         'generated_by', 'generated_at',
     ];
@@ -33,6 +33,7 @@ class AiPrediction extends Model
     {
         return [
             'data_through' => 'date',
+            'data_from' => 'date',
             'horizon' => 'integer',
             'value_total' => 'decimal:2',
             'series' => 'array',

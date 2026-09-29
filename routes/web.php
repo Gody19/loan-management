@@ -592,6 +592,10 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         Route::post('/anomalies/{finding}/review', [AiFinancialIntelligenceController::class, 'review'])
             ->middleware('permission:ai.anomaly.view', 'throttle:ai.tool')
             ->name('anomalies.review');
+
+        Route::post('/predictions/refresh', [AiFinancialIntelligenceController::class, 'refreshPredictions'])
+            ->middleware('permission:ai.predictive.view', 'throttle:ai.tool')
+            ->name('predictions.refresh');
     });
 
     // AI Knowledge Base administration (Phase 11.5): minimal, secured backend.

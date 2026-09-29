@@ -25,6 +25,7 @@ class AiPredictionFactory extends Factory
             'model_version' => 'statistical-baseline-v1',
             'target_period' => now()->startOfMonth()->addMonth()->format('Y-m'),
             'data_through' => now()->toDateString(),
+            'data_from' => now()->startOfMonth()->subMonths(11)->format('Y-m-d'),
             'horizon' => 3,
             'confidence' => PredictionConfidence::Medium,
             'data_quality' => PredictiveDataQuality::Good,

@@ -71,8 +71,9 @@ class CollectionForecastService
             return $this->insufficient($organizationId, $currency, $observationCount, $today);
         }
 
-        $collectedValues = array_map(fn (array $row) => (float) $row['collected'], $series);
-        $dueValues = array_map(fn (array $row) => (float) $row['due'], $series);
+        $expanded = $this->quality->trimLeadingInactive($series, ['due', 'collected']);
+        $collectedValues = array_map(fn (array $row) => (float) $row['collected'], $expanded !== [] ? $expanded : $series);
+        $dueValues = array_map(fn (array $row) => (float) $row['due'], $expanded !== [] ? $expanded : $series);
 
         $collectedMethod = $this->statistics->methodFor($observationCount, $collectedValues);
         $dueMethod = $this->statistics->methodFor($observationCount, $dueValues);
@@ -113,6 +114,7 @@ class CollectionForecastService
             'method' => $method,
             'target_period' => $forecast[0]['period'],
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => $horizon,
             'confidence' => $confidence,
             'data_quality' => $grade->value,
@@ -196,12 +198,14 @@ class CollectionForecastService
     protected function insufficient(int $organizationId, string $currency, int $observationCount, CarbonImmutable $today): array
     {
         $minimum = max(1, (int) config('predictive-intelligence.minimum_history_periods', 3));
+        $months = max(1, (int) config('predictive-intelligence.history_months', 12));
 
         return [
             'status' => 'insufficient_data',
             'method' => 'naive',
             'target_period' => $today->addMonth()->format('Y-m'),
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => 3,
             'confidence' => 'low',
             'data_quality' => 'insufficient',

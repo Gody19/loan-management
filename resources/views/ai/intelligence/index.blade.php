@@ -49,7 +49,12 @@
 
     @isset($predictive)
         <div class="vicoba-card mb-3">
-            <div class="card-header"><i class="bi bi-graph-up me-1"></i> Predictive outlook <span class="badge bg-warning text-dark ms-2">Advisory</span></div>
+            <div class="card-header"><i class="bi bi-graph-up me-1"></i> Predictive outlook <span class="badge bg-warning text-dark ms-2">Advisory</span>
+                <form method="POST" action="{{ route('ai.intelligence.predictions.refresh') }}" class="float-end">
+                    @csrf
+                    <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+                </form>
+            </div>
             <div class="card-body">
                 <div class="small text-muted mb-3">
                     Statistical indications computed from your organization's historical FinancePro records.
@@ -69,7 +74,7 @@
                                         <th>Status</th>
                                         <th>Quality</th>
                                         <th>Confidence</th>
-                                        <th>Data through</th>
+                                        <th>Data window (from → through)</th>
                                         <th class="text-end">Outlook value</th>
                                     </tr>
                                 </thead>
@@ -94,7 +99,7 @@
                                                 <td>
                                                     <span class="badge bg-{{ $prediction->confidence->color() }}">{{ $prediction->confidence->label() }}</span>
                                                 </td>
-                                                <td>{{ $prediction->data_through->toDateString() }}</td>
+                                                <td>{{ $prediction->data_from?->toDateString() ?? '—' }} → {{ $prediction->data_through->toDateString() }}</td>
                                                 <td class="text-end">
                                                     {{ $prediction->value_total === null ? '—' : number_format($prediction->value_total, 2) }}
                                                     @if ($prediction->type->value === 'delinquency_risk' && $prediction->value_total !== null)
@@ -109,6 +114,7 @@
                                                     <strong>Method:</strong> {{ $prediction->method }}
                                                     &middot; <strong>Horizon:</strong> {{ $prediction->horizon }} month(s)
                                                     &middot; <strong>Observed:</strong> {{ $prediction->assumptions['observation_count'] ?? $prediction->data_quality->value }}
+                                                    &middot; <strong>Generated:</strong> {{ $prediction->generated_at?->toDateTimeString() ?? '—' }}
                                                     @if (($prediction->assumptions['incomplete_period_excluded'] ?? null) !== null)
                                                         &middot; In-progress month excluded
                                                     @endif

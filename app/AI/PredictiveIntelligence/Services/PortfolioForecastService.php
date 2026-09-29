@@ -75,7 +75,8 @@ class PortfolioForecastService
             return $this->insufficient($organizationId, $currency, $observationCount, $today);
         }
 
-        $deltas = $this->monthlyDeltas($series);
+        $expanded = $this->quality->trimLeadingInactive($series, ['disbursements', 'principal_repaid']);
+        $deltas = $this->monthlyDeltas($expanded !== [] ? $expanded : $series);
         $methodConfidence = $this->statistics->methodFor($observationCount, $deltas);
         $method = $methodConfidence['method'];
         $confidence = $methodConfidence['confidence'];
@@ -101,6 +102,7 @@ class PortfolioForecastService
             'method' => $method,
             'target_period' => $forecast[0]['period'],
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => $horizon,
             'confidence' => $confidence,
             'data_quality' => $grade->value,
@@ -186,12 +188,14 @@ class PortfolioForecastService
     protected function insufficient(int $organizationId, string $currency, int $observationCount, CarbonImmutable $today): array
     {
         $minimum = max(1, (int) config('predictive-intelligence.minimum_history_periods', 3));
+        $months = max(1, (int) config('predictive-intelligence.history_months', 12));
 
         return [
             'status' => 'insufficient_data',
             'method' => 'naive',
             'target_period' => $today->addMonth()->format('Y-m'),
             'data_through' => $today->toDateString(),
+            'data_from' => $this->quality->dataFrom($today, $months),
             'horizon' => 3,
             'confidence' => 'low',
             'data_quality' => 'insufficient',
