@@ -11,7 +11,7 @@ class BalanceSheetService
         protected GeneralLedgerService $ledgerService,
     ) {}
 
-    public function generate(int $organizationId, ?string $asOfDate = null): array
+    public function generate(int $organizationId, ?string $asOfDate = null, ?int $branchId = null): array
     {
         $asOfDate = $asOfDate ?? now()->format('Y-m-d');
 
@@ -20,14 +20,21 @@ class BalanceSheetService
             ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_lines.chart_of_account_id')
             ->where('journal_lines.organization_id', $organizationId)
             ->where('journal_entries.status', 'posted')
-            ->where('journal_entries.entry_date', '<=', $asOfDate)
-            ->select(
-                'chart_of_accounts.account_type',
-                'chart_of_accounts.account_code',
-                'chart_of_accounts.account_name',
-                DB::raw('SUM(journal_lines.debit) as total_debit'),
-                DB::raw('SUM(journal_lines.credit) as total_credit')
-            )
+            ->where('journal_entries.entry_date', '<=', $asOfDate);
+
+        // Optional branch narrowing. Omitting it keeps the organization-wide
+        // behaviour every existing caller relies on.
+        if ($branchId !== null) {
+            $query->where('journal_entries.branch_id', $branchId);
+        }
+
+        $query->select(
+            'chart_of_accounts.account_type',
+            'chart_of_accounts.account_code',
+            'chart_of_accounts.account_name',
+            DB::raw('SUM(journal_lines.debit) as total_debit'),
+            DB::raw('SUM(journal_lines.credit) as total_credit')
+        )
             ->groupBy('chart_of_accounts.id', 'chart_of_accounts.account_type', 'chart_of_accounts.account_code', 'chart_of_accounts.account_name');
 
         $rows = $query->get();
@@ -69,7 +76,7 @@ class BalanceSheetService
         $totalLiabilities = round(collect($liabilities)->sum('balance'), 2);
         $totalEquity = round(collect($equity)->sum('balance'), 2);
 
-        $netIncome = $this->calculateNetIncome($organizationId, $asOfDate);
+        $netIncome = $this->calculateNetIncome($organizationId, $asOfDate, $branchId);
         $totalEquity += $netIncome;
 
         return [
@@ -85,15 +92,21 @@ class BalanceSheetService
         ];
     }
 
-    protected function calculateNetIncome(int $organizationId, string $asOfDate): float
+    protected function calculateNetIncome(int $organizationId, string $asOfDate, ?int $branchId = null): float
     {
-        $rows = DB::table('journal_lines')
+        $query = DB::table('journal_lines')
             ->join('journal_entries', 'journal_entries.id', '=', 'journal_lines.journal_entry_id')
             ->join('chart_of_accounts', 'chart_of_accounts.id', '=', 'journal_lines.chart_of_account_id')
             ->where('journal_lines.organization_id', $organizationId)
             ->where('journal_entries.status', 'posted')
             ->where('journal_entries.entry_date', '<=', $asOfDate)
-            ->whereIn('chart_of_accounts.account_type', ['income', 'expense'])
+            ->whereIn('chart_of_accounts.account_type', ['income', 'expense']);
+
+        if ($branchId !== null) {
+            $query->where('journal_entries.branch_id', $branchId);
+        }
+
+        $rows = $query
             ->select(
                 'chart_of_accounts.account_type',
                 DB::raw('SUM(journal_lines.debit) as total_debit'),

@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\ChartOfAccount;
 use App\Models\JournalLine;
-use Illuminate\Support\Facades\DB;
 
 class TrialBalanceService
 {
@@ -17,18 +16,25 @@ class TrialBalanceService
         ?string $startDate = null,
         ?string $endDate = null,
         ?int $periodId = null,
+        ?int $branchId = null,
     ): array {
         $query = JournalLine::where('organization_id', $organizationId)
-            ->whereHas('journalEntry', fn($q) => $q->where('status', 'posted'));
+            ->whereHas('journalEntry', fn ($q) => $q->where('status', 'posted'));
 
         if ($periodId) {
-            $query->whereHas('journalEntry', fn($q) => $q->where('accounting_period_id', $periodId));
+            $query->whereHas('journalEntry', fn ($q) => $q->where('accounting_period_id', $periodId));
         }
         if ($startDate) {
-            $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '>=', $startDate));
+            $query->whereHas('journalEntry', fn ($q) => $q->where('entry_date', '>=', $startDate));
         }
         if ($endDate) {
-            $query->whereHas('journalEntry', fn($q) => $q->where('entry_date', '<=', $endDate));
+            $query->whereHas('journalEntry', fn ($q) => $q->where('entry_date', '<=', $endDate));
+        }
+
+        // Optional branch narrowing. Omitting it keeps the organization-wide
+        // behaviour every existing caller relies on.
+        if ($branchId !== null) {
+            $query->whereHas('journalEntry', fn ($q) => $q->where('branch_id', $branchId));
         }
 
         $totals = $query->select('chart_of_account_id')
@@ -42,7 +48,9 @@ class TrialBalanceService
         $accountsData = [];
         foreach ($totals as $row) {
             $account = $accounts[$row->chart_of_account_id] ?? null;
-            if (!$account) continue;
+            if (! $account) {
+                continue;
+            }
 
             $accountsData[] = [
                 'account_code' => $account->account_code,
@@ -53,7 +61,7 @@ class TrialBalanceService
             ];
         }
 
-        usort($accountsData, fn($a, $b) => strcmp($a['account_code'], $b['account_code']));
+        usort($accountsData, fn ($a, $b) => strcmp($a['account_code'], $b['account_code']));
 
         $totalDebit = round(collect($accountsData)->sum('debit_balance'), 2);
         $totalCredit = round(collect($accountsData)->sum('credit_balance'), 2);

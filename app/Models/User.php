@@ -69,6 +69,17 @@ class User extends Authenticatable
             ->withTimestamps();
     }
 
+    /**
+     * The management intelligence reports this user requested (Phase 12.0).
+     * A report is an analytical artifact of a past generation: reading it never
+     * implies the current financial position, so it is deliberately separate
+     * from any live dashboard relationship.
+     */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(AiIntelligenceReport::class, 'requested_by');
+    }
+
     public function member(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
         return $this->hasOne(Member::class);

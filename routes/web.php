@@ -8,6 +8,7 @@ use App\Http\Controllers\AiController;
 use App\Http\Controllers\AiEvaluationController;
 use App\Http\Controllers\AiFeedbackController;
 use App\Http\Controllers\AiFinancialIntelligenceController;
+use App\Http\Controllers\AiIntelligenceReportController;
 use App\Http\Controllers\AiKnowledgeDocumentController;
 use App\Http\Controllers\AiLearningDatasetController;
 use App\Http\Controllers\AiPublicChatController;
@@ -610,6 +611,39 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         Route::post('/insights/{insight}/dismiss', [AiFinancialIntelligenceController::class, 'dismissInsight'])
             ->middleware('permission:ai.insights.view', 'throttle:ai.tool')
             ->name('insights.dismiss');
+    });
+
+    // Management intelligence reporting (Phase 12.0). A single read-only
+    // capability, ai.reports.view, gates the whole surface. Tenant and branch
+    // scope are derived server-side from the trusted context (the browser never
+    // supplies an organization), and the accounting report additionally
+    // re-checks ai.accounting.view inside the reporting service. Generation is
+    // throttled like the tool endpoints because it aggregates authoritative
+    // records; reading, printing and exporting are gated by the same capability
+    // and only ever return a completed report.
+    Route::prefix('ai/reports')->name('ai.reports.')->group(function () {
+        Route::get('/', [AiIntelligenceReportController::class, 'index'])
+            ->middleware('permission:ai.reports.view')
+            ->name('index');
+
+        Route::post('/', [AiIntelligenceReportController::class, 'store'])
+            ->middleware('permission:ai.reports.view', 'throttle:ai.tool')
+            ->name('store');
+
+        Route::get('/{report}', [AiIntelligenceReportController::class, 'show'])
+            ->middleware('permission:ai.reports.view')
+            ->whereNumber('report')
+            ->name('show');
+
+        Route::get('/{report}/print', [AiIntelligenceReportController::class, 'print'])
+            ->middleware('permission:ai.reports.view')
+            ->whereNumber('report')
+            ->name('print');
+
+        Route::get('/{report}/export', [AiIntelligenceReportController::class, 'export'])
+            ->middleware('permission:ai.reports.view')
+            ->whereNumber('report')
+            ->name('export');
     });
 
     // In-app notification inbox (Phase 11.9): personal, auth-only. There is no

@@ -54,6 +54,18 @@ class AiChatOrchestrationService
      * capability is permission-gated; the first matching capability wins.
      */
     private const ORGANIZATION_INTELLIGENCE = [
+        // Reporting is evaluated first and on purpose: asking for "the
+        // collections report" or "the accounting report" is a request for a
+        // report about that subject, not for a bare subject summary. Matching
+        // the narrow subject keyword first would silently answer a report
+        // request with an undated on-the-spot summary.
+        'ai.reports.view' => [
+            'report', 'intelligence report', 'management report', 'executive summary',
+            'executive report', 'loan performance report', 'collections report',
+            'cash flow report', 'cashflow report', 'operational report',
+            'financial report', 'summarise the month', 'summarize the month',
+            'board report', 'brief me', 'give me a report',
+        ],
         'ai.delinquency.view' => [
             'portfolio at risk', 'delinquen', 'overdue', 'days past due', 'aging',
         ],
@@ -81,6 +93,35 @@ class AiChatOrchestrationService
         'ai.insights.view' => [
             'insight', 'proactive', 'action item', 'priorit', 'focus on',
         ],
+    ];
+
+    /**
+     * Report-type keywords for the Phase 12.0 reporting tool. The vocabulary is
+     * mapped server-side to a closed enum; nothing is inferred from free text
+     * beyond this table, and the reporting service validates it again.
+     */
+    private const REPORT_TYPE_KEYWORDS = [
+        'accounting_intelligence' => ['accounting intelligence', 'accounting report', 'income statement report'],
+        'cashflow_intelligence' => ['cash flow intelligence', 'cashflow intelligence', 'cash flow report', 'cashflow report'],
+        'collections' => ['collections report', 'collection report', 'collections intelligence'],
+        'loan_performance' => ['loan performance', 'loan portfolio report', 'lending report', 'loan book report'],
+        'operational_intelligence' => ['operational report', 'operations report', 'operational intelligence', 'branch operations'],
+    ];
+
+    /**
+     * Reporting-period keywords for the Phase 12.0 reporting tool. A period is
+     * only ever chosen from these closed values; a free-text date is never
+     * guessed (the reporting tool accepts an explicit custom range only from
+     * validated request input).
+     */
+    private const PERIOD_KEYWORDS = [
+        'today' => ['today'],
+        'this_week' => ['this week'],
+        'this_month' => ['this month', 'current month'],
+        'this_quarter' => ['this quarter', 'current quarter'],
+        'this_year' => ['this year', 'year to date', 'ytd'],
+        'previous_quarter' => ['previous quarter', 'last quarter'],
+        'previous_month' => ['previous month', 'last month'],
     ];
 
     public function __construct(
@@ -193,20 +234,59 @@ class AiChatOrchestrationService
             'ai.anomaly.view' => 'anomaly findings',
             'ai.predictive.view' => 'predictive intelligence outlook',
             'ai.insights.view' => 'proactive insights and alerts',
+            'ai.reports.view' => 'management intelligence report',
         ];
 
         foreach (self::ORGANIZATION_INTELLIGENCE as $capability => $keywords) {
-            if ($this->hasAny($text, $keywords)) {
-                return $this->planFor(
-                    $capability,
-                    $labels[$capability],
-                    [],
-                    $context,
-                );
+            if (! $this->hasAny($text, $keywords)) {
+                continue;
             }
+
+            // Phase 12.0: a report request carries a report type and a period,
+            // both chosen from closed server-side tables. They are ordinary
+            // (non-tenant) arguments and are re-gated by the tool policy.
+            $arguments = $capability === 'ai.reports.view'
+                ? [
+                    'report_type' => $this->reportType($text),
+                    'period' => $this->reportPeriod($text),
+                ]
+                : [];
+
+            return $this->planFor(
+                $capability,
+                $labels[$capability],
+                $arguments,
+                $context,
+            );
         }
 
         return null;
+    }
+
+    /**
+     * The report type implied by the question, defaulting to the executive
+     * portfolio report when the question names no specific report.
+     */
+    protected function reportType(string $text): string
+    {
+        foreach (self::REPORT_TYPE_KEYWORDS as $type => $keywords) {
+            if ($this->hasAny($text, $keywords)) {
+                return $type;
+            }
+        }
+
+        return 'executive_portfolio';
+    }
+
+    protected function reportPeriod(string $text): string
+    {
+        foreach (self::PERIOD_KEYWORDS as $period => $keywords) {
+            if ($this->hasAny($text, $keywords)) {
+                return $period;
+            }
+        }
+
+        return 'this_month';
     }
 
     /**

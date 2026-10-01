@@ -10,6 +10,7 @@ use App\AI\Tools\DelinquencySummaryTool;
 use App\AI\Tools\FinancialAnomalyTool;
 use App\AI\Tools\FinancialTrendTool;
 use App\AI\Tools\GuarantorEligibilityTool;
+use App\AI\Tools\IntelligenceReportTool;
 use App\AI\Tools\KnowledgeSearchTool;
 use App\AI\Tools\LoanApplicationViewTool;
 use App\AI\Tools\LoanEligibilityTool;
@@ -245,6 +246,13 @@ class AiToolRegistry
             'arguments' => [],
             'handler' => ProactiveInsightsTool::class,
             'description' => 'Read proactive insights and alerts for the user\'s organizations: overdue exposure, maturity pressure, portfolio-at-risk and concentration, cash-flow shortfalls, collection and savings declines, accounting and operational gaps, and predictive-outlook warnings. Deterministic advisories computed from FinancePro records, never guarantees.',
+        ],
+        'ai.reports.view' => [
+            'permissions' => ['ai.reports.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['report_type' => 'string', 'period' => 'string', 'from' => 'string', 'to' => 'string'],
+            'handler' => IntelligenceReportTool::class,
+            'description' => 'Produce a structured management intelligence report for the user\'s own organization: executive portfolio, loan performance, collections, cash-flow intelligence, accounting intelligence or operational intelligence. Every figure is computed deterministically by the FinancePro reporting service and each item is explicitly labelled as a fact, a trend, a prediction or an advisory.',
         ],
     ];
 

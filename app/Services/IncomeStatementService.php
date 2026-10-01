@@ -11,6 +11,7 @@ class IncomeStatementService
         ?string $startDate = null,
         ?string $endDate = null,
         ?int $periodId = null,
+        ?int $branchId = null,
     ): array {
         $endDate = $endDate ?? now()->format('Y-m-d');
         $startDate = $startDate ?? now()->startOfYear()->format('Y-m-d');
@@ -34,6 +35,12 @@ class IncomeStatementService
 
         if ($periodId) {
             $query->where('journal_entries.accounting_period_id', $periodId);
+        }
+
+        // Optional branch narrowing. Omitting it keeps the organization-wide
+        // behaviour every existing caller relies on.
+        if ($branchId !== null) {
+            $query->where('journal_entries.branch_id', $branchId);
         }
 
         $rows = $query->get();
@@ -66,8 +73,8 @@ class IncomeStatementService
             }
         }
 
-        usort($income, fn($a, $b) => strcmp($a['code'], $b['code']));
-        usort($expenses, fn($a, $b) => strcmp($a['code'], $b['code']));
+        usort($income, fn ($a, $b) => strcmp($a['code'], $b['code']));
+        usort($expenses, fn ($a, $b) => strcmp($a['code'], $b['code']));
 
         $totalIncome = round(collect($income)->sum('amount'), 2);
         $totalExpenses = round(collect($expenses)->sum('amount'), 2);

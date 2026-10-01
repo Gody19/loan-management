@@ -52,6 +52,13 @@
         </a>
         @endif
 
+        @if(auth()->check() && auth()->user()->can('ai.reports.view'))
+        <a href="{{ route('ai.reports.index') }}" class="nav-link {{ request()->routeIs('ai.reports.*') ? 'active' : '' }}">
+            <i class="bi bi-file-earmark-bar-graph"></i>
+            <span>Management Reports</span>
+        </a>
+        @endif
+
         @if(auth()->check())
         <a href="{{ route('notifications.index') }}" class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
             <i class="bi bi-bell"></i>
