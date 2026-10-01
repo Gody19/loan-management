@@ -30,8 +30,9 @@ use App\Models\Member;
  *    guarantor/application references) are intentionally NOT orchestrated.
  *  - After the member scope, an organization-level intelligence plan (Phase
  *    11.7) is considered: a small keyword table maps org-level vocabulary
- *    (portfolio, PAR, delinquency, collections, trends, accounting, anomalies)
- *    to the six read-only ai.*.view capabilities. Tenants and scope are derived
+ *    (portfolio, PAR, delinquency, collections, trends, accounting, anomalies,
+ *    insights) to the eight read-only ai.*.view capabilities. Tenants and
+ *    scope are derived
  *    exclusively from the trusted context, and permission-gating still applies
  *    (VICOBA Members holding none of these capabilities fall through).
  *
@@ -48,7 +49,8 @@ class AiChatOrchestrationService
 
     /**
      * Capability => keyword patterns for organization-level financial
-     * intelligence (Phase 11.7) and predictive outlooks (Phase 11.8). Every
+     * intelligence (Phase 11.7), predictive outlooks (Phase 11.8) and
+     * proactive insights (Phase 11.9). Every
      * capability is permission-gated; the first matching capability wins.
      */
     private const ORGANIZATION_INTELLIGENCE = [
@@ -75,6 +77,9 @@ class AiChatOrchestrationService
         ],
         'ai.predictive.view' => [
             'forecast', 'predict', 'projection', 'outlook', 'what to expect',
+        ],
+        'ai.insights.view' => [
+            'insight', 'proactive', 'action item', 'priorit', 'focus on',
         ],
     ];
 
@@ -187,6 +192,7 @@ class AiChatOrchestrationService
             'ai.accounting.view' => 'accounting summary',
             'ai.anomaly.view' => 'anomaly findings',
             'ai.predictive.view' => 'predictive intelligence outlook',
+            'ai.insights.view' => 'proactive insights and alerts',
         ];
 
         foreach (self::ORGANIZATION_INTELLIGENCE as $capability => $keywords) {

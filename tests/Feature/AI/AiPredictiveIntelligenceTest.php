@@ -149,7 +149,7 @@ class AiPredictiveIntelligenceTest extends AiTestCase
             $this->assertNotSame('ai.predictive.view', $public['permissions'][0] ?? '');
         }
 
-        $this->assertSame(20, count($registry->businessCapabilities()), 'Adding ai.predictive.view makes 20 business capabilities.');
+        $this->assertSame(21, count($registry->businessCapabilities()), 'Registry currently has 21 business capabilities.');
     }
 
     public function test_predictive_role_grant_matrix_is_applied_by_the_seeder(): void

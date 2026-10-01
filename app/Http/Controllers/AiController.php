@@ -10,6 +10,7 @@ use App\AI\Policies\AiToolPolicy;
 use App\AI\Services\AiChatOrchestrationService;
 use App\AI\Services\AiConversationService;
 use App\AI\Services\AiGuardrailService;
+use App\AI\Services\AiInsightResultFormatter;
 use App\AI\Services\AiKnowledgeResultFormatter;
 use App\AI\Services\AiKnowledgeRetrievalService;
 use App\AI\Services\AiPredictionResultFormatter;
@@ -490,13 +491,18 @@ class AiController extends Controller
     /**
      * Package a tool result for the provider. Predictive intelligence gets its
      * own delimited block and disclaimer (predictions are indications, never
-     * guarantees); every other capability uses the standard authoritative
-     * datum envelope.
+     * guarantees), proactive insights likewise (advisories for human
+     * decisions); every other capability uses the standard authoritative datum
+     * envelope.
      */
     protected function formatResult(string $capability, array $result): AiMessageData
     {
         if ($capability === 'ai.predictive.view') {
             return AiPredictionResultFormatter::format($result);
+        }
+
+        if ($capability === 'ai.insights.view') {
+            return AiInsightResultFormatter::format($result);
         }
 
         return AiToolResultFormatter::format($capability, $result);

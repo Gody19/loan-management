@@ -21,6 +21,7 @@ use App\AI\Tools\MemberViewTool;
 use App\AI\Tools\NullTool;
 use App\AI\Tools\PortfolioSummaryTool;
 use App\AI\Tools\PredictiveInsightTool;
+use App\AI\Tools\ProactiveInsightsTool;
 use App\AI\Tools\SavingsSummaryTool;
 use App\AI\Tools\ShareSummaryTool;
 use App\AI\Tools\WelfareSummaryTool;
@@ -237,6 +238,13 @@ class AiToolRegistry
             'arguments' => [],
             'handler' => PredictiveInsightTool::class,
             'description' => 'Read predictive intelligence for the user\'s organizations: portfolio, delinquency-risk, cash-flow and collection outlooks. Advisory statistical indications computed from historical FinancePro records, never guarantees.',
+        ],
+        'ai.insights.view' => [
+            'permissions' => ['ai.insights.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => [],
+            'handler' => ProactiveInsightsTool::class,
+            'description' => 'Read proactive insights and alerts for the user\'s organizations: overdue exposure, maturity pressure, portfolio-at-risk and concentration, cash-flow shortfalls, collection and savings declines, accounting and operational gaps, and predictive-outlook warnings. Deterministic advisories computed from FinancePro records, never guarantees.',
         ],
     ];
 

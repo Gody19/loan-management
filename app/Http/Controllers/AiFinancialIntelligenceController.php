@@ -10,9 +10,11 @@ use App\AI\FinancialIntelligence\Services\FinancialTrendService;
 use App\AI\FinancialIntelligence\Services\ParIntelligenceService;
 use App\AI\FinancialIntelligence\Services\PortfolioIntelligenceService;
 use App\AI\PredictiveIntelligence\Services\PredictiveIntelligenceService;
+use App\AI\ProactiveIntelligence\Services\ProactiveInsightService;
 use App\AI\Services\AiContextBuilderService;
 use App\Enums\PredictiveInsightType;
 use App\Models\AiAnomalyFinding;
+use App\Models\AiInsight;
 use App\Services\AuditService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -40,6 +42,7 @@ class AiFinancialIntelligenceController extends Controller
         private readonly AccountingIntelligenceService $accounting,
         private readonly FinancialAnomalyDetectionService $detection,
         private readonly PredictiveIntelligenceService $predictive,
+        private readonly ProactiveInsightService $insights,
         private readonly AuditService $audit,
     ) {}
 
@@ -77,6 +80,10 @@ class AiFinancialIntelligenceController extends Controller
 
         if ($user->can('ai.predictive.view')) {
             $data['predictive'] = $this->predictive->forDashboard($context);
+        }
+
+        if ($user->can('ai.insights.view')) {
+            $data['insights'] = $this->insights->forDashboard($context);
         }
 
         $this->audit->log('ai.financial_intelligence.viewed', null, [], [
@@ -151,5 +158,63 @@ class AiFinancialIntelligenceController extends Controller
             'success',
             'Predictive intelligence refreshed for '.count($context->organizationIds).' organization(s); '.$current.' current snapshot(s) across '.$snapshots.' generated/refreshed.'
         );
+    }
+
+    /**
+     * Acknowledge an open proactive insight (Phase 11.9). The insight must
+     * belong to one of the acting user's organizations — the browser never
+     * supplies a tenant. Accepting a recommendation is a human decision; the
+     * service records who/when and audits the transition.
+     */
+    public function acknowledgeInsight(Request $request, AiInsight $insight): RedirectResponse
+    {
+        $user = $request->user();
+        $context = $this->contextBuilder->build($user);
+
+        if (! in_array($insight->organization_id, $context->organizationIds, true)) {
+            abort(403, 'Unauthorized organization scope.');
+        }
+
+        $this->insights->acknowledge($insight, $user);
+
+        return back()->with('success', 'Insight acknowledged.');
+    }
+
+    /**
+     * Resolve an open proactive insight (Phase 11.9). Tenant check identical to
+     * acknowledge; the human declares the condition handled so the insight
+     * leaves the open dashboard list.
+     */
+    public function resolveInsight(Request $request, AiInsight $insight): RedirectResponse
+    {
+        $user = $request->user();
+        $context = $this->contextBuilder->build($user);
+
+        if (! in_array($insight->organization_id, $context->organizationIds, true)) {
+            abort(403, 'Unauthorized organization scope.');
+        }
+
+        $this->insights->resolve($insight, $user);
+
+        return back()->with('success', 'Insight resolved.');
+    }
+
+    /**
+     * Dismiss an open proactive insight (Phase 11.9). Tenant check identical to
+     * acknowledge; a dismissed insight is never recreated by later passes (the
+     * human override wins over the deterministic rules).
+     */
+    public function dismissInsight(Request $request, AiInsight $insight): RedirectResponse
+    {
+        $user = $request->user();
+        $context = $this->contextBuilder->build($user);
+
+        if (! in_array($insight->organization_id, $context->organizationIds, true)) {
+            abort(403, 'Unauthorized organization scope.');
+        }
+
+        $this->insights->dismiss($insight, $user);
+
+        return back()->with('success', 'Insight dismissed.');
     }
 }

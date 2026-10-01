@@ -21,18 +21,38 @@
     <div class="d-flex align-items-center gap-2">
 
         {{-- Notifications --}}
+        @php
+            $recentNotifications = auth()->user()->notifications()->latest()->limit(5)->get();
+            $unreadNotifications = $recentNotifications->filter(fn ($n) => $n->read_at === null)->count();
+        @endphp
         <div class="dropdown">
             <button class="btn btn-link text-dark position-relative p-2" data-bs-toggle="dropdown">
                 <i class="bi bi-bell fs-5"></i>
+                @if($unreadNotifications > 0)
                 <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                    0
+                    {{ $unreadNotifications }}
                 </span>
+                @endif
             </button>
             <div class="dropdown-menu dropdown-menu-end" style="width: 320px;">
                 <h6 class="dropdown-header fw-semibold">Notifications</h6>
-                <div class="dropdown-item-text text-muted text-center py-3" style="font-size: 0.85rem;">
-                    No new notifications
-                </div>
+                @forelse($recentNotifications as $recentNotification)
+                    <a href="{{ data_get($recentNotification->data, 'url', route('notifications.index')) }}" class="dropdown-item">
+                        <div class="d-flex flex-column">
+                            <span class="small fw-semibold text-truncate">{{ data_get($recentNotification->data, 'title', 'Notification') }}</span>
+                            <span class="small text-muted text-truncate">{{ \Illuminate\Support\Str::limit(data_get($recentNotification->data, 'summary', ''), 60) }}</span>
+                        </div>
+                    </a>
+                    @if(! $loop->last)
+                    <div class="dropdown-divider"></div>
+                    @endif
+                @empty
+                    <div class="dropdown-item-text text-muted text-center py-3" style="font-size: 0.85rem;">
+                        No new notifications
+                    </div>
+                @endforelse
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item text-center small" href="{{ route('notifications.index') }}">View all notifications</a>
             </div>
         </div>
 

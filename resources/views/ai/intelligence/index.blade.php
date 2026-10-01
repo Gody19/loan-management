@@ -34,7 +34,7 @@
         </div>
     </div>
 
-    @if (! isset($portfolio) && ! isset($par) && ! isset($delinquency) && ! isset($collections) && ! isset($trends) && ! isset($accounting) && ! isset($findings) && ! isset($predictive))
+    @if (! isset($portfolio) && ! isset($par) && ! isset($delinquency) && ! isset($collections) && ! isset($trends) && ! isset($accounting) && ! isset($findings) && ! isset($predictive) && ! isset($insights))
         <div class="row g-3">
             <div class="col-12">
                 <div class="vicoba-card">
@@ -166,6 +166,75 @@
                         </div>
                     </div>
                 @endforeach
+            </div>
+        </div>
+    @endisset
+
+    @isset($insights)
+        <div class="vicoba-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-bell me-1"></i> Proactive insights &amp; alerts <span class="badge bg-warning text-dark ms-2">Advisory</span></span>
+                <span class="small text-muted">
+                    Deterministic rule-based alerts derived from your authorized portfolio as of now — resolve or dismiss them to keep the open list clean.
+                </span>
+            </div>
+            <div class="card-body p-0">
+                @forelse($insights as $insight)
+                    @php
+                        $insightBadge = match ($insight->severity->value) {
+                            'critical' => 'danger',
+                            'warning' => 'warning',
+                            'notice' => 'info',
+                            default => 'secondary',
+                        };
+                    @endphp
+                    <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 p-3 {{ ! $loop->last ? 'border-bottom' : '' }}">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="fw-semibold small">{{ $insight->title }}</span>
+                                <span class="badge bg-{{ $insightBadge }} text-dark">{{ $insight->severity->label() }}</span>
+                                <span class="badge bg-light text-dark border">{{ $insight->type->label() }}</span>
+                                <span class="badge bg-{{ $insight->status->color() }}">{{ $insight->status->label() }}</span>
+                            </div>
+                            <div class="small text-muted mt-1">{{ $insight->summary }}</div>
+                            @if ($insight->recommendation)
+                                <div class="small mt-1">
+                                    <i class="bi bi-lightbulb me-1"></i><strong>Recommended action:</strong> {{ $insight->recommendation }}
+                                </div>
+                            @endif
+                            <div class="small text-muted mt-1">
+                                <i class="bi bi-clock me-1"></i>Detected {{ $insight->generated_at->diffForHumans() }}
+                                @if ($insight->organization)
+                                    &middot; {{ $insight->organization->name }}
+                                @endif
+                                @if ($insight->data_through)
+                                    &middot; data through {{ $insight->data_through->format('M j, Y') }}
+                                @endif
+                            </div>
+                        </div>
+                        @if ($insight->status->isOpen())
+                            <div class="d-flex gap-1 flex-shrink-0">
+                                <form action="{{ route('ai.intelligence.insights.acknowledge', $insight) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-primary">Acknowledge</button>
+                                </form>
+                                <form action="{{ route('ai.intelligence.insights.resolve', $insight) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-success">Resolve</button>
+                                </form>
+                                <form action="{{ route('ai.intelligence.insights.dismiss', $insight) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary">Dismiss</button>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <div class="p-5 text-center text-muted">
+                        <i class="bi bi-shield-check d-block mb-2" style="font-size: 2rem;"></i>
+                        No open insights — every monitored condition is within thresholds.
+                    </div>
+                @endforelse
             </div>
         </div>
     @endisset

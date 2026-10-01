@@ -38,6 +38,7 @@ use App\Http\Controllers\MemberLoanController;
 use App\Http\Controllers\MemberNextOfKinController;
 use App\Http\Controllers\MemberPortalController;
 use App\Http\Controllers\MemberRepaymentController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\PermissionController;
@@ -572,17 +573,18 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         ->middleware('permission:ai.use', 'throttle:ai.tool');
 
     // AI Financial Intelligence (Phase 11.7) + Predictive Intelligence
-    // (Phase 11.8): read-only advisory dashboards over the trusted AI context.
-    // The route accepts any of the seven ai.*.view capabilities (OR), the
-    // controller renders only the sections the acting user holds, and
-    // tenant/branch scope is always derived server-side (never from the
-    // request). Reviewing an anomaly finding is a human review marker behind
-    // ai.anomaly.view only, throttled like the tool endpoints.
+    // (Phase 11.8) + Proactive Intelligence (Phase 11.9): read-only advisory
+    // dashboards over the trusted AI context. The route accepts any of the
+    // eight ai.*.view capabilities (OR), the controller renders only the
+    // sections the acting user holds, and tenant/branch scope is always
+    // derived server-side (never from the request). Reviewing an anomaly
+    // finding, resolving/dismissing an insight are human review markers behind
+    // their own capability only, throttled like the tool endpoints.
     Route::prefix('ai/intelligence')->name('ai.intelligence.')->group(function () {
         $intelligencePermissions = implode(',', [
             'ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view',
             'ai.trend.view', 'ai.accounting.view', 'ai.anomaly.view',
-            'ai.predictive.view',
+            'ai.predictive.view', 'ai.insights.view',
         ]);
 
         Route::get('/', [AiFinancialIntelligenceController::class, 'index'])
@@ -596,6 +598,26 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         Route::post('/predictions/refresh', [AiFinancialIntelligenceController::class, 'refreshPredictions'])
             ->middleware('permission:ai.predictive.view', 'throttle:ai.tool')
             ->name('predictions.refresh');
+
+        Route::post('/insights/{insight}/acknowledge', [AiFinancialIntelligenceController::class, 'acknowledgeInsight'])
+            ->middleware('permission:ai.insights.view', 'throttle:ai.tool')
+            ->name('insights.acknowledge');
+
+        Route::post('/insights/{insight}/resolve', [AiFinancialIntelligenceController::class, 'resolveInsight'])
+            ->middleware('permission:ai.insights.view', 'throttle:ai.tool')
+            ->name('insights.resolve');
+
+        Route::post('/insights/{insight}/dismiss', [AiFinancialIntelligenceController::class, 'dismissInsight'])
+            ->middleware('permission:ai.insights.view', 'throttle:ai.tool')
+            ->name('insights.dismiss');
+    });
+
+    // In-app notification inbox (Phase 11.9): personal, auth-only. There is no
+    // cross-user inbox; each user acts only on their own notification rows.
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('/read-all', [NotificationController::class, 'readAll'])->name('read-all');
+        Route::post('/{notification}/read', [NotificationController::class, 'read'])->name('read');
     });
 
     // AI Knowledge Base administration (Phase 11.5): minimal, secured backend.

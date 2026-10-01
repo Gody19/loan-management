@@ -43,12 +43,22 @@
         @endif
 
         @php
-            $hasIntelligence = auth()->check() && (auth()->user()->can('ai.portfolio.view') || auth()->user()->can('ai.delinquency.view') || auth()->user()->can('ai.collection.view') || auth()->user()->can('ai.trend.view') || auth()->user()->can('ai.accounting.view') || auth()->user()->can('ai.anomaly.view') || auth()->user()->can('ai.predictive.view'));
+            $hasIntelligence = auth()->check() && (auth()->user()->can('ai.portfolio.view') || auth()->user()->can('ai.delinquency.view') || auth()->user()->can('ai.collection.view') || auth()->user()->can('ai.trend.view') || auth()->user()->can('ai.accounting.view') || auth()->user()->can('ai.anomaly.view') || auth()->user()->can('ai.predictive.view') || auth()->user()->can('ai.insights.view'));
         @endphp
         @if($hasIntelligence)
         <a href="{{ route('ai.intelligence.index') }}" class="nav-link {{ request()->routeIs('ai.intelligence.*') ? 'active' : '' }}">
             <i class="bi bi-graph-up-arrow"></i>
             <span>Financial Intelligence</span>
+        </a>
+        @endif
+
+        @if(auth()->check())
+        <a href="{{ route('notifications.index') }}" class="nav-link {{ request()->routeIs('notifications.*') ? 'active' : '' }}">
+            <i class="bi bi-bell"></i>
+            <span>Notifications</span>
+            @if($unreadNotifications = auth()->user()->unreadNotifications()->count())
+                <span class="badge rounded-pill bg-danger ms-auto">{{ $unreadNotifications }}</span>
+            @endif
         </a>
         @endif
 

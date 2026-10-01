@@ -173,6 +173,18 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        // AI Proactive Intelligence permission (Phase 11.9). A single,
+        // read-only advisory capability covering the deterministic insight
+        // and alert surface (overdue exposure, maturity pressure, portfolio
+        // risk and concentration, cash-flow, collections, savings, accounting,
+        // operational gaps and predictive outlooks). Insights are generated
+        // by rules over authoritative records and resolved/dismissed by humans;
+        // the AI assistant only reads them.
+        Permission::firstOrCreate([
+            'name' => 'ai.insights.view',
+            'guard_name' => 'web',
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -501,6 +513,30 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiPredictiveRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo($aiPredictivePermissions);
+        }
+
+        /*
+        | Proactive Intelligence grants (Phase 11.9): the same staff roles that
+        | can read their organizations' predictive outlooks may also read and
+        | act on proactive insights/alerts. Secretary and VICOBA Member hold
+        | none — the alert surface is staff-facing advisory signal only.
+        |--------------------------------------------------------------------------
+        */
+        $aiInsightsGrants = [
+            'Organization Administrator' => ['ai.insights.view'],
+            'Branch Manager' => ['ai.insights.view'],
+            'Loan Officer' => ['ai.insights.view'],
+            'Credit Officer' => ['ai.insights.view'],
+            'Collection Officer' => ['ai.insights.view'],
+            'Treasurer' => ['ai.insights.view'],
+            'Accountant' => ['ai.insights.view'],
+            'Auditor' => ['ai.insights.view'],
+        ];
+
+        foreach ($aiInsightsGrants as $aiInsightsRoleName => $aiInsightsPermissions) {
+            Role::where('name', $aiInsightsRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo($aiInsightsPermissions);
         }
 
         /*
