@@ -23,3 +23,12 @@ Schedule::command('ai:refresh-predictions')->dailyAt('03:00');
 // pass of deterministic insights and alerts for every organization.
 // Idempotent per dedup key; retires insights whose condition stopped holding.
 Schedule::command('ai:generate-insights')->dailyAt('04:00');
+
+// Scheduled Management Reporting (Phase 12.1): produces the due recurring
+// management intelligence reports and delivers them to their authorized
+// audience. The pass runs hourly because a schedule may be daily, weekly,
+// monthly or quarterly in any timezone, and the runner claims each
+// schedule+period exactly once — so a tick that finds nothing due does nothing.
+Schedule::command('ai:run-report-schedules')
+    ->hourlyAt('05')
+    ->withoutOverlapping();

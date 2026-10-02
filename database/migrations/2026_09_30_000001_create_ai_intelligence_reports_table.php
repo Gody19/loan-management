@@ -30,8 +30,15 @@ return new class extends Migration
             // The newest authoritative record the report could observe. Kept
             // distinct from the period so a later generation can never be
             // implied to belong to the historical period.
-            $table->timestamp('data_through');
-            $table->timestamp('generated_at');
+            //
+            // Both are nullable: MySQL implicitly assigns
+            // DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP to the
+            // first NOT NULL TIMESTAMP column in a table, which makes a second
+            // NOT NULL timestamp column invalid. The service always sets both
+            // explicitly, and a null is the honest state for a row that never
+            // completed generation.
+            $table->timestamp('data_through')->nullable();
+            $table->timestamp('generated_at')->nullable();
 
             $table->foreignId('requested_by')->nullable()->constrained('users')->nullOnDelete();
 

@@ -9,6 +9,7 @@ use App\Models\AiIntelligenceReport;
 use App\Models\Branch;
 use App\Models\Organization;
 use App\Services\AuditService;
+use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use InvalidArgumentException;
@@ -36,6 +37,12 @@ class AiIntelligenceReportService
     /**
      * Generate a report for one organization within the acting user's trusted
      * scope.
+     *
+     * `$asOf` exists for the Phase 12.1 scheduler: it lets a scheduled run
+     * resolve its completed period in the *schedule's* own timezone instead of
+     * the application default, so a schedule's reporting day never shifts with
+     * the server clock. It only moves the period engine's notion of "today";
+     * every authorization decision still comes from `$context`.
      */
     public function generate(
         AiContextData $context,
@@ -47,6 +54,7 @@ class AiIntelligenceReportService
         ?string $branchId = null,
         bool $withNarrative = false,
         bool $persist = true,
+        ?CarbonImmutable $asOf = null,
     ): AiIntelligenceReport {
         $type = ReportType::tryFrom($reportType);
 
@@ -82,7 +90,7 @@ class AiIntelligenceReportService
             : null;
 
         try {
-            $period = $this->periods->resolve($periodType, $from, $to);
+            $period = $this->periods->resolve($periodType, $from, $to, $asOf);
 
             $reportData = $this->builder->build(
                 type: $type,

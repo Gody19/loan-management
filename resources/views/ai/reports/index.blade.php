@@ -179,4 +179,6 @@
             </div>
         </div>
     </div>
+
+    @include('ai.reports.partials.schedules')
 @endsection

@@ -92,4 +92,47 @@ return [
     */
 
     'recent_limit' => (int) env('AI_REPORTS_RECENT_LIMIT', 25),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scheduled reporting (Phase 12.1)
+    |--------------------------------------------------------------------------
+    |
+    | Recurring management reports reuse the Phase 12.0 reporting service over
+    | a *completed* period — the previous day, week, month or quarter — resolved
+    | in each schedule's own timezone. Frequencies come from a closed
+    | vocabulary; there is deliberately no cron column and no user-supplied
+    | expression anywhere in the scheduling path.
+    |
+    | Delivery pushes into the existing Phase 11.9 in-app inbox, and every
+    | recipient is re-authorized against the produced report immediately before
+    | a notification row is created.
+    |
+    */
+
+    'scheduling' => [
+        'enabled' => (bool) env('AI_REPORT_SCHEDULES_ENABLED', true),
+
+        // Whether a produced report notifies its audience at all. Disabling this
+        // still generates and persists the report; it only stops delivery.
+        'notify' => (bool) env('AI_REPORT_SCHEDULES_NOTIFY', true),
+
+        // Upper bounds so one pass can never become an unbounded batch: at most
+        // this many due schedules per tick, and at most this many recipients per
+        // run (a truncated audience is audited).
+        'max_runs_per_pass' => (int) env('AI_REPORT_SCHEDULES_MAX_RUNS', 25),
+        'max_recipients_per_run' => (int) env('AI_REPORT_SCHEDULES_MAX_RECIPIENTS', 50),
+        'max_schedules_listed' => (int) env('AI_REPORT_SCHEDULES_MAX_LISTED', 100),
+
+        // How long one execution may hold its advisory lock. The unique
+        // schedule+period execution key remains the authoritative idempotency
+        // guard; the lock only prevents duplicated work.
+        'lock_seconds' => (int) env('AI_REPORT_SCHEDULES_LOCK_SECONDS', 900),
+
+        // Digest bounds. The deterministic summary is built from the report's
+        // own classified rows; the optional AI excerpt is advisory prose and is
+        // truncated to this many characters (0 disables the excerpt entirely).
+        'digest_max_headline' => (int) env('AI_REPORT_SCHEDULES_DIGEST_HEADLINE', 6),
+        'digest_max_narrative_chars' => (int) env('AI_REPORT_SCHEDULES_DIGEST_NARRATIVE_CHARS', 600),
+    ],
 ];

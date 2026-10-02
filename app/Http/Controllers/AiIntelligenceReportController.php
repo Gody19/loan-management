@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\AI\DTOs\AiContextData;
+use App\AI\Reporting\Scheduling\AiReportScheduleService;
 use App\AI\Reporting\Services\AiIntelligenceReportService;
 use App\AI\Services\AiContextBuilderService;
 use App\Enums\ReportPeriodType;
+use App\Enums\ReportScheduleFrequency;
+use App\Enums\ReportScheduleRecipientMode;
 use App\Enums\ReportType;
 use App\Models\AiIntelligenceReport;
 use App\Models\Branch;
+use App\Models\User;
 use App\Services\AuditService;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
@@ -38,6 +42,7 @@ class AiIntelligenceReportController extends Controller
     public function __construct(
         private readonly AiContextBuilderService $contextBuilder,
         private readonly AiIntelligenceReportService $reports,
+        private readonly AiReportScheduleService $schedules,
         private readonly AuditService $audit,
     ) {}
 
@@ -52,6 +57,12 @@ class AiIntelligenceReportController extends Controller
             'branches' => $this->branches($context),
             'recent' => $this->reports->recent($context, 10),
             'context' => $context,
+            'schedules' => $this->schedules->listFor($context),
+            'scheduleFrequencies' => ReportScheduleFrequency::cases(),
+            'scheduleRecipientModes' => ReportScheduleRecipientMode::cases(),
+            'scheduleRecipients' => $this->scheduleRecipients($context),
+            'canSchedule' => $context->hasPermission('ai.reports.schedule')
+                && $context->hasPermission('ai.reports.view'),
         ]);
     }
 
@@ -254,5 +265,21 @@ class AiIntelligenceReportController extends Controller
         return Branch::whereIn('id', $context->branchIds)
             ->orderBy('name')
             ->get();
+    }
+
+    /**
+     * The authorized recipient pool offered in the schedule form: only users who
+     * already hold the reporting capability inside the acting user's own
+     * organization. The scheduling service re-verifies every selection anyway.
+     *
+     * @return Collection<int, User>
+     */
+    protected function scheduleRecipients(AiContextData $context)
+    {
+        if ($context->organizationIds === []) {
+            return new Collection;
+        }
+
+        return $this->schedules->candidateRecipients((int) $context->organizationIds[0]);
     }
 }

@@ -12,6 +12,7 @@ use App\Http\Controllers\AiIntelligenceReportController;
 use App\Http\Controllers\AiKnowledgeDocumentController;
 use App\Http\Controllers\AiLearningDatasetController;
 use App\Http\Controllers\AiPublicChatController;
+use App\Http\Controllers\AiReportScheduleController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\ResetPasswordController;
@@ -629,6 +630,38 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         Route::post('/', [AiIntelligenceReportController::class, 'store'])
             ->middleware('permission:ai.reports.view', 'throttle:ai.tool')
             ->name('store');
+
+        // Recurring management reports (Phase 12.1). Gated by the separate
+        // ai.reports.schedule capability: scheduling automatic distribution is a
+        // management configuration act, not a reporting read. The service
+        // re-checks tenant scope and capability on every action, so a foreign
+        // schedule id is a 404/403 rather than a disclosure, and a manual run
+        // shares the scheduler's idempotent execution path.
+        Route::prefix('schedules')->name('schedules.')->group(function () {
+            Route::post('/', [AiReportScheduleController::class, 'store'])
+                ->middleware('permission:ai.reports.schedule', 'throttle:ai.tool')
+                ->name('store');
+
+            Route::put('/{schedule}', [AiReportScheduleController::class, 'update'])
+                ->middleware('permission:ai.reports.schedule', 'throttle:ai.tool')
+                ->whereNumber('schedule')
+                ->name('update');
+
+            Route::post('/{schedule}/toggle', [AiReportScheduleController::class, 'toggle'])
+                ->middleware('permission:ai.reports.schedule', 'throttle:ai.tool')
+                ->whereNumber('schedule')
+                ->name('toggle');
+
+            Route::post('/{schedule}/run', [AiReportScheduleController::class, 'runNow'])
+                ->middleware('permission:ai.reports.schedule', 'throttle:ai.tool')
+                ->whereNumber('schedule')
+                ->name('run');
+
+            Route::delete('/{schedule}', [AiReportScheduleController::class, 'destroy'])
+                ->middleware('permission:ai.reports.schedule', 'throttle:ai.tool')
+                ->whereNumber('schedule')
+                ->name('destroy');
+        });
 
         Route::get('/{report}', [AiIntelligenceReportController::class, 'show'])
             ->middleware('permission:ai.reports.view')

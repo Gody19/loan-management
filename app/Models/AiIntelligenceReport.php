@@ -100,7 +100,7 @@ class AiIntelligenceReport extends Model
         $rows = [];
 
         foreach ((array) ($this->report_data['sections'] ?? []) as $section) {
-            foreach ((array) ($section[$classification->value] ?? []) as $datum) {
+            foreach ((array) ($section[$classification->groupKey()] ?? []) as $datum) {
                 $rows[] = $datum + ['section' => $section['key'] ?? null];
             }
         }

@@ -77,6 +77,22 @@ class ReportPeriodService
                 previousStart: $today->startOfYear()->subYear()->toDateString(),
                 previousEnd: $today->startOfYear()->subYear()->endOfYear()->toDateString(),
             ),
+            ReportPeriodType::Yesterday => new ReportPeriod(
+                type: $periodType->value,
+                label: $periodType->label(),
+                start: $today->subDay()->toDateString(),
+                end: $today->subDay()->toDateString(),
+                previousStart: $today->subDays(2)->toDateString(),
+                previousEnd: $today->subDays(2)->toDateString(),
+            ),
+            ReportPeriodType::PreviousWeek => new ReportPeriod(
+                type: $periodType->value,
+                label: $periodType->label(),
+                start: $today->startOfWeek()->subWeek()->toDateString(),
+                end: $today->startOfWeek()->subWeek()->endOfWeek()->toDateString(),
+                previousStart: $today->startOfWeek()->subWeeks(2)->toDateString(),
+                previousEnd: $today->startOfWeek()->subWeeks(2)->endOfWeek()->toDateString(),
+            ),
             ReportPeriodType::PreviousMonth => new ReportPeriod(
                 type: $periodType->value,
                 label: $periodType->label(),

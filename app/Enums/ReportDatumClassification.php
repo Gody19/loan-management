@@ -45,6 +45,21 @@ enum ReportDatumClassification: string
     }
 
     /**
+     * The key the reporting dataset uses for this classification's group of
+     * data. Kept here so a consumer can never derive it by string concatenation
+     * (which would turn "advisory" into "advisorys").
+     */
+    public function groupKey(): string
+    {
+        return match ($this) {
+            self::Fact => 'facts',
+            self::Trend => 'trends',
+            self::Prediction => 'predictions',
+            self::Advisory => 'advisories',
+        };
+    }
+
+    /**
      * Bootstrap badge context so the UI never has to restate the mapping.
      */
     public function color(): string

@@ -200,6 +200,19 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        // Scheduled management reporting (Phase 12.1): configuring the
+        // automatic generation and distribution of a recurring report. This is a
+        // management configuration act and is deliberately separate from the
+        // read-only ai.reports.view, so a reader is not automatically able to
+        // subscribe an organization to recurring delivery. It grants no financial
+        // capability of its own: the scheduled run still executes under the
+        // schedule owner's own context and still requires ai.reports.view (and
+        // ai.accounting.view for an accounting report).
+        Permission::firstOrCreate([
+            'name' => 'ai.reports.schedule',
+            'guard_name' => 'web',
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -578,6 +591,31 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiReportsRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo($aiReportsPermissions);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Scheduled reporting grants (Phase 12.1)
+        |--------------------------------------------------------------------------
+        */
+        // Recurring delivery is a management configuration act, so it is granted
+        // more narrowly than reading a report. Only the organization
+        // administrator, the branch manager and the auditor may configure it:
+        // the administrator and branch manager own their organization's
+        // operations, and the auditor schedules recurring oversight. Officers,
+        // the treasurer, the accountant, the Secretary and VICOBA Members may
+        // read reports (where granted above) but may not subscribe an
+        // organization to automatic distribution.
+        $aiReportScheduleGrants = [
+            'Organization Administrator' => ['ai.reports.schedule'],
+            'Branch Manager' => ['ai.reports.schedule'],
+            'Auditor' => ['ai.reports.schedule'],
+        ];
+
+        foreach ($aiReportScheduleGrants as $aiScheduleRoleName => $aiSchedulePermissions) {
+            Role::where('name', $aiScheduleRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo($aiSchedulePermissions);
         }
 
         /*

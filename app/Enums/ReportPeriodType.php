@@ -20,6 +20,10 @@ enum ReportPeriodType: string
 
     case ThisYear = 'this_year';
 
+    case Yesterday = 'yesterday';
+
+    case PreviousWeek = 'previous_week';
+
     case PreviousMonth = 'previous_month';
 
     case PreviousQuarter = 'previous_quarter';
@@ -34,9 +38,28 @@ enum ReportPeriodType: string
             self::ThisMonth => 'This month',
             self::ThisQuarter => 'This quarter',
             self::ThisYear => 'This year',
+            self::Yesterday => 'Yesterday',
+            self::PreviousWeek => 'Previous week',
             self::PreviousMonth => 'Previous month',
             self::PreviousQuarter => 'Previous quarter',
             self::Custom => 'Custom range',
+        };
+    }
+
+    /**
+     * Whether the period describes a window that has already fully elapsed.
+     *
+     * A scheduled run (Phase 12.1) reports on a completed period only, so it can
+     * never present a half-finished day, week, month or quarter as if it were a
+     * settled management report. The in-progress periods (today, this_week,
+     * this_month, this_quarter, this_year) and the explicit custom range are
+     * therefore not completed.
+     */
+    public function isCompleted(): bool
+    {
+        return match ($this) {
+            self::Yesterday, self::PreviousWeek, self::PreviousMonth, self::PreviousQuarter => true,
+            default => false,
         };
     }
 
