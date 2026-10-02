@@ -213,6 +213,26 @@ class RolePermissionSeeder extends Seeder
             'guard_name' => 'web',
         ]);
 
+        // Management action workflow (Phase 12.3). Three deliberately coarse
+        // capabilities cover the human follow-up workflow so that it does not
+        // proliferate permissions:
+        //   ai.actions.view    read the Action Center and an action's timeline
+        //   ai.actions.manage  create, edit, start, complete and cancel an action
+        //   ai.actions.assign  assign an action to another user
+        // An action is a human workflow record; none of these grants any
+        // financial capability, any intelligence read or any automatic
+        // execution. An assignee must already hold ai.actions.view.
+        foreach ([
+            'ai.actions.view',
+            'ai.actions.manage',
+            'ai.actions.assign',
+        ] as $managementActionPermission) {
+            Permission::firstOrCreate([
+                'name' => $managementActionPermission,
+                'guard_name' => 'web',
+            ]);
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Create Roles
@@ -616,6 +636,44 @@ class RolePermissionSeeder extends Seeder
             Role::where('name', $aiScheduleRoleName)->where('guard_name', 'web')
                 ->firstOrFail()
                 ->givePermissionTo($aiSchedulePermissions);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Management action grants (Phase 12.3)
+        |--------------------------------------------------------------------------
+        |
+        | Action authority is a workflow capability, deliberately separate from
+        | every intelligence read. It is granted by role as follows:
+        |
+        |   Organization Administrator, Branch Manager   view, manage, assign
+        |   Loan/Credit/Collection Officer, Treasurer,
+        |   Accountant                                     view, manage (act on own follow-ups)
+        |   Auditor                                        view only (oversight, no action authority)
+        |   Secretary, VICOBA Member                       none
+        |
+        | The Security/audit role is intentionally read-only: an auditor may see
+        | that follow-ups exist and how they progressed, but may not create,
+        | assign, complete or cancel one. The assignment capability is reserved
+        | to the two manager roles; officers may act on and complete the
+        | follow-ups they own but cannot assign work to others.
+        |--------------------------------------------------------------------------
+        */
+        $managementActionGrants = [
+            'Organization Administrator' => ['ai.actions.view', 'ai.actions.manage', 'ai.actions.assign'],
+            'Branch Manager' => ['ai.actions.view', 'ai.actions.manage', 'ai.actions.assign'],
+            'Loan Officer' => ['ai.actions.view', 'ai.actions.manage'],
+            'Credit Officer' => ['ai.actions.view', 'ai.actions.manage'],
+            'Collection Officer' => ['ai.actions.view', 'ai.actions.manage'],
+            'Treasurer' => ['ai.actions.view', 'ai.actions.manage'],
+            'Accountant' => ['ai.actions.view', 'ai.actions.manage'],
+            'Auditor' => ['ai.actions.view'],
+        ];
+
+        foreach ($managementActionGrants as $managementActionRoleName => $managementActionPermissions) {
+            Role::where('name', $managementActionRoleName)->where('guard_name', 'web')
+                ->firstOrFail()
+                ->givePermissionTo($managementActionPermissions);
         }
 
         /*

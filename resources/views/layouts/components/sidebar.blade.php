@@ -52,6 +52,23 @@
         </a>
         @endif
 
+        @php
+            $hasCenter = auth()->check() && (auth()->user()->can('ai.portfolio.view') || auth()->user()->can('ai.delinquency.view') || auth()->user()->can('ai.collection.view') || auth()->user()->can('ai.trend.view') || auth()->user()->can('ai.accounting.view') || auth()->user()->can('ai.anomaly.view') || auth()->user()->can('ai.predictive.view') || auth()->user()->can('ai.insights.view') || auth()->user()->can('ai.reports.view') || auth()->user()->can('ai.reports.schedule'));
+        @endphp
+        @if($hasCenter)
+        <a href="{{ route('ai.intelligence-center.index') }}" class="nav-link {{ request()->routeIs('ai.intelligence-center.*') ? 'active' : '' }}">
+            <i class="bi bi-clipboard-data"></i>
+            <span>Intelligence Center</span>
+        </a>
+        @endif
+
+        @if(auth()->check() && auth()->user()->can('ai.actions.view'))
+        <a href="{{ route('ai.actions.index') }}" class="nav-link {{ request()->routeIs('ai.actions.*') ? 'active' : '' }}">
+            <i class="bi bi-list-check"></i>
+            <span>Management Actions</span>
+        </a>
+        @endif
+
         @if(auth()->check() && auth()->user()->can('ai.reports.view'))
         <a href="{{ route('ai.reports.index') }}" class="nav-link {{ request()->routeIs('ai.reports.*') ? 'active' : '' }}">
             <i class="bi bi-file-earmark-bar-graph"></i>

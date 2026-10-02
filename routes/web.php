@@ -33,6 +33,8 @@ use App\Http\Controllers\LoanEligibilityController;
 use App\Http\Controllers\LoanPlanController;
 use App\Http\Controllers\LoanRepaymentCollectionController;
 use App\Http\Controllers\LoanRepaymentController;
+use App\Http\Controllers\ManagementActionController;
+use App\Http\Controllers\ManagementIntelligenceCenterController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDocumentController;
 use App\Http\Controllers\MemberGuarantorController;
@@ -677,6 +679,79 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->middleware('permission:ai.reports.view')
             ->whereNumber('report')
             ->name('export');
+    });
+
+    // Unified Management Intelligence Center (Phase 12.2). A single read-only
+    // executive workspace that aggregates the existing Phase 11.7 descriptive
+    // intelligence, Phase 11.8 predictions, Phase 11.9 insights, Phase 12.0
+    // reports and Phase 12.1 schedules. The route accepts any of the ten
+    // intelligence/reporting capabilities (OR); the controller renders only the
+    // sections the acting user holds, and tenant/branch scope always comes from
+    // the trusted AI context (never the request). Viewing the center changes no
+    // state and never runs the scheduler, the report generator or detection.
+    Route::prefix('ai/intelligence-center')->name('ai.intelligence-center.')->group(function () {
+        $centerPermissions = implode(',', [
+            'ai.portfolio.view', 'ai.delinquency.view', 'ai.collection.view',
+            'ai.trend.view', 'ai.accounting.view', 'ai.anomaly.view',
+            'ai.predictive.view', 'ai.insights.view',
+            'ai.reports.view', 'ai.reports.schedule',
+        ]);
+
+        Route::get('/', [ManagementIntelligenceCenterController::class, 'index'])
+            ->middleware("permission:{$centerPermissions}")
+            ->name('index');
+    });
+
+    // Executive Action & Review Management (Phase 12.3). A human workflow layer
+    // over the intelligence above: creating, assigning, starting, completing and
+    // cancelling management actions. Three capabilities govern it — view, manage
+    // and assign — kept deliberately coarse so the workflow does not proliferate
+    // permissions. Every mutating act is re-authorized and re-scoped inside the
+    // service, tenant and branch scope always come from the trusted AI context
+    // (never the request), and nothing here executes a financial or business
+    // operation.
+    Route::prefix('ai/actions')->name('ai.actions.')->group(function () {
+        Route::get('/', [ManagementActionController::class, 'index'])
+            ->middleware('permission:ai.actions.view')
+            ->name('index');
+
+        Route::get('/create', [ManagementActionController::class, 'create'])
+            ->middleware('permission:ai.actions.manage')
+            ->name('create');
+
+        Route::post('/', [ManagementActionController::class, 'store'])
+            ->middleware('permission:ai.actions.manage', 'throttle:ai.tool')
+            ->name('store');
+
+        Route::get('/{action}', [ManagementActionController::class, 'show'])
+            ->middleware('permission:ai.actions.view')
+            ->whereNumber('action')
+            ->name('show');
+
+        Route::put('/{action}', [ManagementActionController::class, 'update'])
+            ->middleware('permission:ai.actions.manage', 'throttle:ai.tool')
+            ->whereNumber('action')
+            ->name('update');
+
+        Route::post('/{action}/assign', [ManagementActionController::class, 'assign'])
+            ->middleware('permission:ai.actions.assign', 'throttle:ai.tool')
+            ->whereNumber('action')
+            ->name('assign');
+
+        Route::post('/{action}/start', [ManagementActionController::class, 'start'])
+            ->middleware('permission:ai.actions.manage', 'throttle:ai.tool')
+            ->whereNumber('action')
+            ->name('start');
+
+        Route::post('/{action}/complete', [ManagementActionController::class, 'complete'])
+            ->middleware('permission:ai.actions.manage', 'throttle:ai.tool')
+            ->whereNumber('action')
+            ->name('complete');
+
+        Route::post('/{action}/cancel', [ManagementActionController::class, 'cancel'])
+            ->middleware('permission:ai.actions.manage', 'throttle:ai.tool')
+            ->whereNumber('action')
+            ->name('cancel');
     });
 
     // In-app notification inbox (Phase 11.9): personal, auth-only. There is no
