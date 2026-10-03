@@ -155,6 +155,42 @@ class AiController extends Controller
     }
 
     /**
+     * PATCH /ai/conversations/{conversation}
+     *
+     * Renames a conversation the acting user owns (Super Administrators may
+     * rename any conversation). Uses the same ownership rule as deletion, so
+     * read access to an organization-shared conversation never grants a rename.
+     * The submitted title is normalized and length-checked in the service and
+     * is never trusted as given.
+     */
+    public function update(Request $request, AiConversation $conversation): JsonResponse
+    {
+        if (! $this->ensureAvailable()) {
+            return $this->unavailable();
+        }
+
+        $this->guardrail->authorize(
+            'ai.conversation.rename',
+            ['conversation_id' => (int) $conversation->id],
+            $request->user(),
+        );
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:120'],
+        ]);
+
+        $conversation = $this->conversations->rename(
+            $conversation,
+            $validated['title'],
+            $request->user(),
+        );
+
+        return response()->json([
+            'data' => $this->presentConversation($conversation),
+        ]);
+    }
+
+    /**
      * The acting user's own feedback for one message, if any. This is the
      * submitter's own record only; a reviewer never sees it through the chat
      * surface.

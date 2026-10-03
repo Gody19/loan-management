@@ -567,6 +567,8 @@ Route::middleware(['auth', 'suspended'])->group(function () {
             ->name('conversations.show');
         Route::delete('/conversations/{conversation}', [AiController::class, 'destroy'])
             ->name('conversations.destroy');
+        Route::patch('/conversations/{conversation}', [AiController::class, 'update'])
+            ->name('conversations.update');
     });
 
     Route::post('/ai/chat', [AiController::class, 'store'])

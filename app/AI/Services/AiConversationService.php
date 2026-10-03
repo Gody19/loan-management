@@ -332,6 +332,49 @@ class AiConversationService
     }
 
     /**
+     * Rename a conversation the acting user owns (or a Super Administrator).
+     *
+     * Ownership is enforced with exactly the same rule as deletion, so a
+     * colleague who only holds read access to an organization-shared chat can
+     * never relabel it. The title is trimmed, length-checked and collapsed to
+     * a single line here rather than trusted from the request.
+     */
+    public function rename(AiConversation $conversation, string $title, ?User $user = null): AiConversation
+    {
+        $user = $user ?? auth()->user();
+
+        $isOwner = $conversation->user_id !== null
+            && $user !== null
+            && (int) $conversation->user_id === (int) $user->id;
+
+        if (! $user || ! ($isOwner || $user->hasRole('Super Administrator'))) {
+            abort(403, 'You may only rename conversations you own.');
+        }
+
+        $clean = trim(preg_replace('/\s+/u', ' ', $title) ?? '');
+
+        if ($clean === '') {
+            abort(422, 'A chat name cannot be empty.');
+        }
+
+        if (mb_strlen($clean) > 120) {
+            abort(422, 'A chat name cannot be longer than 120 characters.');
+        }
+
+        $previous = $conversation->title;
+        $conversation->title = $clean;
+        $conversation->save();
+
+        $this->audit->log('ai.conversation.renamed', $conversation, [], [
+            'conversation_id' => $conversation->id,
+            'previous_title' => $previous,
+            'title' => $clean,
+        ]);
+
+        return $conversation;
+    }
+
+    /**
      * Stateless completion for public, unauthenticated visitors (landing-page
      * FAQ chat). Deliberately no conversation: nothing is persisted, no member
      * data or knowledge base is reachable, and the reply is never personalized.

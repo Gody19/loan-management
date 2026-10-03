@@ -78,6 +78,13 @@ class AiToolRegistry
             'handler' => NullTool::class,
             'description' => 'Permanently delete a conversation the user owns.',
         ],
+        'ai.conversation.rename' => [
+            'permissions' => ['ai.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['conversation_id' => 'integer'],
+            'handler' => NullTool::class,
+            'description' => 'Rename a conversation the user owns.',
+        ],
         'ai.chat' => [
             'permissions' => ['ai.use'],
             'scope' => self::SCOPE_USER_ORG,
