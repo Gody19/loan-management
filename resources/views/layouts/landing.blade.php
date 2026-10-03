@@ -25,6 +25,16 @@
 
     {{-- Landing page custom styles --}}
     <style>
+        /* The landing nav is fixed-top, so anchored sections would otherwise
+           scroll underneath it. scroll-padding-top offsets every anchor jump
+           by the nav height, and smooth scrolling keeps the header visible. */
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 5rem;
+        }
+        @media (prefers-reduced-motion: reduce) {
+            html { scroll-behavior: auto; }
+        }
         .landing-nav {
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
