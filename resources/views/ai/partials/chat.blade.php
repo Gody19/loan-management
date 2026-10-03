@@ -90,6 +90,75 @@
         .ai-feedback-btn { font-size: 0.75rem; padding: 0.2rem 0.55rem; }
         .ai-feedback-btn.active { background: #0d6efd; border-color: #0d6efd; color: #fff; }
         .ai-feedback-label { margin-inline-start: 0.25rem; }
+        .ai-chat-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 0;
+        }
+        .ai-chat-loading .container {
+            --uib-size: 150px;
+            --uib-speed: 2.5s;
+            --uib-color: #334dff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: var(--uib-size);
+            height: calc(var(--uib-size) * 0.5);
+        }
+        .ai-chat-loading .slice {
+            position: relative;
+            width: calc(var(--uib-size) * 0.12);
+            height: calc(var(--uib-size) * 0.12);
+            margin-inline: calc(var(--uib-size) * 0.02);
+        }
+        .ai-chat-loading .slice::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background-color: var(--uib-color);
+            animation: ai-orbit var(--uib-speed) linear infinite;
+            transition: background-color 0.3s ease;
+        }
+        .ai-chat-loading .slice:nth-child(1)::before {
+            background-color: #334dff;
+            animation-delay: 0s;
+        }
+        .ai-chat-loading .slice:nth-child(2)::before {
+            background-color: #333eff;
+            animation-delay: calc(var(--uib-speed) * -0.9166666667);
+        }
+        .ai-chat-loading .slice:nth-child(3)::before {
+            background-color: #3334ff;
+            animation-delay: calc(var(--uib-speed) * -0.8333333333);
+        }
+        .ai-chat-loading .slice:nth-child(4)::before {
+            background-color: #4433ff;
+            animation-delay: calc(var(--uib-speed) * -0.75);
+        }
+        .ai-chat-loading .slice:nth-child(5)::before {
+            background-color: #6633ff;
+            animation-delay: calc(var(--uib-speed) * -0.6666666667);
+        }
+        .ai-chat-loading .slice:nth-child(6)::before {
+            background-color: #9933ff;
+            animation-delay: calc(var(--uib-speed) * -0.5833333333);
+        }
+        @keyframes ai-orbit {
+            0% {
+                transform: translateX(calc(var(--uib-size) * 0.25)) scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: translateX(0) scale(0.6);
+                opacity: 0.5;
+            }
+            100% {
+                transform: translateX(calc(var(--uib-size) * -0.25)) scale(1);
+                opacity: 1;
+            }
+        }
     </style>
 
     <div class="row g-3">
@@ -175,6 +244,17 @@
                                 <i class="bi bi-send me-1"></i>Send
                             </button>
                         </div>
+                        <div id="aiLoading" class="ai-chat-loading d-none mt-2" aria-live="polite" aria-busy="true">
+                            <!-- From Uiverse.io by Z4drus -->
+                            <div class="container">
+                                <div class="slice"></div>
+                                <div class="slice"></div>
+                                <div class="slice"></div>
+                                <div class="slice"></div>
+                                <div class="slice"></div>
+                                <div class="slice"></div>
+                            </div>
+                        </div>
                         <div class="form-text small" id="aiStatus" role="status" aria-live="polite"></div>
                     </form>
                 </div>
@@ -227,7 +307,8 @@
                 input: document.getElementById('aiInput'),
                 send: document.getElementById('aiSend'),
                 newChat: document.getElementById('aiNewChat'),
-                status: document.getElementById('aiStatus')
+                status: document.getElementById('aiStatus'),
+                loading: document.getElementById('aiLoading')
             };
 
             if (!el.thread || !el.composer) {
@@ -719,6 +800,9 @@
                 el.input.disabled = true;
                 setStatus('AI Assistant is thinking...');
                 clearError();
+                if (el.loading) {
+                    el.loading.classList.remove('d-none');
+                }
 
                 bubble('user', text);
                 appendThinking();
@@ -772,6 +856,9 @@
                     state.sending = false;
                     el.send.disabled = false;
                     el.input.disabled = false;
+                    if (el.loading) {
+                        el.loading.classList.add('d-none');
+                    }
                     setStatus('');
                     el.input.focus();
                 });

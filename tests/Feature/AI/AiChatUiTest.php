@@ -113,6 +113,36 @@ class AiChatUiTest extends AiTestCase
         $this->assertStringNotContainsString('aiWidgetLauncher', $html);
     }
 
+    public function test_chat_page_renders_a_single_hidden_request_spinner(): void
+    {
+        $org = $this->makeOrganization();
+        $staff = $this->staff($org, 'Loan Officer');
+        $this->actingAs($staff);
+
+        $html = $this->get('/ai')->assertOk()->getContent();
+
+        // One spinner per surface, hidden until a request is in flight.
+        $this->assertSame(1, substr_count($html, 'id="aiLoading"'));
+        $this->assertStringContainsString('ai-chat-loading d-none', $html);
+
+        // The Z4drus orbit spinner: attribution plus six slices in the container.
+        $this->assertStringContainsString('From Uiverse.io by Z4drus', $html);
+        $this->assertSame(6, substr_count($html, 'class="slice"'));
+        $this->assertSame(1, substr_count($html, '<div class="container">'));
+
+        // Scoped so the generic Bootstrap `.container` rule cannot leak in.
+        $this->assertStringContainsString('.ai-chat-loading .container', $html);
+        $this->assertStringContainsString('--uib-size: 150px', $html);
+        $this->assertStringContainsString('--uib-speed: 2.5s', $html);
+
+        // Shown when a request starts, hidden again on every completion path.
+        $this->assertStringContainsString("el.loading.classList.remove('d-none');", $html);
+        $this->assertStringContainsString("el.loading.classList.add('d-none');", $html);
+
+        // Still text-only rendering: the spinner must not introduce HTML injection.
+        $this->assertStringNotContainsString('innerHTML', $html);
+    }
+
     public function test_treasurer_staff_sees_generic_suggestions_only(): void
     {
         $org = $this->makeOrganization();
