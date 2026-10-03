@@ -19,7 +19,10 @@ use Illuminate\Support\Collection;
  *
  * The scope filter (which documents the acting user may see) is applied to the
  * candidate document set BEFORE any similarity computation — unauthorized
- * documents can never enter the candidate pool. Similarity is computed over
+ * documents can never enter the candidate pool. Scope specificity
+ * (group > branch > organization > global) is then applied as an ordering key
+ * within that authorized pool only, so a narrower policy always outranks a
+ * broader one without ever widening access. Similarity is computed over
  * the already-scoped chunks in application code, so no raw SQL or dynamic
  * query execution is ever involved.
  *
@@ -152,9 +155,36 @@ class AiKnowledgeRetrievalService
     }
 
     /**
+     * Scope specificity weights, most specific first.
+     *
+     * Precedence is deliberately absolute rather than a weighted blend: an
+     * organization policy that contradicts the generic global handbook must
+     * never lose to the global text on the strength of a higher cosine score,
+     * so specificity is the primary sort key and similarity only orders chunks
+     * that share the same scope. Public marketing content ranks lowest because
+     * it is the broadest and least authoritative source available.
+     */
+    protected const SCOPE_PRECEDENCE = [
+        AiKnowledgeScope::Group->value => 4,
+        AiKnowledgeScope::Branch->value => 3,
+        AiKnowledgeScope::Organization->value => 2,
+        AiKnowledgeScope::Global->value => 1,
+    ];
+
+    /**
      * Shared relevance pipeline: embed the query once, score every eligible
-     * chunk, apply the similarity floor, keep the top-K, then bound the total
-     * context tokens handed to a provider.
+     * chunk, apply the similarity floor, order by scope specificity then
+     * relevance, keep the top-K, and finally bound the total context tokens
+     * handed to a provider.
+     *
+     * Ordering happens only inside the already-authorized candidate set, so
+     * specificity can never promote a document the caller may not read.
+     *
+     * The two sortByDesc calls are a deliberate composite sort: the least
+     * significant key is applied first and the most significant key last, and
+     * PHP 8 guarantees stable sorting, so similarity order survives intact
+     * within each scope band. Collection::sortBy()'s array form is avoided
+     * because its comparator contract differs and it re-sorts the values.
      *
      * @param  Collection<int, AiKnowledgeChunk>  $chunks
      * @return AiKnowledgeResultData[]
@@ -167,11 +197,21 @@ class AiKnowledgeRetrievalService
             ->map(fn (AiKnowledgeChunk $chunk) => $this->score($chunk, $queryVector))
             ->filter(fn (AiKnowledgeResultData $result) => $result->similarity > $this->minimumSimilarity())
             ->sortByDesc(fn (AiKnowledgeResultData $result) => $result->similarity)
+            ->sortByDesc(fn (AiKnowledgeResultData $result) => $this->scopeWeight($result->scope))
             ->take($topK)
             ->values()
             ->all();
 
         return $this->limitByContextTokens($results);
+    }
+
+    /**
+     * Specificity rank for a knowledge scope. Public and any unrecognized value
+     * share the lowest weight.
+     */
+    protected function scopeWeight(string $scope): int
+    {
+        return self::SCOPE_PRECEDENCE[$scope] ?? 0;
     }
 
     /**
@@ -223,9 +263,13 @@ class AiKnowledgeRetrievalService
 
     /**
      * Certified DTO for a chunk, computing cosine similarity against the query
-     * vector. Also re-verifies document eligibility at the row level (retrieval
-     * runs over chunks of already-authorized documents, but the same policy is
-     * applied again here as defense in depth).
+     * vector. Re-verifies that the document is still Active at the row level.
+     *
+     * Tenant scope is intentionally NOT re-checked here: the candidate set is
+     * already constrained to authorized document ids by authorizedDocumentIds(),
+     * and re-deriving scope from the chunk would duplicate that boundary. Status
+     * is cheap to re-assert and guards against a document archived between the
+     * id lookup and the scoring pass.
      */
     protected function score(AiKnowledgeChunk $chunk, array $queryVector): AiKnowledgeResultData
     {
