@@ -4,14 +4,16 @@ namespace Tests\Feature\AI;
 
 use App\AI\DTOs\AiContextData;
 use App\AI\Services\AiChatOrchestrationService;
+use App\Models\AiConversation;
 use App\Models\AiMessage;
 use App\Models\AuditLog;
 use App\Models\Loan;
 use App\Models\LoanPlan;
 use App\Models\Member;
 use App\Models\SavingsAccount;
-use App\Models\WelfareAccount;
 use App\Models\ShareAccount;
+use App\Models\User;
+use App\Models\WelfareAccount;
 
 /**
  * Phase 11.4 server-side chat orchestration. The plain chat endpoint decides
@@ -62,7 +64,7 @@ class AiChatOrchestrationTest extends AiTestCase
         ], $overrides));
     }
 
-    private function actingAsMember(Member $member): \App\Models\User
+    private function actingAsMember(Member $member): User
     {
         $user = $this->vicobaUser(
             $member->organization,
@@ -88,7 +90,7 @@ class AiChatOrchestrationTest extends AiTestCase
         $response = $this->postJson('/ai/chat', ['message' => 'What is my current loan balance?']);
 
         $response->assertOk()
-            ->assertJsonPath('data.conversation_id', \App\Models\AiConversation::first()->id);
+            ->assertJsonPath('data.conversation_id', AiConversation::first()->id);
 
         $requested = AuditLog::where('event', 'ai.tool.requested')->first();
         $completed = AuditLog::where('event', 'ai.tool.completed')->first();
@@ -182,7 +184,22 @@ class AiChatOrchestrationTest extends AiTestCase
         $this->assertSame('ai.member.welfare_summary', $welfare->new_values['capability'] ?? null);
     }
 
-    public function test_unknown_or_eligibility_questions_fall_back_to_plain_chat(): void
+    public function test_eligibility_question_is_answered_by_the_loan_application_capability(): void
+    {
+        $org = $this->makeOrganization();
+        $member = $this->member($org);
+        $this->loanFor($member);
+        $this->actingAsMember($member);
+
+        $this->postJson('/ai/chat', ['message' => 'How can I check my loan eligibility?'])
+            ->assertOk();
+
+        // The member has real plans and a real status, so the question is
+        // answerable. It is answered from those records — never invented.
+        $this->assertDatabaseHas('audit_logs', ['event' => 'ai.tool.requested']);
+    }
+
+    public function test_questions_that_need_values_the_member_has_not_given_stay_in_plain_chat(): void
     {
         $org = $this->makeOrganization();
         $member = $this->member($org);
@@ -190,7 +207,6 @@ class AiChatOrchestrationTest extends AiTestCase
         $this->actingAsMember($member);
 
         foreach ([
-            'How can I check my loan eligibility?',
             'What collateral is required for a new loan?',
             'Tell me about guarantor rules',
         ] as $message) {
@@ -200,6 +216,24 @@ class AiChatOrchestrationTest extends AiTestCase
         $this->assertDatabaseMissing('audit_logs', ['event' => 'ai.tool.requested']);
         $this->assertDatabaseMissing('audit_logs', ['event' => 'ai.tool.completed']);
         $this->assertDatabaseMissing('ai_messages', ['role' => 'system']);
+    }
+
+    public function test_eligibility_without_a_resolvable_plan_is_not_orchestrated_into_a_calculation(): void
+    {
+        $org = $this->makeOrganization();
+        $member = $this->member($org);
+        $this->actingAsMember($member);
+
+        // No plan, no amount, nothing concrete: the capability is available but
+        // cannot invent an amount to calculate with.
+        $plan = $this->service()->plan(
+            $this->contextFor($member),
+            'Am I eligible for a Spacecraft Loan of 500,000?',
+        );
+
+        $this->assertNotNull($plan);
+        $this->assertSame('ai.loan.application.start', $plan->capability);
+        $this->assertArrayNotHasKey('requested_amount', $plan->arguments);
     }
 
     public function test_member_without_loans_gets_plain_chat_for_repayment_question(): void

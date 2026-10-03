@@ -52,6 +52,12 @@ class AiLanguageService
             'mwaka', 'kipa', 'shule', 'wanachama', 'mwanachama', 'kopo',
             'hisa za', 'aka ya', 'zinazo', 'zilizo', 'walilipa',
             'nini kina', 'kinachobaki', 'inayoweza',
+            // FinancePro concepts that were previously undetectable, so a
+            // question using only these could not reach the two-marker
+            // threshold and would be answered in English.
+            'mdhamini', 'kikundi', 'tawi', 'shirika', 'mfuko', 'ombi',
+            'ombi la mkopo', 'ada', 'biashara', 'kilimo', 'elimu',
+            'maendeleo', 'binfi', 'dharura',
         ],
     ];
 

@@ -15,6 +15,7 @@ use App\AI\Tools\IdentityTool;
 use App\AI\Tools\IncomeStatementTool;
 use App\AI\Tools\IntelligenceReportTool;
 use App\AI\Tools\KnowledgeSearchTool;
+use App\AI\Tools\LoanApplicationStartTool;
 use App\AI\Tools\LoanApplicationViewTool;
 use App\AI\Tools\LoanEligibilityTool;
 use App\AI\Tools\LoanRepaymentsTool;
@@ -161,6 +162,13 @@ class AiToolRegistry
             'arguments' => ['application_number' => 'string'],
             'handler' => LoanApplicationViewTool::class,
             'description' => 'Read a loan application within the authorized scope.',
+        ],
+        'ai.loan.application.start' => [
+            'permissions' => ['ai.loan-application.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['member_number' => 'string'],
+            'handler' => LoanApplicationStartTool::class,
+            'description' => 'Report whether the member may begin the loan application workflow and list the active loan plans available to them. Never returns an eligibility verdict, because that requires a plan and amount the member must supply.',
         ],
         'ai.loan.eligibility.check' => [
             'permissions' => ['ai.loan-eligibility.view'],

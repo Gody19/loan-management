@@ -107,6 +107,11 @@ class AiIntentClassifier
         // Swahili
         'mkopo', 'mikopo', 'akiba', 'hisa', 'salio', 'malipo', 'mapato',
         'matumizi', 'wanachama', 'mwanachama', 'deni', 'kopo', 'lipa',
+        // FinancePro concepts that had no marker at all, so a first-person
+        // question about them fell through to the outside-scope default.
+        'mdhamini', 'dhamana', 'kikundi', 'tawi', 'shirika', 'mfuko',
+        'ombi', 'ombi la mkopo', 'ada', 'biashara', 'kilimo', 'elimu',
+        'maendeleo', 'binfi', 'dharura',
     ];
 
     /**

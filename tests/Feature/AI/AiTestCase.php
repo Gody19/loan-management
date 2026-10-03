@@ -23,6 +23,31 @@ abstract class AiTestCase extends TestCase
 
         $this->seed(RolePermissionSeeder::class);
         $this->enableAi();
+        $this->clearExecutionTimeLimit();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->clearExecutionTimeLimit();
+
+        parent::tearDown();
+    }
+
+    /**
+     * AiController::extendTimeLimit() calls set_time_limit(600) so that a real
+     * HTTP request is not killed mid-response. Under the CLI SAPI that call
+     * restarts the timer for the whole PHP process, so the FIRST chat request
+     * in a PHPUnit run silently caps every remaining test in that run at 600
+     * seconds and kills the process part-way through with a fatal error that
+     * looks nothing like a timeout.
+     *
+     * Clearing the limit between tests restores an unlimited budget per test,
+     * which is the correct semantics for a test process. Production behaviour
+     * is untouched.
+     */
+    protected function clearExecutionTimeLimit(): void
+    {
+        set_time_limit(0);
     }
 
     /**

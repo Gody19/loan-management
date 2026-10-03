@@ -4,6 +4,7 @@ namespace App\AI\Services;
 
 use App\AI\DTOs\AiChatToolPlan;
 use App\AI\DTOs\AiContextData;
+use App\Models\LoanPlan;
 use App\Models\Member;
 
 /**
@@ -46,6 +47,42 @@ class AiChatOrchestrationService
         'eligib', 'qualif', 'appl', 'plan', 'schedule',
         'repay', 'guarant', 'interest', 'collateral',
     ];
+
+    /**
+     * Loan application and eligibility questions. These are matched before
+     * loanIntent(), which excludes them precisely because they need a plan and
+     * an amount that must never be guessed.
+     *
+     * Phrases are deliberately kept whole rather than stemmed: hasAny() uses a
+     * plain substring test, so a bare "appl" or "plan" would swallow unrelated
+     * questions about payment plans and planning reports.
+     */
+    private const LOAN_APPLICATION_INTENT = [
+        'am i eligible', 'i am eligible', 'eligible for', 'my eligibility',
+        'loan eligibility', 'can i qualify', 'do i qualify', 'qualify for',
+        'can i apply', 'how do i apply', 'can i get a loan', 'can i borrow',
+        'apply for a loan', 'apply for another loan', 'apply for a new loan',
+        'start a loan application', 'start an application',
+        'begin a loan application', 'begin an application', 'take out a loan',
+        // Kiswahili
+        'nastahili', 'nimeastahili', 'inawezekana', 'naweza kuomba',
+        'ninaweza kuomba', 'nomba mkopo', 'omba mkopo', 'kuomba mkopo',
+        'mkopo mpya', 'ombe la mkopo', 'naweza kukopa', 'nikope',
+    ];
+
+    /**
+     * Words that carry no discriminating power when matching a question against
+     * a loan plan name. Without this, every plan would be called "Business Loan"
+     * and no plan could ever be selected.
+     */
+    private const PLAN_NAME_STOPWORDS = ['loan', 'loans', 'plan', 'the', 'and', 'for', 'of', 'a'];
+
+    /**
+     * Statuses that mean an application exists but has not reached a decision.
+     * Reported as context only — FinancePro has no rule that blocks a new
+     * application on this basis.
+     */
+    private const IN_PROGRESS_APPLICATION_STATUSES = ['draft', 'submitted', 'under_review'];
 
     /**
      * Capability => keyword patterns for organization-level financial
@@ -159,6 +196,7 @@ class AiChatOrchestrationService
 
     public function __construct(
         private readonly AiToolRegistry $registry,
+        private readonly AiTerminologyService $terminology,
     ) {}
 
     public function plan(AiContextData $context, string $message): ?AiChatToolPlan
@@ -204,6 +242,15 @@ class AiChatOrchestrationService
         }
 
         $memberNumber = (string) $member->member_number;
+
+        // Loan application / eligibility questions are routed before loanIntent()
+        // so they can reach a real capability instead of being excluded from
+        // member loan information.
+        $applicationPlan = $this->loanApplicationPlan($context, $member, $memberNumber, $text);
+
+        if ($applicationPlan !== null) {
+            return $applicationPlan;
+        }
 
         // Repayment information — resolved to the member's most recent loan.
         if ($this->hasAny($text, ['repay', 'malipo', 'nili lipa', 'ulipo'])) {
@@ -369,6 +416,134 @@ class AiChatOrchestrationService
             ['loan_number' => (string) $loan->loan_number, 'limit' => 50],
             $context,
         );
+    }
+
+    /**
+     * Loan application workflow and eligibility questions.
+     *
+     * Two very different questions are separated here:
+     *
+     *  - "Can I apply for a loan?" is a workflow question. It is answered by
+     *    ai.loan.application.start, which reports whether the member may begin
+     *    the process and which plans are available.
+     *  - "Am I eligible for a <plan> of <amount>?" is a calculation. Only when
+     *    the question names one unambiguous plan AND one amount is
+     *    ai.loan.eligibility.check invoked, with those exact values.
+     *
+     * If the plan is missing, ambiguous, or the amount is missing or ambiguous,
+     * this falls back to the workflow capability so the assistant asks which
+     * plan and amount apply. It never picks a plan or invents an amount.
+     */
+    protected function loanApplicationPlan(
+        AiContextData $context,
+        Member $member,
+        string $memberNumber,
+        string $text,
+    ): ?AiChatToolPlan {
+        if (! $this->hasAny($text, self::LOAN_APPLICATION_INTENT)) {
+            return null;
+        }
+
+        $resolved = $this->resolveEligibilityArguments($member, $text);
+
+        if ($resolved !== null) {
+            return $this->planFor(
+                'ai.loan.eligibility.check',
+                'your authoritative loan eligibility result',
+                [
+                    'loan_plan_id' => $resolved['loan_plan_id'],
+                    'requested_amount' => $resolved['requested_amount'],
+                    'member_number' => $memberNumber,
+                ],
+                $context,
+            );
+        }
+
+        return $this->planFor(
+            'ai.loan.application.start',
+            'whether you can begin a loan application, and the loan plans available to you',
+            ['member_number' => $memberNumber],
+            $context,
+        );
+    }
+
+    /**
+     * Extract an unambiguous (plan, amount) pair from the question, or null when
+     * either is missing or ambiguous.
+     *
+     * The plan is matched on its real name within the member's own organization,
+     * ignoring generic words. FinancePro has no notion of a default or primary
+     * loan plan and LoanEligibilityService never reads the loan purpose, so a
+     * plan can only be resolved by name the member actually used — and only
+     * when exactly one active plan matches. Two matches means the member must
+     * choose, not that the assistant picks one.
+     *
+     * @return array{loan_plan_id: int, requested_amount: float}|null
+     */
+    protected function resolveEligibilityArguments(Member $member, string $text): ?array
+    {
+        $amount = $this->terminology->requestedAmount($text);
+
+        if ($amount === null) {
+            return null;
+        }
+
+        $plans = LoanPlan::query()
+            ->active()
+            ->where('organization_id', $member->organization_id)
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (LoanPlan $plan) => $this->planIsNamed($text, $plan));
+
+        if ($plans->count() !== 1) {
+            return null;
+        }
+
+        return [
+            'loan_plan_id' => (int) $plans->first()->id,
+            'requested_amount' => $amount,
+        ];
+    }
+
+    /**
+     * True when the question names this plan. Every discriminating word of the
+     * plan name must appear in the question; plans made up entirely of generic
+     * words can never be matched, because that would make them ambiguous with
+     * every other loan question.
+     */
+    protected function planIsNamed(string $text, LoanPlan $plan): bool
+    {
+        // Matched against both the original text and its terminology-normalized
+        // form, so "mkopo wa biashara" selects the plan named "Business Loan".
+        $haystacks = [$text, $this->terminology->normalize($text)];
+
+        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower((string) $plan->name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        $discriminating = array_values(array_filter(
+            $words,
+            fn (string $word) => mb_strlen($word) >= 3 && ! in_array($word, self::PLAN_NAME_STOPWORDS, true),
+        ));
+
+        if ($discriminating === []) {
+            return false;
+        }
+
+        foreach ($discriminating as $word) {
+            $matched = false;
+
+            foreach ($haystacks as $haystack) {
+                if (str_contains($haystack, $word)) {
+                    $matched = true;
+                    break;
+                }
+            }
+
+            if (! $matched) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
