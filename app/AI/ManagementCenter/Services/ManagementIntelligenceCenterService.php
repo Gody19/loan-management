@@ -9,6 +9,7 @@ use App\AI\FinancialIntelligence\Services\DelinquencyIntelligenceService;
 use App\AI\FinancialIntelligence\Services\FinancialTrendService;
 use App\AI\FinancialIntelligence\Services\ParIntelligenceService;
 use App\AI\FinancialIntelligence\Services\PortfolioIntelligenceService;
+use App\AI\ManagementActions\Services\ManagementActionEffectivenessService;
 use App\AI\ManagementActions\Services\ManagementActionQueryService;
 use App\AI\Reporting\Data\ReportPeriod;
 use App\AI\Reporting\Services\IntelligenceReportNarrativeService;
@@ -54,6 +55,7 @@ class ManagementIntelligenceCenterService
         private readonly ReportPeriodService $periods,
         private readonly IntelligenceReportNarrativeService $narrative,
         private readonly ManagementActionQueryService $actions,
+        private readonly ManagementActionEffectivenessService $actionEffectiveness,
     ) {}
 
     /**
@@ -160,9 +162,12 @@ class ManagementIntelligenceCenterService
     }
 
     /**
-     * The Executive Review "Management Follow-up" panel: human workflow counts
-     * and the recently completed actions. Read-only; loading the center never
-     * creates, assigns or changes a management action.
+     * The Executive Review "Management Follow-up" panel: human workflow counts,
+     * the recently completed actions and — since Phase 12.4 — the action
+     * effectiveness measurements.
+     *
+     * Read-only throughout: loading the center never creates, assigns, starts,
+     * completes or cancels a management action, and never escalates one.
      *
      * @return array<string, mixed>
      */
@@ -172,7 +177,10 @@ class ManagementIntelligenceCenterService
             return ['available' => false];
         }
 
-        return ['available' => true] + $this->actions->dashboard($context);
+        return [
+            'available' => true,
+            'effectiveness' => $this->actionEffectiveness->centerPanel($context),
+        ] + $this->actions->dashboard($context);
     }
 
     /**

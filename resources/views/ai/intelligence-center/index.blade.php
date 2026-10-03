@@ -37,6 +37,7 @@
         };
         $narrativeQuery = array_merge(request()->query(), ['narrative' => 1]);
         $follow = $overview['management_follow_up'] ?? ['available' => false];
+        $effectiveness = $follow['effectiveness'] ?? ['available' => false];
     @endphp
 
     <div class="vicoba-card mb-3">
@@ -214,6 +215,49 @@
                         </div>
                     @endforeach
                 </div>
+
+                @if (($effectiveness['available'] ?? false))
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+                            <div>
+                                <span class="fw-semibold small">Action effectiveness</span>
+                                <span class="badge bg-secondary text-dark ms-1">Workflow measurement</span>
+                            </div>
+                            <a href="{{ route('ai.actions.effectiveness') }}" class="small">Open effectiveness dashboard <i class="bi bi-box-arrow-up-right"></i></a>
+                        </div>
+                        @php
+                            $measure = function ($value, $unit) {
+                                if ($value === null) {
+                                    return 'N/A';
+                                }
+                                $formatted = number_format((float) $value, $unit === '%' ? 1 : 1);
+
+                                return $unit === '%' ? $formatted . '%' : $formatted . ' ' . $unit;
+                            };
+                            $effectivenessCards = [
+                                ['label' => 'Total actions', 'value' => number_format($effectiveness['total_actions'])],
+                                ['label' => 'Unresolved', 'value' => number_format($effectiveness['unresolved_actions'])],
+                                ['label' => 'Completion rate', 'value' => $measure($effectiveness['completion_rate'], '%')],
+                                ['label' => 'Cancellation rate', 'value' => $measure($effectiveness['cancellation_rate'], '%')],
+                                ['label' => 'Average completion time', 'value' => $measure($effectiveness['average_completion_days'], 'days')],
+                                ['label' => 'Average time to start', 'value' => $measure($effectiveness['average_time_to_start_days'], 'days')],
+                            ];
+                        @endphp
+                        <div class="row g-2">
+                            @foreach ($effectivenessCards as $card)
+                                <div class="col-6 col-md-4 col-xl-2">
+                                    <div class="text-muted small">{{ $card['label'] }}</div>
+                                    <div class="h6 mb-0">{{ $card['value'] }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <div class="small text-muted mt-2">
+                            Measured over every action in your authorized scope. A figure is shown as N/A when it cannot be derived
+                            from the records; it is never shown as zero. These measurements never evaluate a person and never
+                            escalate, reassign or close an action.
+                        </div>
+                    </div>
+                @endif
 
                 <div class="fw-semibold small mb-2">Recently completed</div>
                 @if (($follow['recently_completed'] ?? collect())->isEmpty())

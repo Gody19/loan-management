@@ -34,6 +34,7 @@ use App\Http\Controllers\LoanPlanController;
 use App\Http\Controllers\LoanRepaymentCollectionController;
 use App\Http\Controllers\LoanRepaymentController;
 use App\Http\Controllers\ManagementActionController;
+use App\Http\Controllers\ManagementActionEffectivenessController;
 use App\Http\Controllers\ManagementIntelligenceCenterController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\MemberDocumentController;
@@ -722,6 +723,16 @@ Route::middleware(['auth', 'suspended'])->group(function () {
         Route::post('/', [ManagementActionController::class, 'store'])
             ->middleware('permission:ai.actions.manage', 'throttle:ai.tool')
             ->name('store');
+
+        // Management Action Effectiveness & Executive Accountability (Phase 12.4).
+        // A read-only measurement layer over the actions above. It reuses the
+        // existing ai.actions.view capability (a separate executive reporting
+        // permission is deliberately not introduced) and is declared before the
+        // wildcard action route so the path is never shadowed. Loading it can
+        // never create, assign, escalate, complete or cancel an action.
+        Route::get('/effectiveness', [ManagementActionEffectivenessController::class, 'index'])
+            ->middleware('permission:ai.actions.view')
+            ->name('effectiveness');
 
         Route::get('/{action}', [ManagementActionController::class, 'show'])
             ->middleware('permission:ai.actions.view')

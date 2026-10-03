@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\AI\DTOs\AiContextData;
 use App\AI\ManagementActions\Data\ManagementActionData;
 use App\AI\ManagementActions\Services\ManagementActionAuthorizationService;
+use App\AI\ManagementActions\Services\ManagementActionEffectivenessService;
 use App\AI\ManagementActions\Services\ManagementActionQueryService;
 use App\AI\ManagementActions\Services\ManagementActionService;
 use App\AI\Services\AiContextBuilderService;
@@ -40,6 +41,7 @@ class ManagementActionController extends Controller
         private readonly ManagementActionService $actions,
         private readonly ManagementActionQueryService $query,
         private readonly ManagementActionAuthorizationService $authorization,
+        private readonly ManagementActionEffectivenessService $effectiveness,
     ) {}
 
     public function index(Request $request): View|RedirectResponse
@@ -147,6 +149,7 @@ class ManagementActionController extends Controller
             'action' => $model,
             'data' => ManagementActionData::fromModel($model),
             'timeline' => $model->events,
+            'lifecycle' => $this->effectiveness->lifecycle($model, $model->events),
             'assignees' => $this->assignees($context),
             'priorities' => ManagementActionPriority::cases(),
             'sourceUrl' => $this->sourceUrl($model),

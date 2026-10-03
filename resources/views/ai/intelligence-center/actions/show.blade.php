@@ -69,6 +69,68 @@
         </div>
     </div>
 
+    <div class="vicoba-card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span><i class="bi bi-stopwatch me-1"></i> Lifecycle measurements <span class="badge bg-secondary text-dark">Workflow measurement</span></span>
+            <a href="{{ route('ai.actions.effectiveness') }}" class="small">Action effectiveness <i class="bi bi-box-arrow-up-right"></i></a>
+        </div>
+        <div class="card-body">
+            @if (! $lifecycle['available'])
+                <p class="text-muted mb-0">{{ $lifecycle['unavailable_reason'] }}</p>
+            @else
+                @php
+                    $dayFormat = function ($value) {
+                        return $value === null ? 'N/A' : number_format((float) $value, 1) . ' days';
+                    };
+                    $milestones = [
+                        ['label' => 'Created', 'value' => $lifecycle['created_at']],
+                        ['label' => 'Started', 'value' => $lifecycle['started_at']],
+                        ['label' => 'Completed', 'value' => $lifecycle['completed_at']],
+                        ['label' => 'Cancelled', 'value' => $lifecycle['cancelled_at']],
+                    ];
+                    $durations = [
+                        ['label' => 'Time to start', 'value' => $dayFormat($lifecycle['time_to_start_days'])],
+                        ['label' => 'Time to complete', 'value' => $dayFormat($lifecycle['time_to_complete_days'])],
+                        [
+                            'label' => 'Total age',
+                            'value' => $dayFormat($lifecycle['total_age_days']),
+                            'note' => $lifecycle['total_age_measured_to'] === 'closure'
+                                ? 'Measured up to the recorded closure.'
+                                : 'Measured up to now; this action is still unresolved.',
+                        ],
+                    ];
+                @endphp
+
+                <div class="row g-3 mb-3">
+                    @foreach ($milestones as $milestone)
+                        <div class="col-6 col-md-3">
+                            <div class="text-muted small">{{ $milestone['label'] }}</div>
+                            <div class="small">{{ $milestone['value'] ?? 'N/A' }}</div>
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="row g-3">
+                    @foreach ($durations as $duration)
+                        <div class="col-6 col-md-3">
+                            <div class="text-muted small">{{ $duration['label'] }}</div>
+                            <div class="h6 mb-0">{{ $duration['value'] }}</div>
+                            @if (! empty($duration['note']))
+                                <div class="small text-muted">{{ $duration['note'] }}</div>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+
+                <div class="small text-muted mt-3">
+                    Derived from the append-only action timeline, falling back to the action's own timestamps only when no
+                    matching event exists. N/A means the measurement cannot be derived. These are factual observations only: no
+                    target, score or recommendation is attached, and viewing this page changes nothing.
+                </div>
+            @endif
+        </div>
+    </div>
+
     <div class="row g-3 mb-3">
         <div class="col-lg-6">
             <div class="vicoba-card h-100">

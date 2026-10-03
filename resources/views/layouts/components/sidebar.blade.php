@@ -63,9 +63,13 @@
         @endif
 
         @if(auth()->check() && auth()->user()->can('ai.actions.view'))
-        <a href="{{ route('ai.actions.index') }}" class="nav-link {{ request()->routeIs('ai.actions.*') ? 'active' : '' }}">
+        <a href="{{ route('ai.actions.index') }}" class="nav-link {{ request()->routeIs('ai.actions.index') || request()->routeIs('ai.actions.show') ? 'active' : '' }}">
             <i class="bi bi-list-check"></i>
             <span>Management Actions</span>
+        </a>
+        <a href="{{ route('ai.actions.effectiveness') }}" class="nav-link {{ request()->routeIs('ai.actions.effectiveness') ? 'active' : '' }}">
+            <i class="bi bi-clipboard-data"></i>
+            <span>Action Effectiveness</span>
         </a>
         @endif
 

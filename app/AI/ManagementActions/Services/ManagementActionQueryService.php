@@ -132,11 +132,16 @@ class ManagementActionQueryService
             $query->where('branch_id', (int) $filters['branch_id']);
         }
 
-        if (! empty($filters['source_type']) && is_string($filters['source_type'])) {
-            $class = ManagementAction::SOURCE_TYPES[$filters['source_type']] ?? null;
+        $source = $filters['source_type'] ?? null;
 
-            if ($class !== null) {
-                $query->where('source_type', $class);
+        if (is_string($source) && $source !== '') {
+            // `standalone` is the explicit "raised without an intelligence
+            // source" filter added by the Phase 12.4 effectiveness view, so the
+            // detailed record list and the effectiveness metrics always agree.
+            if ($source === 'standalone') {
+                $query->whereNull('source_type');
+            } elseif (isset(ManagementAction::SOURCE_TYPES[$source])) {
+                $query->where('source_type', ManagementAction::SOURCE_TYPES[$source]);
             }
         }
 
