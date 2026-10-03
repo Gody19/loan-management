@@ -79,9 +79,20 @@ class AiChatOrchestrationService
             'trend', 'growth', 'monthly performance', 'over time', 'month over month',
             'month-on-month', 'last 3 months', 'last 6 months', 'last 12 months',
         ],
+        'ai.accounting.income_statement' => [
+            'income statement', 'statement of income', 'profit and loss',
+            'profit & loss', 'p&l', 'revenue and expenditure',
+            'suruhi ya mapato', 'mapato na matumizi',
+        ],
+        'ai.accounting.balance_sheet' => [
+            'balance sheet', 'statement of financial position',
+            'suruhi ya hali', 'hafidhau ya hali',
+        ],
+        'ai.accounting.trial_balance' => [
+            'trial balance', 'faili ya majaribio', 'kumbukumbu ya hesabu',
+        ],
         'ai.accounting.view' => [
-            'income statement', 'profit and loss', 'profit', 'loss', 'net income',
-            'trial balance', 'balance sheet', 'accounting', 'expense', 'expenditure',
+            'accounting', 'expense', 'expenditure',
             'liquidity', 'cash position', 'financial statement',
         ],
         'ai.anomaly.view' => [
@@ -124,6 +135,28 @@ class AiChatOrchestrationService
         'previous_month' => ['previous month', 'last month'],
     ];
 
+    /**
+     * Platform-identity questions. These need no member or organization scope
+     * and no financial record: the answer is the configured identity plus the
+     * capabilities this caller is permitted to use, both read from the server.
+     * They were previously unanswerable from any source and so reached the
+     * model ungrounded, which improvised a general-assistant persona.
+     *
+     * @var string[]
+     */
+    private const IDENTITY = [
+        'who are you', 'who is this', 'what are you', 'what is this',
+        'your name', 'what is your name', 'introduce yourself', 'tell me about yourself',
+        'what can you do', 'what can you help', 'how can you help',
+        'what are you able to do', 'what do you do', 'your capabilities',
+        'what can you tell me', 'what do you know', 'what data can you see',
+        'what can you access',
+        // Swahili
+        'wewe ni nani', 'ni nani', 'jinsi ya kujitambulisha', 'jina lako',
+        'unapaswa kusaidia', 'unaweza kusaidia na', 'unaweza kunisaidia',
+        'wewe ni nini', 'unaweza kufanya nini',
+    ];
+
     public function __construct(
         private readonly AiToolRegistry $registry,
     ) {}
@@ -134,6 +167,18 @@ class AiChatOrchestrationService
 
         if ($text === '') {
             return null;
+        }
+
+        // Identity is checked first and is independent of member/organization
+        // scope: "who are you" must answer even when no member record is linked
+        // and no organization-level intelligence permission is held.
+        if ($this->hasAny($text, self::IDENTITY)) {
+            return $this->planFor(
+                'ai.identity.view',
+                'the FinancePro Assistance identity and your permitted capabilities',
+                [],
+                $context,
+            );
         }
 
         if ($context->memberId !== null) {
@@ -161,7 +206,7 @@ class AiChatOrchestrationService
         $memberNumber = (string) $member->member_number;
 
         // Repayment information — resolved to the member's most recent loan.
-        if ($this->hasAny($text, ['repay'])) {
+        if ($this->hasAny($text, ['repay', 'malipo', 'nili lipa', 'ulipo'])) {
             $plan = $this->repaymentPlan($context, $member, $memberNumber);
 
             if ($plan !== null) {
@@ -178,7 +223,7 @@ class AiChatOrchestrationService
             );
         }
 
-        if ($this->hasAny($text, ['financial summary', 'my finances', 'my money', 'my balance', 'my balances', 'my totals', 'my accounts'])) {
+        if ($this->hasAny($text, ['financial summary', 'my finances', 'my money', 'my balance', 'my balances', 'my totals', 'my accounts', 'muhtasari wa kifedha', 'fedha zangu', 'aka yangu kifedha'])) {
             return $this->planFor(
                 'ai.member.financial_summary',
                 'your financial summary',
@@ -187,7 +232,7 @@ class AiChatOrchestrationService
             );
         }
 
-        if ($this->hasAny($text, ['saving'])) {
+        if ($this->hasAny($text, ['saving', 'akiba'])) {
             return $this->planFor(
                 'ai.member.savings_summary',
                 'your savings information',
@@ -196,7 +241,7 @@ class AiChatOrchestrationService
             );
         }
 
-        if (preg_match('/\bshares?\b/', $text) === 1) {
+        if ($this->hasAny($text, ['share', 'hisa'])) {
             return $this->planFor(
                 'ai.member.share_summary',
                 'your share information',
@@ -205,10 +250,23 @@ class AiChatOrchestrationService
             );
         }
 
-        if (str_contains($text, 'welfare')) {
+        if ($this->hasAny($text, ['welfare', 'wafadhili', 'kijamii'])) {
             return $this->planFor(
                 'ai.member.welfare_summary',
                 'your welfare information',
+                ['member_number' => $memberNumber],
+                $context,
+            );
+        }
+
+        // Profile questions are evaluated last so a more specific financial
+        // intent above always wins. ai.member.view was previously registered but
+        // never planned, so a plain "what does my profile say" reached the model
+        // with no authoritative context at all.
+        if ($this->hasAny($text, ['my profile', 'my details', 'about me', 'my record', 'my membership', 'aka yangu', 'taarifa za aka'])) {
+            return $this->planFor(
+                'ai.member.view',
+                'your member profile',
                 ['member_number' => $memberNumber],
                 $context,
             );
@@ -231,6 +289,9 @@ class AiChatOrchestrationService
             'ai.collection.view' => 'collection summary',
             'ai.trend.view' => 'trend series',
             'ai.accounting.view' => 'accounting summary',
+            'ai.accounting.income_statement' => 'the income statement',
+            'ai.accounting.balance_sheet' => 'the balance sheet',
+            'ai.accounting.trial_balance' => 'the trial balance',
             'ai.anomaly.view' => 'anomaly findings',
             'ai.predictive.view' => 'predictive intelligence outlook',
             'ai.insights.view' => 'proactive insights and alerts',
@@ -319,7 +380,9 @@ class AiChatOrchestrationService
      */
     protected function loanIntent(string $text): bool
     {
-        if (str_contains($text, 'loan')) {
+        // "mkopo"/"mikopo" is the Swahili equivalent of "loan"; matching the
+        // stem covers singular and plural without a language-specific branch.
+        if (str_contains($text, 'loan') || str_contains($text, 'mkopo')) {
             // Organization-level intelligence phrases (Phase 11.7) are not a
             // member "loan information" request — "loan portfolio" and
             // "portfolio at risk" must reach the org planning stage.

@@ -18,6 +18,7 @@ use App\Enums\AiMessageRole;
 final class AiKnowledgeResultFormatter
 {
     public const OPEN_BLOCK = '<FINANCEPRO_KNOWLEDGE>';
+
     public const CLOSE_BLOCK = '</FINANCEPRO_KNOWLEDGE>';
 
     /**
@@ -26,12 +27,19 @@ final class AiKnowledgeResultFormatter
     public static function format(array $results): AiMessageData
     {
         if ($results === []) {
+            // Callers should prefer AiDomainInstructionService::grounding(),
+            // which carries the directive for the specific question type. This
+            // is the safe generic fallback for any remaining caller: it must
+            // not invite free-form prose, which is what previously produced
+            // ungrounded, invented FinancePro answers.
             return new AiMessageData(
                 AiMessageRole::System,
-                'No relevant approved FinancePro knowledge was found for the question. '
-                .'Do not invent policies, rates, or procedures. Keep the answer '
-                .'conversational and say the information is not available in approved '
-                .'FinancePro knowledge.'
+                'No approved FinancePro knowledge was retrieved for this question. '
+                .'Do not answer it from general knowledge: do not invent, infer or '
+                .'describe policies, rates, procedures, criteria or figures. State '
+                .'that the information is not available in approved FinancePro '
+                .'knowledge, and point the user to the official FinancePro '
+                .'documentation for this topic.'
             );
         }
 

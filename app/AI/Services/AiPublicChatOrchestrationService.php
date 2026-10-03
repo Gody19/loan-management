@@ -40,6 +40,8 @@ class AiPublicChatOrchestrationService
         private readonly AiConversationService $conversations,
         private readonly AiKnowledgeRetrievalService $knowledge,
         private readonly AuditService $audit,
+        private readonly AiIntentClassifier $classifier,
+        private readonly AiDomainInstructionService $domain,
     ) {}
 
     /**
@@ -105,7 +107,18 @@ class AiPublicChatOrchestrationService
 
         $history = $this->conversations->history($conversation, $limit);
 
-        $instructions = trim((string) config('ai.system_instructions', ''));
+        // The visitor's own latest message drives response-language detection.
+        $latest = null;
+
+        for ($index = count($history) - 1; $index >= 0; $index--) {
+            if ($history[$index]->role === AiMessageRole::User) {
+                $latest = $history[$index]->content;
+                break;
+            }
+        }
+
+        $instructions = $this->domain->base($latest)
+            ?: trim((string) config('ai.system_instructions', ''));
         $publicInstructions = trim((string) config('ai.public_system_instructions', ''));
 
         $context = array_values(array_filter(
@@ -132,8 +145,10 @@ class AiPublicChatOrchestrationService
 
     /**
      * Optional, public-only knowledge context for the question. Never throws:
-     * unauthorized, unavailable, or irrelevant retrieval just means the public
-     * assistant answers conversationally from its system instructions.
+     * unauthorized, unavailable, or irrelevant retrieval injects the matching
+     * no-fabrication directive instead, so a visitor question is never answered
+     * from general knowledge merely because no public document happened to
+     * match.
      *
      * @return AiMessageData[]
      */
@@ -143,12 +158,26 @@ class AiPublicChatOrchestrationService
             $results = $this->knowledge->searchPublic($message);
 
             if ($results === []) {
-                return [];
+                return $this->ungrounded($message);
             }
 
             return [AiKnowledgeResultFormatter::format($results)];
         } catch (Throwable) {
+            return $this->ungrounded($message);
+        }
+    }
+
+    /**
+     * @return AiMessageData[]
+     */
+    protected function ungrounded(string $message): array
+    {
+        $directive = $this->domain->grounding($this->classifier->classify($message));
+
+        if ($directive === '') {
             return [];
         }
+
+        return [new AiMessageData(AiMessageRole::System, $directive)];
     }
 }

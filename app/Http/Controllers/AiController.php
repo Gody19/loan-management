@@ -9,14 +9,17 @@ use App\AI\Exceptions\AiUnavailableException;
 use App\AI\Policies\AiToolPolicy;
 use App\AI\Services\AiChatOrchestrationService;
 use App\AI\Services\AiConversationService;
+use App\AI\Services\AiDomainInstructionService;
 use App\AI\Services\AiGuardrailService;
 use App\AI\Services\AiInsightResultFormatter;
+use App\AI\Services\AiIntentClassifier;
 use App\AI\Services\AiKnowledgeResultFormatter;
 use App\AI\Services\AiKnowledgeRetrievalService;
 use App\AI\Services\AiPredictionResultFormatter;
 use App\AI\Services\AiToolRegistry;
 use App\AI\Services\AiToolResultFormatter;
 use App\AI\Services\AiToolRunnerService;
+use App\Enums\AiMessageRole;
 use App\Models\AiConversation;
 use App\Models\AiFeedback;
 use App\Models\User;
@@ -46,6 +49,8 @@ class AiController extends Controller
         private readonly AiToolRegistry $registry,
         private readonly AiChatOrchestrationService $orchestrator,
         private readonly AiKnowledgeRetrievalService $knowledge,
+        private readonly AiIntentClassifier $classifier,
+        private readonly AiDomainInstructionService $domain,
     ) {}
 
     protected function ensureAvailable(): bool
@@ -448,7 +453,10 @@ class AiController extends Controller
             return [$this->formatResult($plan->capability, $result)];
         } catch (AiToolException $exception) {
             if (in_array($exception->category, ['unauthorized', 'not_found'], true)) {
-                return [];
+                // Deliberately identical to a plain miss: nothing about whether
+                // the record exists is disclosed. The grounding directive only
+                // states that no authoritative data was retrieved.
+                return $this->ungrounded($message);
             }
 
             return [AiToolResultFormatter::failure($plan->label, $exception->category)];
@@ -462,10 +470,11 @@ class AiController extends Controller
      * is injected as a delimited, read-only System message (never persisted).
      *
      * Permission, tenant scope, top-K and the similarity floor are all
-     * enforced server-side inside AiKnowledgeRetrievalService. Unauthorized or
-     * unavailable retrieval falls through to plain conversation, and when no
-     * relevant knowledge is found nothing is injected at all — the system
-     * instructions already forbid inventing policies or figures.
+     * enforced server-side inside AiKnowledgeRetrievalService. When nothing
+     * authoritative is available the question is NOT handed to the provider
+     * unconstrained: a type-specific grounding directive is injected instead,
+     * which is what stops a FinancePro question from being answered from
+     * general knowledge.
      *
      * @return AiMessageData[]
      */
@@ -473,19 +482,41 @@ class AiController extends Controller
     {
         try {
             if (! $context->hasPermission('ai.knowledge.search')) {
-                return [];
+                return $this->ungrounded($message);
             }
 
             $results = $this->knowledge->search($context, $message);
 
             if ($results === []) {
-                return [];
+                return $this->ungrounded($message);
             }
 
             return [AiKnowledgeResultFormatter::format($results)];
         } catch (AiToolException) {
+            return $this->ungrounded($message);
+        }
+    }
+
+    /**
+     * The correction for the silent fall-through: a question that produced no
+     * authoritative FinancePro source is never answered from general
+     * knowledge. The question type is classified server-side, and the matching
+     * directive forbids inventing figures, policies or steps for it.
+     *
+     * The directive reveals nothing about authorization, tenant scope or record
+     * existence — it only constrains how the model may answer.
+     *
+     * @return AiMessageData[]
+     */
+    protected function ungrounded(string $message): array
+    {
+        $directive = $this->domain->grounding($this->classifier->classify($message));
+
+        if ($directive === '') {
             return [];
         }
+
+        return [new AiMessageData(AiMessageRole::System, $directive)];
     }
 
     /**

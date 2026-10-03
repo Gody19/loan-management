@@ -4,12 +4,15 @@ namespace App\AI\Services;
 
 use App\AI\Contracts\AiToolInterface;
 use App\AI\Tools\AccountingSummaryTool;
+use App\AI\Tools\BalanceSheetTool;
 use App\AI\Tools\CollateralRequirementTool;
 use App\AI\Tools\CollectionSummaryTool;
 use App\AI\Tools\DelinquencySummaryTool;
 use App\AI\Tools\FinancialAnomalyTool;
 use App\AI\Tools\FinancialTrendTool;
 use App\AI\Tools\GuarantorEligibilityTool;
+use App\AI\Tools\IdentityTool;
+use App\AI\Tools\IncomeStatementTool;
 use App\AI\Tools\IntelligenceReportTool;
 use App\AI\Tools\KnowledgeSearchTool;
 use App\AI\Tools\LoanApplicationViewTool;
@@ -25,6 +28,7 @@ use App\AI\Tools\PredictiveInsightTool;
 use App\AI\Tools\ProactiveInsightsTool;
 use App\AI\Tools\SavingsSummaryTool;
 use App\AI\Tools\ShareSummaryTool;
+use App\AI\Tools\TrialBalanceTool;
 use App\AI\Tools\WelfareSummaryTool;
 
 /**
@@ -80,6 +84,13 @@ class AiToolRegistry
             'arguments' => ['conversation_id' => 'integer'],
             'handler' => NullTool::class,
             'description' => 'Continue an AI chat conversation.',
+        ],
+        'ai.identity.view' => [
+            'permissions' => ['ai.use'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => [],
+            'handler' => IdentityTool::class,
+            'description' => 'Read the FinancePro Assistance platform identity and the list of AI capabilities the signed-in caller is currently permitted to use.',
         ],
         'ai.member.view' => [
             'permissions' => ['ai.member.view'],
@@ -225,6 +236,27 @@ class AiToolRegistry
             'arguments' => [],
             'handler' => AccountingSummaryTool::class,
             'description' => 'Read the accounting summary of the user\'s organizations: income, expenses, trial-balance integrity and liquid position from the authoritative reports.',
+        ],
+        'ai.accounting.income_statement' => [
+            'permissions' => ['ai.accounting.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['from' => 'string', 'to' => 'string'],
+            'handler' => IncomeStatementTool::class,
+            'description' => 'Read the full income statement for the user\'s organizations, line by line, from the authoritative FinancePro accounting reports.',
+        ],
+        'ai.accounting.balance_sheet' => [
+            'permissions' => ['ai.accounting.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['as_of' => 'string'],
+            'handler' => BalanceSheetTool::class,
+            'description' => 'Read the full balance sheet for the user\'s organizations, line by line, from the authoritative FinancePro accounting reports.',
+        ],
+        'ai.accounting.trial_balance' => [
+            'permissions' => ['ai.accounting.view'],
+            'scope' => self::SCOPE_USER_ORG,
+            'arguments' => ['from' => 'string', 'to' => 'string'],
+            'handler' => TrialBalanceTool::class,
+            'description' => 'Read the trial balance for the user\'s organizations, including the debit/credit integrity check, from the authoritative FinancePro accounting reports.',
         ],
         'ai.anomaly.view' => [
             'permissions' => ['ai.anomaly.view'],

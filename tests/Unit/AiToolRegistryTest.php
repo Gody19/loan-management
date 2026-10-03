@@ -43,7 +43,7 @@ class AiToolRegistryTest extends TestCase
         }
 
         $this->assertSame(
-            22,
+            26,
             count($this->registry->businessCapabilities()),
         );
     }

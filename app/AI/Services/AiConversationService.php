@@ -27,6 +27,7 @@ class AiConversationService
     public function __construct(
         private readonly AiProviderService $providerService,
         private readonly AuditService $audit,
+        private readonly AiDomainInstructionService $domain,
     ) {}
 
     /**
@@ -377,8 +378,15 @@ class AiConversationService
     }
 
     /**
-     * Prepend the configured system instruction when present, followed by any
-     * caller-supplied system context (e.g. tool results), then the history.
+     * Prepend the assistant's domain contract, followed by any caller-supplied
+     * system context (e.g. tool results or a grounding directive), then the
+     * history.
+     *
+     * The composed contract is the single place the assistant learns its
+     * identity, the source-of-truth hierarchy and its language, so every
+     * channel — web chat, the public landing-page assistant, and any future
+     * voice channel — is grounded identically because they all reach the
+     * provider through here.
      *
      * @param  AiMessageData[]  $messages
      * @param  AiMessageData[]  $systemContext
@@ -386,7 +394,8 @@ class AiConversationService
      */
     protected function withSystemInstruction(array $messages, array $systemContext = []): array
     {
-        $instructions = trim((string) config('ai.system_instructions', ''));
+        $instructions = $this->domain->base($this->instructingMessage($messages))
+            ?: trim((string) config('ai.system_instructions', ''));
 
         $context = array_values(array_filter(
             $systemContext,
@@ -405,6 +414,25 @@ class AiConversationService
         }
 
         return array_merge($context, $messages);
+    }
+
+    /**
+     * The user's own latest message, used only to resolve the response
+     * language. Reads the history the caller already built — never the
+     * conversation record, and never a system or tool-result message, so a
+     * retrieved document can never influence language detection.
+     *
+     * @param  AiMessageData[]  $messages
+     */
+    protected function instructingMessage(array $messages): ?string
+    {
+        for ($index = count($messages) - 1; $index >= 0; $index--) {
+            if ($messages[$index]->role === AiMessageRole::User) {
+                return $messages[$index]->content;
+            }
+        }
+
+        return null;
     }
 
     /**
