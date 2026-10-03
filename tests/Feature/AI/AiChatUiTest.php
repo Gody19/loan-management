@@ -169,6 +169,101 @@ class AiChatUiTest extends AiTestCase
         $this->assertStringContainsString('textContent = text', $html);
     }
 
+    public function test_chat_history_is_not_a_nested_scroll_region(): void
+    {
+        $org = $this->makeOrganization();
+        $this->actingAs($this->staff($org, 'Loan Officer'));
+
+        $html = $this->get('/ai')->assertOk()->getContent();
+
+        // The sidebar history grows with the page instead of scrolling inside
+        // its own 60vh box, so the "..." dropdown is never clipped by it.
+        $this->assertStringContainsString('.ai-conv-list {', $html);
+        $this->assertStringNotContainsString('.ai-conv-list {
+            max-height: 60vh;', $html);
+
+        // The message thread stays scrollable but renders no scrollbar chrome,
+        // via the existing .no-scrollbar utility.
+        $this->assertStringContainsString('class="card-body ai-messages no-scrollbar"', $html);
+    }
+
+    public function test_options_menu_is_pinned_to_one_fixed_spot(): void
+    {
+        $org = $this->makeOrganization();
+        $this->actingAs($this->staff($org, 'Loan Officer'));
+
+        $html = $this->get('/ai')->assertOk()->getContent();
+
+        // The title must be able to shrink and truncate, otherwise a long chat
+        // title pushes the "..." trigger sideways.
+        $this->assertStringContainsString(
+            '.ai-conv-row .ai-conv-item { flex: 1 1 0; min-width: 0;',
+            $html,
+        );
+
+        // The trigger occupies a fixed-width slot and is centred in it, so the
+        // dots always sit in the same place regardless of title length.
+        $this->assertStringContainsString('.ai-conv-menu { position: relative; flex: 0 0 auto; width: 2rem; }', $html);
+        $this->assertStringContainsString('justify-content: center;', $html);
+
+        // Revealed on row hover / keyboard focus, and always visible on touch.
+        $this->assertStringContainsString('.ai-conv-row:hover .ai-conv-menu-trigger', $html);
+        $this->assertStringContainsString('@media (hover: none)', $html);
+    }
+
+    public function test_conversation_row_uses_an_options_menu_instead_of_a_delete_button(): void
+    {
+        $org = $this->makeOrganization();
+        $this->actingAs($this->staff($org, 'Loan Officer'));
+
+        $html = $this->get('/ai')->assertOk()->getContent();
+
+        // ChatGPT-style per-chat "..." trigger, hidden until hover/focus.
+        $this->assertStringContainsString('ai-conv-menu-trigger', $html);
+        $this->assertStringContainsString('bi-three-dots-vertical', $html);
+        $this->assertStringContainsString("setAttribute('aria-haspopup', 'true')", $html);
+        $this->assertStringContainsString("setAttribute('aria-expanded', 'false')", $html);
+        $this->assertStringContainsString("setAttribute('role', 'menu')", $html);
+
+        // The menu is built on demand and closed by Escape or an outside click.
+        $this->assertStringContainsString('.ai-conv-menu-panel[hidden] { display: none; }', $html);
+        $this->assertStringContainsString("event.key === 'Escape'", $html);
+        $this->assertStringContainsString('closeAnyOpenMenu(null);', $html);
+
+        // The old always-visible trash button is gone.
+        $this->assertStringNotContainsString('ai-conv-delete', $html);
+
+        // Built with createElement/textContent only, so a conversation title
+        // can never inject markup into the list.
+        $this->assertStringNotContainsString('innerHTML', $html);
+    }
+
+    public function test_options_menu_exposes_rename_and_delete_actions(): void
+    {
+        $org = $this->makeOrganization();
+        $this->actingAs($this->staff($org, 'Loan Officer'));
+
+        $html = $this->get('/ai')->assertOk()->getContent();
+
+        $this->assertStringContainsString("addEl(panel, 'button', 'ai-conv-menu-item', 'Rename')", $html);
+        $this->assertStringContainsString('ai-conv-menu-danger', $html);
+        $this->assertStringContainsString('Delete chat', $html);
+        $this->assertStringContainsString('renameConversation(item);', $html);
+        $this->assertStringContainsString('deleteConversation(item.id);', $html);
+    }
+
+    public function test_chat_ui_wires_the_rename_endpoint(): void
+    {
+        $org = $this->makeOrganization();
+        $this->actingAs($this->staff($org, 'Loan Officer'));
+
+        $html = $this->get('/ai')->assertOk()->getContent();
+
+        $this->assertStringContainsString('updateTmpl:', $html);
+        $this->assertStringContainsString("method: 'PATCH'", $html);
+        $this->assertStringContainsString('body: JSON.stringify({ title: next })', $html);
+    }
+
     public function test_conversation_list_page_renders_empty_state_for_new_member(): void
     {
         $org = $this->makeOrganization();

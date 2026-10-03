@@ -29,8 +29,9 @@
 
     <style>
         .ai-conv-list {
-            max-height: 60vh;
-            overflow-y: auto;
+            /* No nested scroll region: the history grows with the page so the
+               sidebar behaves like a plain list, not a second viewport. */
+            overflow: visible;
         }
         .ai-conv-item {
             width: 100%;
@@ -41,16 +42,65 @@
             padding: 0.5rem 0.625rem;
         }
         .ai-conv-row { display: flex; align-items: center; }
-        .ai-conv-row .ai-conv-item { flex: 1 1 auto; width: auto; border-radius: 0.5rem 0 0 0.5rem; }
-        .ai-conv-delete {
+        /* flex-basis 0 + min-width 0 let the title shrink and truncate, which
+           pins the "..." trigger to one fixed spot regardless of title length. */
+        .ai-conv-row .ai-conv-item { flex: 1 1 0; min-width: 0; width: auto; border-radius: 0.5rem; }
+        /* ChatGPT-style per-chat "..." menu: the trigger stays out of the way
+           until the row is hovered or the trigger itself is focused. */
+        .ai-conv-menu { position: relative; flex: 0 0 auto; width: 2rem; }
+        .ai-conv-menu-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
             border: 0;
             background: transparent;
             color: #adb5bd;
             padding: 0.375rem 0.5rem;
-            border-radius: 0 0.5rem 0.5rem 0;
+            border-radius: 0.5rem;
+            line-height: 1;
+            opacity: 0;
+            transition: opacity 0.15s ease;
         }
-        .ai-conv-delete:hover { color: #dc3545; background: rgba(220, 53, 69, 0.08); }
-        .ai-conv-delete:focus-visible { outline: 2px solid #dc3545; outline-offset: -2px; }
+        .ai-conv-row:hover .ai-conv-menu-trigger,
+        .ai-conv-menu-trigger:focus-visible,
+        .ai-conv-menu.open .ai-conv-menu-trigger { opacity: 1; }
+        .ai-conv-menu-trigger:hover { background: rgba(13, 110, 253, 0.08); color: #212529; }
+        .ai-conv-menu-trigger:focus-visible { outline: 2px solid #0d6efd; outline-offset: -2px; }
+        .ai-conv-menu-panel {
+            position: absolute;
+            top: calc(100% + 0.25rem);
+            inset-inline-end: 0;
+            z-index: 1050;
+            min-width: 11rem;
+            padding: 0.25rem;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.12);
+        }
+        .ai-conv-menu-panel[hidden] { display: none; }
+        .ai-conv-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            width: 100%;
+            border: 0;
+            background: transparent;
+            text-align: start;
+            padding: 0.4rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.8125rem;
+            color: #212529;
+        }
+        .ai-conv-menu-item:hover { background: #f1f3f5; }
+        .ai-conv-menu-item:focus-visible { outline: 2px solid #0d6efd; outline-offset: -2px; }
+        .ai-conv-menu-item.ai-conv-menu-danger { color: #dc3545; }
+        .ai-conv-menu-item.ai-conv-menu-danger:hover { background: rgba(220, 53, 69, 0.08); }
+        /* Touch devices have no hover, so the trigger is always visible there. */
+        @media (hover: none) {
+            .ai-conv-menu-trigger { opacity: 1; }
+        }
         .ai-conv-item:hover { background: rgba(13, 110, 253, 0.06); }
         .ai-conv-item:focus-visible { outline: 2px solid #0d6efd; outline-offset: -2px; }
         .ai-conv-item.active { background: rgba(13, 110, 253, 0.12); }
@@ -106,7 +156,7 @@
                         </button>
                     </div>
                     <div class="card-body p-2">
-                        <div id="aiConversationList" class="ai-conv-list" role="list" aria-label="Previous conversations">
+                        <div id="aiConversationList" class="ai-conv-list no-scrollbar" role="list" aria-label="Previous conversations">
                             <div id="aiConversationLoading" class="text-center text-muted small py-4">
                                 <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading conversations...
                             </div>
@@ -123,7 +173,7 @@
                     <h6 class="mb-0 fw-semibold"><i class="bi bi-stars me-2 text-primary"></i>AI Assistant</h6>
                 </div>
 
-                <div class="card-body ai-messages" id="aiMessages" aria-live="polite">
+                <div class="card-body ai-messages no-scrollbar" id="aiMessages" aria-live="polite">
 
                     {{-- Empty state (no conversation selected / brand new chat) --}}
                     <div id="aiEmptyState" class="d-flex align-items-center justify-content-center h-100 py-4">
@@ -209,6 +259,7 @@
                 listUrl: @json(route('ai.conversations.index')),
                 showTmpl: @json(route('ai.conversations.show', '__ID__')),
                 deleteTmpl: @json(route('ai.conversations.destroy', '__ID__')),
+                updateTmpl: @json(route('ai.conversations.update', '__ID__')),
                 chatUrl: @json(($guest ?? false) ? route('ai.chat.guest') : route('ai.chat')),
                 feedbackUrl: @json(route('ai.feedback.store')),
                 canGiveFeedback: @json((! ($guest ?? false)) && auth()->check() && auth()->user()->can('ai.feedback.submit')),
@@ -238,6 +289,40 @@
                 currentId: null,
                 sending: false
             };
+
+            /**
+             * Keeps at most one "..." panel open: opening a panel closes any
+             * other one, and a click or Escape anywhere else closes the lot.
+             */
+            function closeAnyOpenMenu(keep) {
+                Array.prototype.forEach.call(document.querySelectorAll('.ai-conv-menu.open'), function (node) {
+                    if (keep && node.contains(keep)) {
+                        return;
+                    }
+                    var panel = node.querySelector('.ai-conv-menu-panel');
+                    var trigger = node.querySelector('.ai-conv-menu-trigger');
+                    if (panel) {
+                        panel.hidden = true;
+                        panel.replaceChildren();
+                    }
+                    if (trigger) {
+                        trigger.setAttribute('aria-expanded', 'false');
+                    }
+                    node.classList.remove('open');
+                });
+            }
+
+            document.addEventListener('click', function (event) {
+                if (!event.target.closest || !event.target.closest('.ai-conv-menu')) {
+                    closeAnyOpenMenu(null);
+                }
+            });
+
+            document.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    closeAnyOpenMenu(null);
+                }
+            });
 
             function csrf() {
                 var meta = document.querySelector('meta[name="csrf-token"]');
@@ -512,6 +597,89 @@
                 });
             }
 
+            /**
+* ChatGPT-style per-chat "..." menu. The panel is built with
+             * createElement/textContent only — never by assigning a raw HTML
+             * string — so a conversation title can never inject markup.
+             */
+            function buildConversationMenu(item, onOpen) {
+                var wrap = document.createElement('div');
+                wrap.className = 'ai-conv-menu';
+
+                var trigger = document.createElement('button');
+                trigger.type = 'button';
+                trigger.className = 'ai-conv-menu-trigger';
+                trigger.setAttribute('aria-label', 'Chat options');
+                trigger.setAttribute('title', 'Chat options');
+                trigger.setAttribute('aria-haspopup', 'true');
+                trigger.setAttribute('aria-expanded', 'false');
+
+                var triggerIcon = document.createElement('i');
+                triggerIcon.className = 'bi bi-three-dots-vertical';
+                triggerIcon.setAttribute('aria-hidden', 'true');
+                trigger.appendChild(triggerIcon);
+
+                var panel = document.createElement('div');
+                panel.className = 'ai-conv-menu-panel';
+                panel.setAttribute('role', 'menu');
+                panel.hidden = true;
+
+                function closeMenu() {
+                    if (panel.hidden) {
+                        return;
+                    }
+                    panel.hidden = true;
+                    panel.replaceChildren();
+                    wrap.classList.remove('open');
+                    trigger.setAttribute('aria-expanded', 'false');
+                }
+
+                function openMenu() {
+                    panel.replaceChildren();
+
+                    addEl(panel, 'button', 'ai-conv-menu-item', 'Rename').addEventListener('click', function () {
+                        closeMenu();
+                        renameConversation(item);
+                    });
+
+                    addEl(panel, 'button', 'ai-conv-menu-item ai-conv-menu-danger', 'Delete chat')
+                        .addEventListener('click', function () {
+                            closeMenu();
+                            deleteConversation(item.id);
+                        });
+
+                    panel.hidden = false;
+                    wrap.classList.add('open');
+                    trigger.setAttribute('aria-expanded', 'true');
+                    closeAnyOpenMenu(panel);
+                }
+
+                trigger.addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    if (panel.hidden) {
+                        openMenu();
+                    } else {
+                        closeMenu();
+                    }
+                });
+
+                // Escape closes and returns focus to the trigger; Tab-out closes.
+                panel.addEventListener('keydown', function (event) {
+                    if (event.key === 'Escape') {
+                        event.stopPropagation();
+                        closeMenu();
+                        trigger.focus();
+                    } else if (event.key === 'Tab') {
+                        closeMenu();
+                    }
+                });
+
+                wrap.appendChild(trigger);
+                wrap.appendChild(panel);
+
+                return wrap;
+            }
+
             function renderConversationList(items) {
                 el.list.replaceChildren();
 
@@ -548,24 +716,12 @@
                         openConversation(item.id);
                     });
 
-                    var del = document.createElement('button');
-                    del.type = 'button';
-                    del.className = 'ai-conv-delete';
-                    del.setAttribute('aria-label', 'Delete this chat');
-                    del.setAttribute('title', 'Delete chat');
-
-                    var delIcon = document.createElement('i');
-                    delIcon.className = 'bi bi-trash';
-                    delIcon.setAttribute('aria-hidden', 'true');
-                    del.appendChild(delIcon);
-
-                    del.addEventListener('click', function (event) {
-                        event.stopPropagation();
-                        deleteConversation(item.id);
+                    var menu = buildConversationMenu(item, function () {
+                        openConversation(item.id);
                     });
 
                     row.appendChild(button);
-                    row.appendChild(del);
+                    row.appendChild(menu);
                     el.list.appendChild(row);
                 });
 
@@ -631,6 +787,64 @@
                 setStatus('');
                 el.input.value = '';
                 el.input.focus();
+            }
+
+            /**
+             * Renames a conversation. The prompt value is sent as JSON and the
+             * server normalizes and length-checks it; the browser never trusts
+             * its own input as the stored title.
+             */
+            function renameConversation(item) {
+                var current = (item.title || '').trim();
+                var next = window.prompt('Rename this chat', current);
+
+                if (next === null) {
+                    return;
+                }
+
+                next = next.trim();
+
+                if (next === '' || next === current) {
+                    return;
+                }
+
+                clearError();
+                setStatus('Renaming chat...');
+
+                fetch(ENDPOINTS.updateTmpl.replace('__ID__', window.encodeURIComponent(String(item.id))), {
+                    method: 'PATCH',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrf(),
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({ title: next })
+                }).then(function (response) {
+                    return response.json().then(function (payload) {
+                        return { ok: response.ok, status: response.status, payload: payload };
+                    });
+                }).then(function (result) {
+                    if (result.ok && result.payload && result.payload.data) {
+                        item.title = result.payload.data.title;
+                        setStatus('Chat renamed.');
+                        refreshConversations();
+                        return;
+                    }
+                    if (result.status === 401) {
+                        redirectLogin();
+                        return;
+                    }
+                    if (result.status === 403) {
+                        showError('You can only rename chats you own.');
+                        return;
+                    }
+                    setStatus('');
+                    showError(httpMessage(result.status, result.payload));
+                }).catch(function () {
+                    setStatus('');
+                    showError('The chat could not be renamed. Please try again.');
+                });
             }
 
             function deleteConversation(id) {
