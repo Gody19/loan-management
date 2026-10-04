@@ -190,6 +190,17 @@ return [
 
         'model' => env('AI_EMBEDDING_MODEL', 'text-embedding-3-small'),
 
+        // Read from the environment like the chat providers so the embedding
+        // provider can target a custom OpenAI-compatible endpoint (a local
+        // Ollama server, for example) instead of always assuming api.openai.com.
+        // These keys were previously absent here, which made
+        // AI_EMBEDDING_PROVIDER=openai unusable against any custom base URL.
+        'api_key' => env('AI_EMBEDDING_API_KEY', env('OPENAI_API_KEY')),
+
+        'base_url' => env('AI_EMBEDDING_BASE_URL', env('OPENAI_BASE_URL', 'https://api.openai.com/v1')),
+
+        // Must match the dimensionality the configured model actually returns:
+        // AiEmbeddingProvider validates every vector length against this value.
         'dimensions' => (int) env('AI_EMBEDDING_DIMENSIONS', 256),
 
         'timeout' => (int) env('AI_EMBEDDING_TIMEOUT', 30),
