@@ -15,9 +15,7 @@
 
 @section('content')
 
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-        <form method="POST" action="{{ route('organizations.store') }}" data-validate>
+<form method="POST" action="{{ route('organizations.store') }}" data-validate>
             @csrf
 
             {{-- Organization Information --}}
@@ -206,8 +204,6 @@
                 </a>
             </div>
         </form>
-    </div>
-</div>
 
 @endsection
 

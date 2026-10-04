@@ -77,14 +77,55 @@ class AiPublicKnowledgeSeeder extends Seeder
                 'type' => AiKnowledgeDocumentType::LoanPolicy,
                 'description' => 'Loan lifecycle: plans, eligibility, application, approval, disbursement, repayment.',
                 'content' => 'Loans in FinancePro follow the configured loan plans. Staff create and activate '
-                    .'loan plans that set repayment terms and interest behaviour. A member checks eligibility '
-                    .'against a plan (which considers the member\'s savings and guarantees), then submits a '
-                    .'loan application. Applications can add guarantors and collateral, upload supporting '
+                    .'loan plans that set repayment terms and interest behaviour. A member checks '
+                    .'eligibility against a chosen plan for a requested amount and term; the eligibility '
+                    .'checks cover membership status, plan status, the amount and term ranges and the '
+                    .'member\'s existing active loans. A member then submits a loan application. '
+                    .'Applications can add guarantors and collateral, upload supporting '
                     .'documents, and move through the organization\'s approval levels before being approved '
                     .'or rejected. Approved applications become loans which staff disburse. Repayments are '
                     .'recorded against the loan through the member\'s schedule or by staff collecting on the '
                     .'member\'s behalf; posted records are tracked separately from reversed ones. FinancePro '
                     .'reports delinquency so groups can follow up overdue loans.',
+            ],
+            [
+                'title' => 'How a member checks loan eligibility in FinancePro',
+                'type' => AiKnowledgeDocumentType::Procedure,
+                'description' => 'Where the eligibility check lives in the member portal and what it checks.',
+                'content' => 'In the FinancePro member portal, use the Loans section of the sidebar. '
+                    .'"My Loans" lists every loan plan that is active for your organization, together with '
+                    .'your existing loan applications, your active loans and your completed loans. Open a '
+                    .'plan with "View Details" to see the plan\'s requirements and an eligibility summary '
+                    .'for that plan. A dedicated Eligibility Check page is available for each plan: it '
+                    .'takes a requested amount and a term in months and shows whether you are eligible, '
+                    .'listing each eligibility check and the reasons for any failure. '
+                    .'Eligibility is evaluated by the system against your membership status, whether the '
+                    .'plan is active, whether the requested amount falls inside the plan\'s minimum and '
+                    .'maximum, whether the requested term falls inside the plan\'s minimum and maximum '
+                    .'term, and how many loans you already have active. A member who already has an '
+                    .'active loan must have repaid at least 85 percent of it. Eligibility does not '
+                    .'depend on savings, shares or welfare balances. If you are eligible you continue to '
+                    .'the application form for that plan, where you enter the requested amount, the term, '
+                    .'the loan purpose and a description of the purpose, then save the application as a '
+                    .'draft. From your Loan Applications page you can add guarantors, add collateral and '
+                    .'upload supporting documents, and then submit the application. Submitted '
+                    .'applications move through your organization\'s approval levels before being approved '
+                    .'or rejected.',
+            ],
+            [
+                'title' => 'What determines FinancePro loan eligibility',
+                'type' => AiKnowledgeDocumentType::LoanPolicy,
+                'description' => 'The eligibility checks FinancePro actually performs.',
+                'content' => 'FinancePro evaluates loan eligibility with five checks and no others. '
+                    .'First, the member\'s membership status must be active. Second, the loan plan must be '
+                    .'active. Third, the requested amount must fall within the plan\'s minimum and maximum '
+                    .'amount. Fourth, the requested term in months must fall within the plan\'s minimum and '
+                    .'maximum term. Fifth, the member must not exceed the plan\'s limit on active loans, '
+                    .'and any loan the member already has active must be at least 85 percent repaid. '
+                    .'Eligibility is not calculated from savings, share or welfare balances, and it is not '
+                    .'affected by whether a previous application is still in draft, submitted or under '
+                    .'review. Guarantor and collateral requirements are separate from eligibility: they '
+                    .'are set by the loan plan and are collected while preparing an application.',
             ],
             [
                 'title' => 'Savings, shares and welfare accounts',

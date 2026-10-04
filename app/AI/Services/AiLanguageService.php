@@ -33,6 +33,12 @@ class AiLanguageService
     private const SWAHILI_MARKERS = [
         'question_words' => [
             'nini', 'gani', 'vipi', 'wapi', 'nani', 'lini', 'kwa nini',
+            // Interrogative -aje forms: "nawezaje", "ninawezaje", "nitajuaje",
+            // "naangaliaje". A Kiswahili how-to question is built on one of
+            // these, so without them an instruction question had no chance of
+            // reaching the two-marker threshold and was answered in English.
+            'nawezaje', 'ninawezaje', 'nitajuaje', 'najua', 'ninaloza',
+            'najitafutia', 'naangaliaje', 'ninataka',
         ],
         'pronouns' => [
             'wangu', 'yangu', 'zangu', 'yetu', 'wetu', 'wao', 'yeye',
@@ -41,11 +47,15 @@ class AiLanguageService
         'verbs' => [
             'niambie', 'nipe', 'tuna', 'tazama', 'hesabu', 'onyesha',
             'saidia', 'unganisha', 'jaza', 'chagua',
+            // Infinitive forms used by how-to questions.
+            'kuangalia', 'kujua', 'kupata', 'kuomba', 'kuwa', 'kufanya',
+            'kutumia', 'kuendelea', 'kuhudhuria', 'kuwasilisha', 'kuchukua',
         ],
         'courtesy_and_connectives' => [
             'asante', 'karibu', 'habari', 'tafadhali', 'kwa sababu',
             'lakini', 'pia', 'hapana', 'sawa', 'kwamba', 'kuhusu',
             'kwa hiyo', 'wakati', 'baada', 'kabla', 'ndani', 'juu ya',
+            'kama',
         ],
         'domain_terms' => [
             'akiba', 'hisa', 'mikopo', 'malipo', 'salio', 'mwezi',
@@ -58,6 +68,12 @@ class AiLanguageService
             'mdhamini', 'kikundi', 'tawi', 'shirika', 'mfuko', 'ombi',
             'ombi la mkopo', 'ada', 'biashara', 'kilimo', 'elimu',
             'maendeleo', 'binfi', 'dharura',
+            // "mkopo" is the class-9 singular and is written as ONE word, so the
+            // "kopo" entry above can never match it on a word boundary. The
+            // loan concept is central to FinancePro, and "mkopo" was the most
+            // common single marker in real loan questions, so it is listed
+            // explicitly here rather than by loosening boundary matching.
+            'mkopo', 'ustahiki', 'nahau', 'riba', 'fungua', 'fungati',
         ],
     ];
 

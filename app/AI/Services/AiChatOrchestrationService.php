@@ -4,6 +4,7 @@ namespace App\AI\Services;
 
 use App\AI\DTOs\AiChatToolPlan;
 use App\AI\DTOs\AiContextData;
+use App\Enums\AiQuestionType;
 use App\Models\LoanPlan;
 use App\Models\Member;
 
@@ -197,6 +198,7 @@ class AiChatOrchestrationService
     public function __construct(
         private readonly AiToolRegistry $registry,
         private readonly AiTerminologyService $terminology,
+        private readonly AiIntentClassifier $classifier,
     ) {}
 
     public function plan(AiContextData $context, string $message): ?AiChatToolPlan
@@ -217,6 +219,20 @@ class AiChatOrchestrationService
                 [],
                 $context,
             );
+        }
+
+        // A question about HOW FinancePro works, or about its documented rules,
+        // is answered from approved knowledge and never from a business tool.
+        // The classifier is the single source of truth for that decision: a tool
+        // returns a record or a verdict, and neither can explain where the check
+        // lives or which rules apply. Routing those questions to a tool is what
+        // made the assistant tell a member that it could not retrieve eligibility
+        // details when the member had only asked how to check them.
+        if (in_array($this->classifier->classify($message), [
+            AiQuestionType::FinanceProHowTo,
+            AiQuestionType::FinanceProPolicy,
+        ], true)) {
+            return null;
         }
 
         if ($context->memberId !== null) {

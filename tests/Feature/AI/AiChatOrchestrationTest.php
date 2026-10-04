@@ -184,7 +184,7 @@ class AiChatOrchestrationTest extends AiTestCase
         $this->assertSame('ai.member.welfare_summary', $welfare->new_values['capability'] ?? null);
     }
 
-    public function test_eligibility_question_is_answered_by_the_loan_application_capability(): void
+    public function test_how_to_eligibility_question_is_answered_from_knowledge_and_not_by_a_capability(): void
     {
         $org = $this->makeOrganization();
         $member = $this->member($org);
@@ -194,8 +194,29 @@ class AiChatOrchestrationTest extends AiTestCase
         $this->postJson('/ai/chat', ['message' => 'How can I check my loan eligibility?'])
             ->assertOk();
 
-        // The member has real plans and a real status, so the question is
-        // answerable. It is answered from those records — never invented.
+        // Asking WHERE to check is a question about the workflow, so it is
+        // answered from approved knowledge. It must not be routed to the loan
+        // application capability: that capability can describe this member's
+        // application, but it cannot explain how the check is performed, and
+        // routing it there produced a "could not retrieve your eligibility
+        // details" failure for a member who had only asked for instructions.
+        $this->assertDatabaseHas('audit_logs', ['event' => 'ai.knowledge.retrieved']);
+        $this->assertDatabaseMissing('audit_logs', ['event' => 'ai.tool.requested']);
+    }
+
+    public function test_an_explicit_eligibility_check_is_answered_by_the_loan_application_capability(): void
+    {
+        $org = $this->makeOrganization();
+        $member = $this->member($org);
+        $this->loanFor($member);
+        $this->actingAsMember($member);
+
+        // Asking for the actual check is a request for this member's own
+        // record, so it must still reach the capability and be answered from
+        // real data — never invented.
+        $this->postJson('/ai/chat', ['message' => 'Check my loan eligibility.'])
+            ->assertOk();
+
         $this->assertDatabaseHas('audit_logs', ['event' => 'ai.tool.requested']);
     }
 

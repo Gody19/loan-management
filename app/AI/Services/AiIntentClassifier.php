@@ -128,6 +128,56 @@ class AiIntentClassifier
     ];
 
     /**
+     * Frames that ask for INSTRUCTIONS rather than for a value.
+     *
+     * These are checked before the FinancePro-data rules, because a process
+     * question ("how can I check my loan eligibility?") must never be answered
+     * by a business tool: the tool returns a record or a verdict, and neither
+     * answers "how do I do this?". Routing those to system data is what made the
+     * assistant claim it could not retrieve eligibility details for a member who
+     * had simply asked where the check lives.
+     *
+     * @var string[]
+     */
+    private const HOW_TO_FRAMES = [
+        // English
+        'how can i', 'how do i', 'how to', 'how can we', 'how do we',
+        'where can i', 'where do i', 'where can we', 'where do we',
+        'where should i', 'where would i', 'where in the system',
+        'what steps', 'which steps', 'what is the process', 'what is the procedure',
+        'what is the workflow', 'how can i know', 'how do i know',
+        'how would i know', 'can i check', 'is there a way to check',
+        'any way to check', 'where do i start', 'how do i begin', 'how do i proceed',
+        'what do i need to do', 'what should i do', 'what do i do to',
+        // Kiswahili
+        'nawezaje', 'ninawezaje', 'nitajuaje', 'naangaliaje', 'ninaangaliaje',
+        'nini hatua', 'hatua gani', 'mchakato gani', 'mchakato upi',
+        'nini kwa ku', 'wapi naweza', 'wapi naangalia', 'vipi naweza',
+        'ninaweza kuangalia wapi', 'ninaangalia wapi', 'naangalia wapi',
+        'ninataka kuanza', 'nianze',
+    ];
+
+    /**
+     * Subjects that make a how-to frame a question about the loan APPLICATION
+     * PROCESS, as opposed to any "where do I ..." question.
+     *
+     * Deliberately excludes generic FinancePro nouns such as "loan", "balance"
+     * or "mkopo". "Where can I see my loan balance?" is a request for that
+     * member's balance and must stay system data; only an eligibility or
+     * application-process subject turns the frame into a how-to question.
+     *
+     * @var string[]
+     */
+    private const PROCESS_NOUNS = [
+        // English
+        'eligibility', 'eligible', 'qualify', 'qualifying', 'qualification',
+        'qualified', 'apply', 'applying', 'application', 'applications',
+        // Kiswahili
+        'ustahiki', 'nastahili', 'kustahili', 'sifa', 'kupata', 'kuomba',
+        'ombe', 'kuwasilisha',
+    ];
+
+    /**
      * Questions about FinancePro's own rules, rates, policies and documented
      * processes. Answerable only from approved knowledge documents.
      *
@@ -141,10 +191,14 @@ class AiIntentClassifier
             'terms', 'charge', 'charges', 'fee', 'fees', 'interest rate',
             'rates', 'target audience', 'purpose of the sacco', 'what is a sacco',
             'what is a microfinance', 'difference between',
+            // "What determines eligibility?" is a policy question even though it
+            // names no policy noun, so the deciding-verb forms are listed.
+            'determines', 'what determines', 'determining', 'what factors',
+            'factors in', 'based on what', 'criteria for', 'conditions for',
             // Swahili
             'sera', 'sheria', 'kanuni', 'taratibu', 'mahusizo', 'wajibu',
             'mwongozo', 'makato', 'amana', 'riba', 'funguo', 'lengo la',
-            'tofauti kati ya',
+            'tofauti kati ya', 'nini huamua', 'vigezo', 'hali zinazotumika',
         ],
     ];
 
@@ -232,6 +286,15 @@ class AiIntentClassifier
             return AiQuestionType::OutsideScope;
         }
 
+        // A request for INSTRUCTIONS is decided before any data rule. "How can I
+        // check my loan eligibility?" contains a personal marker ("my") and a
+        // record noun ("loan"), so without this check the personal-scope rule
+        // below classified it as system data and the assistant tried to return
+        // an eligibility verdict the member never asked for.
+        if ($this->asksHowTo($text)) {
+            return AiQuestionType::FinanceProHowTo;
+        }
+
         // FinancePro data first: a first-person or organization-position
         // question must be answered from records even when it also contains
         // policy vocabulary ("explain my eligibility" is about MY eligibility).
@@ -257,6 +320,17 @@ class AiIntentClassifier
             }
         }
 
+        // A definitional question about a FinancePro concept ("what is loan
+        // eligibility?") is answerable from approved knowledge about that
+        // concept, so it must not fall through to the outside-scope default.
+        // It is deliberately checked AFTER the system-data rules, so "what is
+        // MY eligibility" still resolves to this member's own record.
+        if ($this->containsAny($text, self::DEFINITION_FRAMES)
+            && $this->containsAny($text, self::PROCESS_NOUNS)
+        ) {
+            return AiQuestionType::FinanceProPolicy;
+        }
+
         foreach (self::HOW_TO as $group) {
             if ($this->hasAny($text, $group)) {
                 return AiQuestionType::FinanceProHowTo;
@@ -278,6 +352,56 @@ class AiIntentClassifier
         // Conservative default: an unrecognised question is declined rather
         // than answered from general knowledge.
         return AiQuestionType::OutsideScope;
+    }
+
+    /**
+     * True when the caller is asking HOW to do something in FinancePro rather
+     * than asking for a value.
+     *
+     * Requires BOTH an instructional frame and a process subject, so that
+     * "where can I see my loan balance?" stays a system-data question while
+     * "where can I check my loan eligibility?" becomes a how-to question.
+     */
+/**
+     * Frames that ask what something MEANS rather than for a value or a process.
+     *
+     * Kept separate from EXPLANATION_FRAMES on purpose: that list suppresses the
+     * personal-scope rule, so adding "what is" to it would stop "what is my loan
+     * balance?" from being recognised as a request for that member's balance.
+     *
+     * @var string[]
+     */
+    private const DEFINITION_FRAMES = [
+        'what is', 'what are', 'what does', 'what do', 'meaning of',
+        'define', 'explain', 'nini ni', 'nini za', 'maana ya', 'eleza',
+    ];
+
+    protected function asksHowTo(string $text): bool
+    {
+        return $this->containsAny($text, self::HOW_TO_FRAMES)
+            && $this->containsAny($text, self::PROCESS_NOUNS);
+    }
+
+    /**
+     * Substring matching, used where word boundaries are the wrong tool.
+     *
+     * Kiswahili writes the subject concord and the verb stem as ONE word, so
+     * "nastahili" (am I eligible) also appears as "ninastahili" and "nakustahili".
+     * A \b-delimited match cannot see a boundary inside "ninastahili" and would
+     * silently miss the most common form of the question. The needles here are
+     * distinctive enough that substring matching cannot over-match.
+     *
+     * @param  string[]  $needles
+     */
+    protected function containsAny(string $text, array $needles): bool
+    {
+        foreach ($needles as $needle) {
+            if (str_contains($text, $needle)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     protected function mentionsPersonalScope(string $text): bool
