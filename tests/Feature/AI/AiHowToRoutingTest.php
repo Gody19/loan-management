@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\AI;
 
+use App\AI\DTOs\AiContextData;
 use App\AI\Services\AiChatOrchestrationService;
 use App\AI\Services\AiContextBuilderService;
 use App\AI\Services\AiLanguageService;
 use App\Enums\AiLanguage;
+use App\Models\User;
+use Database\Seeders\AiPublicKnowledgeSeeder;
 
 /**
  * A how-to question must never reach a business capability.
@@ -21,7 +24,7 @@ use App\Enums\AiLanguage;
  */
 class AiHowToRoutingTest extends AiTestCase
 {
-    private function contextFor(\App\Models\User $user): \App\AI\DTOs\AiContextData
+    private function contextFor(User $user): AiContextData
     {
         return app(AiContextBuilderService::class)->build($user);
     }
@@ -133,7 +136,7 @@ class AiHowToRoutingTest extends AiTestCase
      */
     public function test_the_seeded_how_to_knowledge_describes_the_real_member_workflow(): void
     {
-        $documents = app(\Database\Seeders\AiPublicKnowledgeSeeder::class);
+        $documents = app(AiPublicKnowledgeSeeder::class);
 
         $reflection = new \ReflectionClass($documents);
         $method = $reflection->getMethod('documents');

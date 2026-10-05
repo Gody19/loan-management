@@ -362,7 +362,7 @@ class AiIntentClassifier
      * "where can I see my loan balance?" stays a system-data question while
      * "where can I check my loan eligibility?" becomes a how-to question.
      */
-/**
+    /**
      * Frames that ask what something MEANS rather than for a value or a process.
      *
      * Kept separate from EXPLANATION_FRAMES on purpose: that list suppresses the

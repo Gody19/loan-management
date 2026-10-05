@@ -72,7 +72,7 @@ class AiLoanEligibilityIntentTest extends TestCase
     {
         $this->assertSame(
             $expected,
-            (new AiIntentClassifier())->classify($question),
+            (new AiIntentClassifier)->classify($question),
             "Wrong intent for: {$question}",
         );
     }
@@ -87,7 +87,7 @@ class AiLoanEligibilityIntentTest extends TestCase
     {
         $this->assertSame(
             AiQuestionType::FinanceProSystemData,
-            (new AiIntentClassifier())->classify($question),
+            (new AiIntentClassifier)->classify($question),
             "A record lookup must not be downgraded to a how-to answer: {$question}",
         );
     }
@@ -115,7 +115,7 @@ class AiLoanEligibilityIntentTest extends TestCase
     {
         $this->assertNotSame(
             AiQuestionType::FinanceProHowTo,
-            (new AiIntentClassifier())->classify($question),
+            (new AiIntentClassifier)->classify($question),
             "A record request must not be downgraded to a how-to answer: {$question}",
         );
     }
