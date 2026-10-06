@@ -28,7 +28,7 @@
                             $data = $notification->data;
                             $severity = data_get($data, 'severity');
                             $severityLabel = data_get($data, 'severity_label');
-                            $url = data_get($data, 'url', '#');
+                            $url = \App\Support\NotificationUrl::relative(data_get($data, 'url', '#'));
                             $badgeClass = match ($severity) {
                                 'critical' => 'danger',
                                 'warning' => 'warning',

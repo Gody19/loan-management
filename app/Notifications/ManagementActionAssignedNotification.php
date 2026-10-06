@@ -41,7 +41,7 @@ class ManagementActionAssignedNotification extends Notification
             'priority_label' => $this->action->priority->label(),
             'due_date' => $this->action->due_date?->toDateString(),
             'message' => 'You have been assigned a management action.',
-            'url' => route('ai.actions.show', $this->action),
+            'url' => route('ai.actions.show', $this->action, absolute: false),
         ];
     }
 

@@ -40,7 +40,7 @@ class AiInsightNotification extends Notification
             'severity_label' => $this->insight->severity->label(),
             'title' => $this->insight->title,
             'summary' => $this->insight->summary,
-            'url' => route('ai.intelligence.index'),
+            'url' => route('ai.intelligence.index', absolute: false),
         ];
     }
 

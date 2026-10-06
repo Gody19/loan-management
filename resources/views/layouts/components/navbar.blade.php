@@ -37,7 +37,7 @@
             <div class="dropdown-menu dropdown-menu-end" style="width: 320px;">
                 <h6 class="dropdown-header fw-semibold">Notifications</h6>
                 @forelse($recentNotifications as $recentNotification)
-                    <a href="{{ data_get($recentNotification->data, 'url', route('notifications.index')) }}" class="dropdown-item">
+                    <a href="{{ \App\Support\NotificationUrl::relative(data_get($recentNotification->data, 'url')) ?: route('notifications.index') }}" class="dropdown-item">
                         <div class="d-flex flex-column">
                             <span class="small fw-semibold text-truncate">{{ data_get($recentNotification->data, 'title', 'Notification') }}</span>
                             <span class="small text-muted text-truncate">{{ \Illuminate\Support\Str::limit(data_get($recentNotification->data, 'summary', ''), 60) }}</span>

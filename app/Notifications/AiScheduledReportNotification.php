@@ -60,7 +60,7 @@ class AiScheduledReportNotification extends Notification
             'data_through' => $this->report->data_through?->toDateString(),
             'frequency' => $this->schedule->frequency->value,
             'narrative' => $this->digest['narrative'] ?? null,
-            'url' => route('ai.reports.show', $this->report),
+            'url' => route('ai.reports.show', $this->report, absolute: false),
         ];
     }
 
