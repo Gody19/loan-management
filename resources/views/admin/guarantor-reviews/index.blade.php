@@ -3,9 +3,14 @@
 @section('title', 'Guarantor Reviews')
 @section('page-title', 'Guarantor Review Queue')
 
+@section('page-header')
+    @include('layouts.components.page-header', [
+        'title' => 'Guarantor Review Queue',
+        'subtitle' => 'Guarantor requests awaiting a decision',
+    ])
+@endsection
+
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10">
         @if($pendingGuarantors->isEmpty())
         <div class="card border-0 shadow-sm">
             <div class="card-body text-center py-5">
@@ -109,6 +114,4 @@
             </div>
         </div>
         @endif
-    </div>
-</div>
 @endsection

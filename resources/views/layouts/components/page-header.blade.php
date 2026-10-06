@@ -11,7 +11,7 @@
             <p class="text-muted mb-0" style="font-size: 0.875rem;">{{ $subtitle }}</p>
         @endisset
     </div>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
         {!! $actions ?? '' !!}
     </div>
 </div>

@@ -21,36 +21,33 @@
 @endsection
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-10">
-
-        {{-- Summary Card --}}
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-body">
-                <div class="d-flex align-items-center">
-                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 64px; height: 64px;">
-                        <i class="bi bi-cash-coin text-white fs-4"></i>
-                    </div>
-                    <div class="flex-grow-1">
-                        <h4 class="mb-0 fw-bold">{{ $loan->loan_number }}</h4>
-                        <div class="d-flex align-items-center gap-3 mt-1">
-                            <span class="badge bg-{{ $loan->status->color() }}">{{ $loan->status->label() }}</span>
-                            <span class="text-muted">{{ $loan->loanPlan->name ?? '—' }}</span>
-                            <span class="text-muted">{{ $loan->branch->name ?? '—' }}</span>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <div class="text-muted small">Outstanding Balance</div>
-                        <div class="fw-bold fs-4 text-danger">{{ number_format($loan->outstanding_balance, 0) }} TZS</div>
-                    </div>
+{{-- Summary Card --}}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <div class="d-flex flex-column flex-sm-row align-items-sm-center">
+            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center mb-3 mb-sm-0 me-sm-3 flex-shrink-0" style="width: 64px; height: 64px;">
+                <i class="bi bi-cash-coin text-white fs-4"></i>
+            </div>
+            <div class="flex-grow-1 mb-3 mb-sm-0">
+                <h4 class="mb-0 fw-bold text-break">{{ $loan->loan_number }}</h4>
+                <div class="d-flex flex-wrap align-items-center gap-3 mt-1">
+                    <span class="badge bg-{{ $loan->status->color() }}">{{ $loan->status->label() }}</span>
+                    <span class="text-muted text-break">{{ $loan->loanPlan->name ?? '—' }}</span>
+                    <span class="text-muted text-break">{{ $loan->branch->name ?? '—' }}</span>
                 </div>
             </div>
+            <div class="text-sm-end">
+                <div class="text-muted small">Outstanding Balance</div>
+                <div class="fw-bold fs-4 text-danger text-break">{{ number_format($loan->outstanding_balance, 0) }} TZS</div>
+            </div>
         </div>
+    </div>
+</div>
 
-        <div class="row g-4">
+<div class="row g-3 g-xl-4">
 
             {{-- Loan Details --}}
-            <div class="col-md-6">
+            <div class="col-12 col-md-6 col-xxl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-info-circle me-2"></i>Loan Details</h6>
@@ -70,7 +67,7 @@
             </div>
 
             {{-- Financial Details --}}
-            <div class="col-md-6">
+            <div class="col-12 col-md-6 col-xxl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-calculator me-2"></i>Financial Details</h6>
@@ -92,7 +89,7 @@
             </div>
 
             {{-- Payment Progress --}}
-            <div class="col-md-6">
+            <div class="col-12 col-md-6 col-xxl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-graph-up me-2"></i>Payment Progress</h6>
@@ -121,7 +118,7 @@
             </div>
 
             {{-- Timeline --}}
-            <div class="col-md-6">
+            <div class="col-12 col-md-6 col-xxl-3">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-clock me-2"></i>Timeline</h6>
@@ -195,8 +192,6 @@
             </div>
             @endif
 
-        </div>
-    </div>
 </div>
 
 {{-- Disbursement Modal --}}
