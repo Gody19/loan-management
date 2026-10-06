@@ -30,17 +30,25 @@
         section { page-break-inside: avoid; }
         @media print { .no-print { display: none; } body { margin: 0; } }
     </style>
+
+    {{-- FinancePro shared print kit: brand mark, watermark, footer --}}
+    @include('layouts.print.styles', ['inApp' => false])
 </head>
 <body>
     <div class="no-print mb-3">
         <button type="button" onclick="window.print()">Print this report</button>
     </div>
 
-    <h1>{{ config('app.name') }} — {{ $report->report_type->label() }}</h1>
-    <div class="meta">
-        {{ $report->organization?->name }}
-        @if ($report->branch) &middot; {{ $report->branch->name }} @else &middot; All authorized branches @endif
-    </div>
+    @include('layouts.print.watermark')
+
+    @include('layouts.print.header', [
+        'organization' => $report->organization?->name ?? config('app.name'),
+        'meta' => [
+            $report->branch ? $report->branch->name : 'All authorized branches',
+            'Generated ' . ($report->generated_at?->format('j M Y, H:i') ?? now()->format('d M Y, H:i')),
+        ],
+        'title' => $report->report_type->label(),
+    ])
 
     <div class="meta">
         <table>
@@ -218,5 +226,9 @@
         suggestions for a human decision. This report never modifies a financial record, a loan decision, a prediction
         or an insight.
     </div>
+
+    @include('layouts.print.footer', [
+        'text' => config('app.name', 'FinancePro') . ' · VICOBA System · ' . ($report->organization?->name ?? '') . ' · ' . $report->report_type->label() . ' · Printed ' . now()->format('d M Y, H:i'),
+    ])
 </body>
 </html>

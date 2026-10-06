@@ -1,21 +1,14 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="no-print">
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h4 class="mb-1">Loan Statement</h4>
-            <nav aria-label="breadcrumb">
-                <ol class="breadcrumb mb-0">
-                    <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('loans.index') }}">Loans</a></li>
-                    <li class="breadcrumb-item"><a href="{{ route('loans.show', $loan) }}">{{ $loan->loan_number }}</a></li>
-                    <li class="breadcrumb-item active">Statement</li>
-                </ol>
-            </nav>
         </div>
         <div>
-            <button onclick="window.print()" class="btn btn-outline-secondary">
+            <button onclick="window.print()" class="btn btn-outline-secondary no-print">
                 <i class="bi bi-printer me-1"></i> Print Statement
             </button>
         </div>
@@ -204,4 +197,162 @@
         </div>
     </div>
 </div>
+</div>{{-- /.no-print --}}
+
+{{-- Print-only document: rendered exclusively by the print media query --}}
+<div class="print-document">
+    @include('layouts.print.watermark')
+
+    @include('layouts.print.header', [
+        'organization' => $loan->organization->name ?? 'FinancePro',
+        'meta' => [
+            $loan->branch->name ?? 'VICOBA System',
+            'Generated ' . now()->format('d M Y, H:i'),
+        ],
+        'title' => 'Loan Statement',
+    ])
+
+    <table class="print-table print-doc-details">
+        <tbody>
+            <tr>
+                <th>Member Name</th>
+                <td>{{ $loan->member->full_name ?? '—' }}</td>
+                <th>Member Number</th>
+                <td>{{ $loan->member->member_number ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Organization</th>
+                <td>{{ $loan->organization->name ?? '—' }}</td>
+                <th>Branch</th>
+                <td>{{ $loan->branch->name ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>VICOBA Group</th>
+                <td colspan="3">{{ $loan->member->vicobaGroup?->name ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Loan Number</th>
+                <td>{{ $loan->loan_number }}</td>
+                <th>Loan Plan</th>
+                <td>{{ $loan->loanPlan->name ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Loan Status</th>
+                <td>{{ $loan->status->label() }}</td>
+                <th>Disbursement Date</th>
+                <td>{{ $loan->disbursement_date?->format('d M Y') ?? '—' }}</td>
+            </tr>
+            <tr>
+                <th>Interest Method</th>
+                <td>{{ $loan->interest_method->label() }}</td>
+                <th>Repayment Frequency</th>
+                <td>{{ $loan->repayment_frequency->label() }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="print-section-title">Loan Summary</h2>
+    <table class="print-table print-summary">
+        <thead>
+            <tr>
+                <th>Principal</th>
+                <th>Total Interest</th>
+                <th>Total Amount</th>
+                <th>Total Paid</th>
+                <th>Outstanding Balance</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>TSh {{ number_format($loan->principal_amount, 2) }}</td>
+                <td>TSh {{ number_format($loan->total_interest, 2) }}</td>
+                <td>TSh {{ number_format($loan->total_amount, 2) }}</td>
+                <td>TSh {{ number_format($loan->amount_paid, 2) }}</td>
+                <td>TSh {{ number_format($loan->outstanding_balance, 2) }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2 class="print-section-title">Payment History</h2>
+    @if($loan->repayments->isEmpty())
+        <p class="print-empty">No payments recorded for this loan.</p>
+    @else
+        <table class="print-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Repayment #</th>
+                    <th class="text-end">Amount</th>
+                    <th class="text-end">Principal</th>
+                    <th class="text-end">Interest</th>
+                    <th class="text-end">Fees</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($loan->repayments as $repayment)
+                <tr>
+                    <td>{{ $repayment->payment_date->format('d M Y') }}</td>
+                    <td>{{ $repayment->repayment_number }}</td>
+                    <td class="text-end">TSh {{ number_format($repayment->amount, 2) }}</td>
+                    <td class="text-end">TSh {{ number_format($repayment->principal_portion, 2) }}</td>
+                    <td class="text-end">TSh {{ number_format($repayment->interest_portion, 2) }}</td>
+                    <td class="text-end">TSh {{ number_format($repayment->fee_portion, 2) }}</td>
+                    <td>{{ ucfirst(str_replace('_', ' ', $repayment->payment_method)) }}</td>
+                    <td>{{ $repayment->status->label() }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th colspan="2" class="text-end">Total</th>
+                    <th class="text-end">TSh {{ number_format($loan->repayments->where('status', 'posted')->sum('amount'), 2) }}</th>
+                    <th class="text-end">TSh {{ number_format($loan->repayments->where('status', 'posted')->sum('principal_portion'), 2) }}</th>
+                    <th class="text-end">TSh {{ number_format($loan->repayments->where('status', 'posted')->sum('interest_portion'), 2) }}</th>
+                    <th class="text-end">TSh {{ number_format($loan->repayments->where('status', 'posted')->sum('fee_portion'), 2) }}</th>
+                    <th colspan="2"></th>
+                </tr>
+            </tfoot>
+        </table>
+    @endif
+
+    <h2 class="print-section-title">Repayment Schedule</h2>
+    <table class="print-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Due Date</th>
+                <th class="text-end">Principal</th>
+                <th class="text-end">Interest</th>
+                <th class="text-end">Total Due</th>
+                <th class="text-end">Paid</th>
+                <th class="text-end">Outstanding</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($loan->repaymentSchedule->sortBy('installment_number') as $installment)
+            <tr>
+                <td>{{ $installment->installment_number }}</td>
+                <td>{{ $installment->due_date->format('d M Y') }}</td>
+                <td class="text-end">TSh {{ number_format($installment->principal_amount, 2) }}</td>
+                <td class="text-end">TSh {{ number_format($installment->interest_amount, 2) }}</td>
+                <td class="text-end">TSh {{ number_format($installment->total_amount, 2) }}</td>
+                <td class="text-end">TSh {{ number_format($installment->amount_paid, 2) }}</td>
+                <td class="text-end">TSh {{ number_format($installment->outstanding_amount, 2) }}</td>
+                <td>{{ $installment->status->label() }}</td>
+            </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    @include('layouts.print.footer', [
+        'text' => config('app.name', 'FinancePro') . ' · VICOBA System · ' . ($loan->organization->name ?? '') . ' · Loan Statement for ' . ($loan->member->full_name ?? 'Member') . ' (' . ($loan->member->member_number ?? '—') . ') · Printed ' . now()->format('d M Y, H:i'),
+    ])
+</div>
 @endsection
+
+@push('styles')
+@include('layouts.print.styles')
+@endpush

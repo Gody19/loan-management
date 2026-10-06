@@ -38,7 +38,12 @@
         .status-completed { background: #dcfce7; color: #166534; }
         .status-pending { background: #fef9c3; color: #854d0e; }
         .print-btn { position: fixed; bottom: 20px; right: 20px; z-index: 100; }
+        .receipt-brand { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; }
+        .receipt-brand .print-brand-text { text-align: left; }
     </style>
+
+    {{-- FinancePro shared print kit: brand mark, watermark, footer --}}
+    @include('layouts.print.styles', ['inApp' => false])
 </head>
 <body>
 
@@ -46,8 +51,17 @@
         <i class="bi bi-printer"></i> Print Receipt
     </button>
 
+    @include('layouts.print.watermark')
+
     <div class="receipt">
         <div class="receipt-header">
+            <div class="receipt-brand print-brand">
+                <img class="print-brand-mark" src="{{ asset('images/financepro-mark.svg') }}" alt="">
+                <div class="print-brand-text">
+                    <strong>{{ config('app.name', 'FinancePro') }}</strong>
+                    <span>VICOBA System</span>
+                </div>
+            </div>
             <div class="org-name">{{ $transaction->organization->name ?? config('app.name') }}</div>
             <h1>SAVINGS RECEIPT</h1>
             <div class="receipt-title">Official Transaction Receipt</div>
@@ -153,6 +167,10 @@
             <div class="thank-you">Thank you for your savings!</div>
         </div>
     </div>
+
+    @include('layouts.print.footer', [
+        'text' => config('app.name', 'FinancePro') . ' · VICOBA System · ' . ($transaction->organization->name ?? '') . ' · Savings Receipt ' . ($transaction->transaction_number ?? 'N/A') . ' · Printed ' . now()->format('d M Y, H:i'),
+    ])
 
 </body>
 </html>
