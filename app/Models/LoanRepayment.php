@@ -19,7 +19,8 @@ class LoanRepayment extends Model
         'repayment_number', 'amount', 'principal_portion', 'interest_portion',
         'fee_portion', 'overpayment_amount', 'payment_date', 'payment_method',
         'reference_number', 'status', 'reversal_reason', 'reversed_by',
-        'reversal_date', 'idempotency_key', 'notes',
+        'reversal_date', 'rejection_reason', 'rejected_by', 'rejected_at',
+        'idempotency_key', 'notes',
     ];
 
     protected function casts(): array
@@ -32,6 +33,7 @@ class LoanRepayment extends Model
             'overpayment_amount' => 'decimal:2',
             'payment_date' => 'date',
             'reversal_date' => 'date',
+            'rejected_at' => 'datetime',
             'status' => LoanRepaymentStatus::class,
         ];
     }
@@ -40,19 +42,61 @@ class LoanRepayment extends Model
     {
         parent::boot();
         static::creating(function (LoanRepayment $repayment) {
-            if (!$repayment->received_by) {
+            if (! $repayment->received_by) {
                 $repayment->received_by = auth()->id();
             }
         });
     }
 
-    public function loan(): BelongsTo { return $this->belongsTo(Loan::class); }
-    public function organization(): BelongsTo { return $this->belongsTo(Organization::class); }
-    public function branch(): BelongsTo { return $this->belongsTo(Branch::class); }
-    public function member(): BelongsTo { return $this->belongsTo(Member::class); }
-    public function paymentMethod(): BelongsTo { return $this->belongsTo(PaymentMethod::class); }
-    public function receiver(): BelongsTo { return $this->belongsTo(User::class, 'received_by'); }
-    public function reverser(): BelongsTo { return $this->belongsTo(User::class, 'reversed_by'); }
+    public function loan(): BelongsTo
+    {
+        return $this->belongsTo(Loan::class);
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function branch(): BelongsTo
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    public function member(): BelongsTo
+    {
+        return $this->belongsTo(Member::class);
+    }
+
+    public function paymentMethod(): BelongsTo
+    {
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
+    public function receiver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'received_by');
+    }
+
+    public function reverser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reversed_by');
+    }
+
+    public function rejecter(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'rejected_by');
+    }
+
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', LoanRepaymentStatus::Pending->value);
+    }
+
+    public function scopePosted(Builder $query): Builder
+    {
+        return $query->where('status', LoanRepaymentStatus::Posted->value);
+    }
 
     public function allocations(): HasMany
     {
@@ -81,10 +125,13 @@ class LoanRepayment extends Model
 
     public function scopeSearch(Builder $query, ?string $search): Builder
     {
-        if (!$search) return $query;
+        if (! $search) {
+            return $query;
+        }
+
         return $query->where(function ($q) use ($search) {
             $q->where('repayment_number', 'LIKE', "%{$search}%")
-              ->orWhere('reference_number', 'LIKE', "%{$search}%");
+                ->orWhere('reference_number', 'LIKE', "%{$search}%");
         });
     }
 }

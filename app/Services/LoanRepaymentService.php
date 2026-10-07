@@ -27,6 +27,7 @@ class LoanRepaymentService
         ?string $referenceNumber,
         ?string $notes,
         ?string $idempotencyKey,
+        bool $requiresApproval = false,
     ): LoanRepayment {
         $this->validateLoanForRepayment($loan);
 
@@ -39,7 +40,7 @@ class LoanRepaymentService
 
         return DB::transaction(function () use (
             $loan, $amount, $paymentDate, $paymentMethod,
-            $paymentMethodId, $referenceNumber, $notes, $idempotencyKey
+            $paymentMethodId, $referenceNumber, $notes, $idempotencyKey, $requiresApproval
         ) {
             // Re-read the loan under a row lock and use THAT row for every
             // subsequent read and write in this transaction.
@@ -73,54 +74,172 @@ class LoanRepaymentService
                 'payment_date' => $paymentDate,
                 'payment_method' => $paymentMethod,
                 'reference_number' => $referenceNumber,
-                'status' => LoanRepaymentStatus::Posted,
+                'status' => $requiresApproval
+                    ? LoanRepaymentStatus::Pending
+                    : LoanRepaymentStatus::Posted,
                 'idempotency_key' => $idempotencyKey,
                 'notes' => $notes,
             ]);
 
-            $allocations = $this->allocationService->allocatePayment($lockedLoan, $amount, $repayment->id);
+            // Member-submitted payments are only recorded: the loan balance,
+            // schedule and ledger stay untouched until an authorised user
+            // approves the payment.
+            if ($requiresApproval) {
+                $this->auditService->log('loan.repayment.submitted', $repayment, [], $repayment->toArray());
 
-            $totalPrincipal = array_sum(array_map(fn ($a) => (float) $a->principal_allocation, $allocations));
-            $totalInterest = array_sum(array_map(fn ($a) => (float) $a->interest_allocation, $allocations));
-            $totalFee = array_sum(array_map(fn ($a) => (float) $a->fee_allocation, $allocations));
-            $totalAllocated = $totalPrincipal + $totalInterest + $totalFee;
-            $overpaymentAmount = max(0, $amount - $totalAllocated);
+                return $repayment->fresh();
+            }
 
-            $repayment->update([
-                'principal_portion' => round($totalPrincipal, 2),
-                'interest_portion' => round($totalInterest, 2),
-                'fee_portion' => round($totalFee, 2),
-                'overpayment_amount' => round($overpaymentAmount, 2),
-            ]);
-
-            $newAmountPaid = (float) $lockedLoan->amount_paid + $amount;
-            $newOutstanding = max(0, (float) $lockedLoan->outstanding_balance - $amount);
-
-            $nextPayment = $lockedLoan->repaymentSchedule()
-                ->whereIn('status', [
-                    LoanScheduleInstallmentStatus::Pending->value,
-                    LoanScheduleInstallmentStatus::Partial->value,
-                    LoanScheduleInstallmentStatus::Overdue->value,
-                ])
-                ->orderBy('due_date')
-                ->first();
-
-            $lockedLoan->update([
-                'amount_paid' => round($newAmountPaid, 2),
-                'outstanding_balance' => round($newOutstanding, 2),
-                'next_payment_date' => $nextPayment?->due_date,
-                'installments_paid' => $lockedLoan->repaymentSchedule()
-                    ->where('status', LoanScheduleInstallmentStatus::Paid)
-                    ->count(),
-                'status' => $newOutstanding <= 0 ? LoanStatus::Completed : LoanStatus::Active,
-            ]);
-
-            $this->auditService->log('loan.repayment.posted', $repayment, [], $repayment->toArray());
-
-            $this->accountingService->recordLoanRepayment($repayment->fresh());
-
-            return $repayment->fresh();
+            return $this->applyRepayment($lockedLoan, $repayment, $amount);
         });
+    }
+
+    /**
+     * Approve a member-submitted payment: allocate it to the schedule and
+     * update the loan balance, schedule and ledger exactly like a manually
+     * recorded payment.
+     */
+    public function approveRepayment(LoanRepayment $repayment): LoanRepayment
+    {
+        if (! $repayment->status->isAwaitingReview()) {
+            throw new \InvalidArgumentException('Only pending payments can be approved.');
+        }
+
+        return DB::transaction(function () use ($repayment) {
+            $lockedLoan = Loan::query()
+                ->whereKey($repayment->loan_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->validateLoanForRepayment($lockedLoan);
+
+            $lockedRepayment = LoanRepayment::query()
+                ->whereKey($repayment->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if (! $lockedLoan->status || ! $lockedLoan->status->isRepayable()) {
+                throw new \InvalidArgumentException('This loan no longer accepts repayments.');
+            }
+
+            if (! $lockedLoan->status instanceof LoanStatus) {
+                throw new \InvalidArgumentException('Loan must be active to accept repayments.');
+            }
+
+            if ($lockedLoan->status !== LoanStatus::Active) {
+                throw new \InvalidArgumentException('Loan must be active to accept repayments.');
+            }
+
+            if ((float) $lockedLoan->outstanding_balance <= 0) {
+                throw new \InvalidArgumentException('Loan is fully paid. This payment can no longer be approved.');
+            }
+
+            if (! $lockedLoan->status ?? true) {
+                throw new \InvalidArgumentException('Only pending payments can be approved.');
+            }
+
+            $lockedLoan->refresh();
+
+            $lockedLoan = Loan::query()
+                ->whereKey($repayment->loan_id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->validateLoanForRepayment($lockedLoan);
+
+            $lockedRepayment->update(['status' => LoanRepaymentStatus::Posted]);
+
+            $approved = $this->applyRepayment($lockedLoan, $lockedRepayment, (float) $lockedRepayment->amount);
+
+            $this->auditService->log('loan.repayment.approved', $approved, [
+                'status' => LoanRepaymentStatus::Pending->value,
+            ], [
+                'status' => LoanRepaymentStatus::Posted->value,
+            ]);
+
+            return $approved;
+        });
+    }
+
+    /**
+     * Reject a member-submitted payment. Nothing is applied to the loan.
+     */
+    public function rejectRepayment(LoanRepayment $repayment, string $reason): LoanRepayment
+    {
+        if (! $repayment->status->isAwaitingReview()) {
+            throw new \InvalidArgumentException('Only pending payments can be rejected.');
+        }
+
+        $repayment->update([
+            'status' => LoanRepaymentStatus::Rejected,
+            'rejection_reason' => $reason,
+            'rejected_by' => auth()->id(),
+            'rejected_at' => now(),
+        ]);
+
+        $this->auditService->log('loan.repayment.rejected', $repayment, [
+            'status' => LoanRepaymentStatus::Pending->value,
+        ], [
+            'status' => LoanRepaymentStatus::Rejected->value,
+            'rejection_reason' => $reason,
+        ]);
+
+        return $repayment->fresh();
+    }
+
+    /**
+     * Apply an already-persisted repayment to the (locked) loan: allocate the
+     * amount across installments, update the loan balances and status, and
+     * post the accounting entry.
+     */
+    private function applyRepayment(Loan $lockedLoan, LoanRepayment $repayment, float $amount): LoanRepayment
+    {
+        $allocations = $this->allocationService->allocatePayment($lockedLoan, $amount, $repayment->id);
+
+        $totalPrincipal = array_sum(array_map(fn ($a) => (float) $a->principal_allocation, $allocations));
+        $totalInterest = array_sum(array_map(fn ($a) => (float) $a->interest_allocation, $allocations));
+        $totalFee = array_sum(array_map(fn ($a) => (float) $a->fee_allocation, $allocations));
+        $totalAllocated = $totalPrincipal + $totalInterest + $totalFee;
+        $overpaymentAmount = max(0, $amount - $totalAllocated);
+
+        $repayment->update([
+            'status' => LoanRepaymentStatus::Posted,
+            'principal_portion' => round($totalPrincipal, 2),
+            'interest_portion' => round($totalInterest, 2),
+            'fee_portion' => round($totalFee, 2),
+            'overpayment_amount' => round($overpaymentAmount, 2),
+        ]);
+
+        // Read the balances from the locked row, not from the instance that
+        // was loaded before the lock was taken, or the write below would
+        // overwrite a concurrent repayment's result with a stale value.
+        $newAmountPaid = (float) $lockedLoan->amount_paid + $amount;
+        $newOutstanding = max(0, (float) $lockedLoan->outstanding_balance - $amount);
+
+        $nextPayment = $lockedLoan->repaymentSchedule()
+            ->whereIn('status', [
+                LoanScheduleInstallmentStatus::Pending->value,
+                LoanScheduleInstallmentStatus::Partial->value,
+                LoanScheduleInstallmentStatus::Overdue->value,
+            ])
+            ->orderBy('due_date')
+            ->first();
+
+        $lockedLoan->update([
+            'amount_paid' => round($newAmountPaid, 2),
+            'outstanding_balance' => round($newOutstanding, 2),
+            'next_payment_date' => $nextPayment?->due_date,
+            'installments_paid' => $lockedLoan->repaymentSchedule()
+                ->where('status', LoanScheduleInstallmentStatus::Paid)
+                ->count(),
+            'status' => $newOutstanding <= 0 ? LoanStatus::Completed : LoanStatus::Active,
+        ]);
+
+        $this->auditService->log('loan.repayment.posted', $repayment, [], $repayment->toArray());
+
+        $this->accountingService->recordLoanRepayment($repayment->fresh());
+
+        return $repayment->fresh();
     }
 
     public function reverseRepayment(LoanRepayment $repayment, string $reason): LoanRepayment
@@ -209,7 +328,8 @@ class LoanRepaymentService
     {
         $query = LoanRepayment::forOrganization($organizationId)
             ->with(['loan', 'member', 'receiver', 'paymentMethod'])
-            ->orderBy('payment_date', 'desc');
+            ->orderBy('payment_date', 'desc')
+            ->orderBy('id', 'desc');
 
         if ($search) {
             $query->search($search);
@@ -219,6 +339,25 @@ class LoanRepaymentService
         }
 
         return $query->paginate(15);
+    }
+
+    public function getPendingRepaymentsForOrganization(int $organizationId, ?string $search = null)
+    {
+        $query = LoanRepayment::forOrganization($organizationId)
+            ->pending()
+            ->with(['loan', 'member', 'receiver', 'paymentMethod'])
+            ->orderBy('created_at', 'asc');
+
+        if ($search) {
+            $query->search($search);
+        }
+
+        return $query->paginate(15);
+    }
+
+    public function getRepaymentsForOrganizationIndex(int $organizationId, ?string $search = null, ?string $status = null)
+    {
+        return $this->getRepaymentsForOrganization($organizationId, $search, $status);
     }
 
     private function validateLoanForRepayment(Loan $loan): void

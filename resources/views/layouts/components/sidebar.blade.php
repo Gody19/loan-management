@@ -275,7 +275,9 @@
                 @endif
                 @if(auth()->user()->can('loan-repayments.create'))
                 <a href="{{ route('loan-repayments-collection.index') }}" class="nav-link sub-link {{ request()->routeIs('loan-repayments-collection.*') ? 'active' : '' }}">
-                    <span>Record Payment</span>
+                    @if(auth()->user()->can('loan-repayments.view'))
+                        <span>Record Payment</span>
+                    @endif
                 </a>
                 @endif
             </div>

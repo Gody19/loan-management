@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreRepaymentRequest;
 use App\Http\Requests\ReverseRepaymentRequest;
+use App\Http\Requests\StoreRepaymentRequest;
 use App\Models\Loan;
 use App\Models\LoanRepayment;
+use App\Services\LoanRepaymentScheduleService;
 use App\Services\LoanRepaymentService;
 
 class LoanRepaymentController extends Controller
@@ -31,10 +32,10 @@ class LoanRepaymentController extends Controller
 
         $loan->load(['member', 'loanPlan', 'branch', 'repaymentSchedule' => function ($q) {
             $q->whereIn('status', ['pending', 'partial', 'overdue'])
-              ->orderBy('due_date');
+                ->orderBy('due_date');
         }]);
 
-        $scheduleSummary = app(\App\Services\LoanRepaymentScheduleService::class)
+        $scheduleSummary = app(LoanRepaymentScheduleService::class)
             ->getScheduleSummary($loan);
 
         return view('loan-repayments.create', compact('loan', 'scheduleSummary'));
@@ -57,7 +58,7 @@ class LoanRepaymentController extends Controller
             );
 
             return redirect()->route('loan-repayments.show', $repayment)
-                ->with('success', 'Payment recorded successfully. Repayment #' . $repayment->repayment_number);
+                ->with('success', 'Payment recorded successfully. Repayment #'.$repayment->repayment_number);
         } catch (\InvalidArgumentException $e) {
             return back()->withInput()->with('error', $e->getMessage());
         }
