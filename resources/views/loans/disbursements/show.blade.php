@@ -19,8 +19,6 @@
 @endsection
 
 @section('content')
-<div class="row justify-content-center">
-    <div class="col-lg-8">
 
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-body">
@@ -44,7 +42,7 @@
         </div>
 
         <div class="row g-4">
-            <div class="col-md-6">
+            <div class="col-lg-5">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-cash me-2"></i>Disbursement Details</h6>
@@ -63,7 +61,7 @@
                 </div>
             </div>
 
-            <div class="col-md-6">
+            <div class="col-lg-7">
                 <div class="card border-0 shadow-sm h-100">
                     <div class="card-header bg-white border-bottom">
                         <h6 class="mb-0 fw-semibold"><i class="bi bi-gear me-2"></i>Processing Details</h6>
@@ -85,6 +83,4 @@
                 </div>
             </div>
         </div>
-    </div>
-</div>
 @endsection

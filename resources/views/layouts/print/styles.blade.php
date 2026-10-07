@@ -259,6 +259,12 @@
             display: block !important;
         }
 
+        /* Screen-only page furniture above the document */
+        .page-header,
+        .alert {
+            display: none !important;
+        }
+
         .print-document {
             display: block !important;
             position: relative;

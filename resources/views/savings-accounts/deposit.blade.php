@@ -5,7 +5,7 @@
 @section('page-header')
     @include('layouts.components.page-header', [
         'title' => 'Make Deposit',
-        'subtitle' => 'Account: ' . $account->account_number . ' | Balance: ' . number_format($account->balance, 2),
+        'subtitle' => 'Account: ' . $account->account_number . ' | Balance: ' . number_format($account->current_balance, 2),
         'breadcrumb' => [
             ['label' => 'Member Savings Accounts', 'url' => route('savings-accounts.index')],
             ['label' => $account->account_number, 'url' => route('savings-accounts.show', $account)],
@@ -18,7 +18,7 @@
 @endsection
 
 @section('content')
-<form method="POST" action="{{ route('savings-accounts.deposit.store', $account) }}" data-validate>
+<form method="POST" action="{{ route('savings-accounts.do-deposit', $account) }}" data-validate>
     @csrf
 
     <div class="row justify-content-center">
@@ -35,18 +35,17 @@
                             <label class="form-label">Amount <span class="text-danger">*</span></label>
                             <input type="number" name="amount" class="form-control" value="{{ old('amount') }}" step="0.01" min="0.01" required placeholder="0.00">
                             @error('amount') <span class="text-danger small">{{ $message }}</span> @enderror
-                            <div class="form-text">Minimum deposit: {{ number_format($account->savingsProduct->minimum_amount ?? 0, 2) }}</div>
+                            <div class="form-text">Minimum deposit: {{ number_format(optional($account->savingsProduct)->minimum_amount ?? 0, 2) }}</div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Payment Method <span class="text-danger">*</span></label>
-                            <select name="payment_method" class="form-select" required>
+                            <select name="payment_method_id" class="form-select" required>
                                 <option value="">Select Method</option>
-                                <option value="cash" {{ old('payment_method') == 'cash' ? 'selected' : '' }}>Cash</option>
-                                <option value="bank_transfer" {{ old('payment_method') == 'bank_transfer' ? 'selected' : '' }}>Bank Transfer</option>
-                                <option value="mobile_money" {{ old('payment_method') == 'mobile_money' ? 'selected' : '' }}>Mobile Money</option>
-                                <option value="cheque" {{ old('payment_method') == 'cheque' ? 'selected' : '' }}>Cheque</option>
+                                @foreach($paymentMethods as $method)
+                                    <option value="{{ $method->id }}" {{ old('payment_method_id') == $method->id ? 'selected' : '' }}>{{ $method->name }}</option>
+                                @endforeach
                             </select>
-                            @error('payment_method') <span class="text-danger small">{{ $message }}</span> @enderror
+                            @error('payment_method_id') <span class="text-danger small">{{ $message }}</span> @enderror
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Transaction Date <span class="text-danger">*</span></label>

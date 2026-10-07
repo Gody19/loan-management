@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreVicobaGroupRequest;
-use App\Models\Branch;
 use App\Models\VicobaGroup;
 use App\Services\AuditService;
 use App\Services\OrganizationContext;
@@ -63,7 +62,10 @@ class VicobaGroupController extends Controller
 
         $vicoba_group->load('branch.organization');
 
-        return view('vicoba-groups.show', ['group' => $vicoba_group]);
+        return view('vicoba-groups.show', [
+            'group' => $vicoba_group,
+            'summary' => $this->groupService->summary($vicoba_group),
+        ]);
     }
 
     public function edit(VicobaGroup $vicoba_group): View
