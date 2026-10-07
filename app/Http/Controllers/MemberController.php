@@ -9,8 +9,8 @@ use App\Models\Branch;
 use App\Models\Member;
 use App\Models\Organization;
 use App\Models\VicobaGroup;
-use App\Services\MemberService;
 use App\Services\FinancialStatementService;
+use App\Services\MemberService;
 use Illuminate\Http\Request;
 
 class MemberController extends Controller
@@ -88,7 +88,7 @@ class MemberController extends Controller
         $tempPassword = $result['temp_password'];
 
         return redirect()->route('members.show', $member)
-            ->with('success', 'Member "'.$member->full_name.'" created successfully. Member No: '.$member->member_number.'. Portal credentials: '.$request->email.' / password');
+            ->with('success', 'Member "'.$member->full_name.'" created successfully. Member No: '.$member->member_number.'. Portal credentials: '.$request->email.' / '.$tempPassword);
     }
 
     public function show(Member $member)

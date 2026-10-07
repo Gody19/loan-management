@@ -79,10 +79,15 @@ Route::get('/register-organization', [LandingPageController::class, 'showRegistr
     ->name('register-organization');
 
 Route::post('/register-organization', [LandingPageController::class, 'storeRegistration'])
-    ->name('register-organization.store');
+    ->name('register-organization.store')
+    // This endpoint creates an entire tenant (organization + branch + an
+    // Organization Administrator). Unthrottled it is an unauthenticated
+    // mass-account creation primitive.
+    ->middleware('throttle:10,1');
 
 Route::post('/contact', [ContactMessageController::class, 'store'])
-    ->name('contact.store');
+    ->name('contact.store')
+    ->middleware('throttle:5,1');
 
 /*
  * Public landing-page FAQ chat for unauthenticated visitors. Stateless and
@@ -121,7 +126,10 @@ Route::get('/login', [LoginController::class, 'showLoginForm'])
     ->name('login')
     ->middleware('guest');
 
-Route::post('/login', [LoginController::class, 'login']);
+Route::post('/login', [LoginController::class, 'login'])
+    // Coarse outer bound on request volume; LoginRequest additionally applies a
+    // per email+IP counter that locks the account out after 5 failures.
+    ->middleware('throttle:20,1');
 
 Route::post('/logout', [LoginController::class, 'logout'])
     ->name('logout')

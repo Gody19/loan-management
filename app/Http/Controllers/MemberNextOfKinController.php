@@ -25,7 +25,7 @@ class MemberNextOfKinController extends Controller
 
     public function update(StoreNextOfKinRequest $request, Member $member, MemberNextOfKin $kin)
     {
-        $this->authorize('manageNextOfKin', $member);
+        $this->authorizeForMember($member, $kin);
 
         $this->memberService->updateNextOfKin($kin, $request->validated());
 
@@ -35,11 +35,24 @@ class MemberNextOfKinController extends Controller
 
     public function destroy(Member $member, MemberNextOfKin $kin)
     {
-        $this->authorize('manageNextOfKin', $member);
+        $this->authorizeForMember($member, $kin);
 
         $this->memberService->removeNextOfKin($kin);
 
         return redirect()->route('members.show', $member)
             ->with('success', 'Next of kin removed successfully.');
+    }
+
+    /**
+     * The relative and the member are bound independently from the URL, so the
+     * relative identifier would otherwise be trusted from user input. Without
+     * this check, a user authorized for one member could read or overwrite the
+     * next-of-kin identity records of any other member in the organization.
+     */
+    private function authorizeForMember(Member $member, MemberNextOfKin $kin): void
+    {
+        abort_unless($kin->member_id === $member->id, 403);
+
+        $this->authorize('manageNextOfKin', $member);
     }
 }

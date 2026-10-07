@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -680,7 +681,19 @@ class RolePermissionSeeder extends Seeder
         |--------------------------------------------------------------------------
         | Create Default Super Administrator
         |--------------------------------------------------------------------------
+        |
+        | Both bootstrap accounts previously shipped the literal password
+        | "password", which handed a production Super Administrator to anyone
+        | who knew the seed data. The password is now taken from
+        | FINANCEPRO_ADMIN_PASSWORD when supplied, and otherwise generated
+        | randomly and printed once, so a real deployment never starts from a
+        | credential that is published in this repository. The accounts are
+        | created with firstOrCreate, so an existing password is never
+        | overwritten when the seeder is re-run.
+        |
         */
+        $adminPassword = $this->bootstrapPassword('Super Administrator');
+
         $admin = User::firstOrCreate(
             ['email' => 'admin@financepro.co.tz'],
             [
@@ -689,7 +702,7 @@ class RolePermissionSeeder extends Seeder
                 'phone' => '+255700000000',
                 'nida_number' => '00000000000000000000',
                 'status' => 'active',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($adminPassword),
                 'email_verified_at' => now(),
             ]
         );
@@ -709,11 +722,38 @@ class RolePermissionSeeder extends Seeder
                 'phone' => '+255711111111',
                 'nida_number' => '11111111111111111111',
                 'status' => 'active',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($this->bootstrapPassword('Bootstrap member account')),
                 'email_verified_at' => now(),
             ]
         );
 
         $testUser->assignRole('VICOBA Member');
+    }
+
+    /**
+     * Resolve the password for a bootstrap account.
+     *
+     * Read from the environment when the operator has set one, otherwise
+     * generated. It is only ever surfaced through console output, never stored
+     * in the repository and never written to a file inside the public webroot.
+     */
+    private function bootstrapPassword(string $account): string
+    {
+        $configured = config('financepro.admin_password');
+
+        if (is_string($configured) && trim($configured) !== '') {
+            return trim($configured);
+        }
+
+        $generated = Str::password(16, symbols: false, spaces: false);
+
+        if ($this->command !== null) {
+            $this->command->warn(
+                "FINANCEPRO_ADMIN_PASSWORD is not set. Generated password for the {$account}: {$generated}"
+            );
+            $this->command->warn('Record it now. It is not stored anywhere and cannot be recovered.');
+        }
+
+        return $generated;
     }
 }

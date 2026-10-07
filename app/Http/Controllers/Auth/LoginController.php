@@ -27,14 +27,20 @@ class LoginController extends Controller
      */
     public function login(LoginRequest $request): RedirectResponse
     {
+        $request->ensureIsNotRateLimited();
+
         $credentials = $request->only('email', 'password');
         $remember = $request->boolean('remember');
 
         if (! Auth::attempt($credentials, $remember)) {
+            $request->hitRateLimiter();
+
             return back()->withErrors([
                 'email' => 'The provided credentials do not match our records.',
             ])->onlyInput('email');
         }
+
+        $request->clearRateLimiter();
 
         $user = Auth::user();
 

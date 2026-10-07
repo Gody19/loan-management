@@ -46,9 +46,19 @@ class AiPublicChatController extends Controller
             && $this->conversations->isAvailable();
     }
 
+    /**
+     * Bound how long an ANONYMOUS request may hold a PHP worker.
+     *
+     * This previously called set_time_limit(600), which let an unauthenticated
+     * visitor pin a worker for up to ten minutes per request. Combined with the
+     * per-IP chat throttle that is a cheap way to exhaust the FPM pool on a
+     * financial application. The wall clock is now a configurable bound that
+     * sits above the provider timeout and far below ten minutes, and the
+     * provider's own timeout remains the real ceiling.
+     */
     protected function extendTimeLimit(): void
     {
-        set_time_limit(600);
+        set_time_limit((int) config('ai.public_chat.max_execution_seconds', 120));
     }
 
     protected function unavailable(): JsonResponse

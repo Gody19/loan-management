@@ -27,7 +27,7 @@ class MemberDocumentController extends Controller
 
     public function download(Member $member, MemberDocument $document)
     {
-        $this->authorize('manageDocuments', $member);
+        $this->authorizeForMember($member, $document);
 
         if (! Storage::disk('private')->exists($document->file_path)) {
             abort(404, 'Document file not found.');
@@ -41,7 +41,7 @@ class MemberDocumentController extends Controller
 
     public function verify(VerifyDocumentRequest $request, Member $member, MemberDocument $document)
     {
-        $this->authorize('manageDocuments', $member);
+        $this->authorizeForMember($member, $document);
 
         if ($request->verification_status === 'verified') {
             $this->memberService->verifyDocument($document, $request->notes);
@@ -57,11 +57,25 @@ class MemberDocumentController extends Controller
 
     public function destroy(Member $member, MemberDocument $document)
     {
-        $this->authorize('manageDocuments', $member);
+        $this->authorizeForMember($member, $document);
 
         $this->memberService->deleteDocument($document);
 
         return redirect()->route('members.show', $member)->with('tab', 'documents')
             ->with('success', 'Document deleted successfully.');
+    }
+
+    /**
+     * The document and the member are bound independently from the URL, so
+     * authorizing the member alone leaves the document identifier trusted from
+     * user input. Without this check, a user authorized for one member could
+     * read, re-verify or delete another member's identity documents by pairing
+     * their own member id with any document id.
+     */
+    private function authorizeForMember(Member $member, MemberDocument $document): void
+    {
+        abort_unless($document->member_id === $member->id, 403);
+
+        $this->authorize('manageDocuments', $member);
     }
 }

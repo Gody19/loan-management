@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\MemberStatus;
+use App\Enums\UserStatus;
 use App\Models\Member;
 use App\Models\MemberDocument;
 use App\Models\MemberNextOfKin;
@@ -54,7 +55,14 @@ class MemberService
         return DB::transaction(function () use ($data, $nextOfKinData, $documentsData) {
             $data['member_number'] = $this->numberGenerator->generate();
 
-            $tempPassword = 'password';
+            // Every member account previously received the literal string
+            // "password", so any account whose username or email leaked could be
+            // taken over immediately. The credential is now generated per member
+            // and returned to the caller so staff can pass it to the member out
+            // of band. It is deliberately letters and digits only, because it is
+            // read aloud and typed on a telephone as often as it is typed on a
+            // keyboard.
+            $tempPassword = Str::password(12, symbols: false, spaces: false);
 
             $user = User::create([
                 'fullname' => trim(($data['first_name'] ?? '').' '.($data['last_name'] ?? '')),
@@ -63,7 +71,7 @@ class MemberService
                 'phone' => $data['phone'] ?? null,
                 'nida_number' => $data['national_id'] ?? ('NIDA-'.Str::random(10)),
                 'password' => Hash::make($tempPassword),
-                'status' => \App\Enums\UserStatus::Active,
+                'status' => UserStatus::Active,
                 'is_active' => true,
             ]);
 

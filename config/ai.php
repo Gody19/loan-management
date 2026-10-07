@@ -126,6 +126,13 @@ return [
         'max_output_tokens' => (int) env('AI_PUBLIC_CHAT_MAX_OUTPUT_TOKENS', 512),
 
         'retention_days' => (int) env('AI_PUBLIC_CHAT_RETENTION_DAYS', 30),
+
+        // Wall-clock ceiling, in seconds, for an unauthenticated public chat
+        // request. Bounds how long one PHP worker can be held by a caller who
+        // has no account. Keep it above AI_TIMEOUT so a slow provider still
+        // returns its own controlled error rather than a hard kill, and well
+        // below the FPM max_execution_time of a typical production pool.
+        'max_execution_seconds' => (int) env('AI_PUBLIC_CHAT_MAX_EXECUTION_SECONDS', 120),
     ],
 
     'public_system_instructions' => (string) env('AI_PUBLIC_SYSTEM_INSTRUCTIONS',

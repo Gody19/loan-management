@@ -2,17 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ReverseTransactionRequest;
 use App\Http\Requests\StoreSavingsAccountRequest;
 use App\Http\Requests\StoreSavingsDepositRequest;
 use App\Http\Requests\StoreSavingsWithdrawalRequest;
-use App\Http\Requests\ReverseTransactionRequest;
+use App\Models\Branch;
 use App\Models\Member;
 use App\Models\Organization;
-use App\Models\Branch;
-use App\Models\VicobaGroup;
 use App\Models\PaymentMethod;
 use App\Models\SavingsAccount;
 use App\Models\SavingsProduct;
+use App\Models\SavingsTransaction;
+use App\Models\VicobaGroup;
 use App\Services\OrganizationContext;
 use App\Services\SavingsAccountNumberGenerator;
 use App\Services\SavingsTransactionService;
@@ -41,8 +42,12 @@ class SavingsAccountController extends Controller
                         ->orWhere('last_name', 'LIKE', "%{$request->search}%"));
             });
         }
-        if ($request->filled('organization_id')) $query->where('organization_id', $request->organization_id);
-        if ($request->filled('status')) $query->where('status', $request->status);
+        if ($request->filled('organization_id')) {
+            $query->where('organization_id', $request->organization_id);
+        }
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
 
         $accounts = $query->latest()->paginate(15)->withQueryString();
 
@@ -65,13 +70,21 @@ class SavingsAccountController extends Controller
 
     public function store(StoreSavingsAccountRequest $request)
     {
+        $this->authorize('create', SavingsAccount::class);
+
+        // A member account is created inside a chosen organization, so the
+        // organization has to be one the caller may act in. Without this the
+        // route is reachable by any authenticated user of any organization.
+        OrganizationContext::authorizeOrganization((int) $request->organization_id);
+
         $data = $request->validated();
         $data['account_number'] = $this->numberGenerator->generate();
         $data['current_balance'] = 0;
 
         $account = SavingsAccount::create($data);
+
         return redirect()->route('savings-accounts.show', $account)
-            ->with('success', 'Savings account ' . $account->account_number . ' created.');
+            ->with('success', 'Savings account '.$account->account_number.' created.');
     }
 
     public function show(SavingsAccount $savingsAccount)
@@ -100,6 +113,7 @@ class SavingsAccountController extends Controller
     {
         $this->authorize('deposit', $savingsAccount);
         $paymentMethods = PaymentMethod::where('status', 'active')->get();
+
         return view('savings-accounts.deposit', ['account' => $savingsAccount, 'paymentMethods' => $paymentMethods]);
     }
 
@@ -108,6 +122,7 @@ class SavingsAccountController extends Controller
         $this->authorize('deposit', $savingsAccount);
         try {
             $this->transactionService->deposit($savingsAccount, $request->validated());
+
             return redirect()->route('savings-accounts.show', $savingsAccount)
                 ->with('success', 'Deposit completed successfully.');
         } catch (\InvalidArgumentException $e) {
@@ -120,6 +135,7 @@ class SavingsAccountController extends Controller
     {
         $this->authorize('withdraw', $savingsAccount);
         $paymentMethods = PaymentMethod::where('status', 'active')->get();
+
         return view('savings-accounts.withdraw', ['account' => $savingsAccount, 'paymentMethods' => $paymentMethods]);
     }
 
@@ -128,6 +144,7 @@ class SavingsAccountController extends Controller
         $this->authorize('withdraw', $savingsAccount);
         try {
             $this->transactionService->withdraw($savingsAccount, $request->validated());
+
             return redirect()->route('savings-accounts.show', $savingsAccount)
                 ->with('success', 'Withdrawal completed successfully.');
         } catch (\InvalidArgumentException $e) {
@@ -136,11 +153,12 @@ class SavingsAccountController extends Controller
         }
     }
 
-    public function reverse(ReverseTransactionRequest $request, \App\Models\SavingsTransaction $transaction)
+    public function reverse(ReverseTransactionRequest $request, SavingsTransaction $transaction)
     {
         $this->authorize('reverse', $transaction);
         try {
             $reversal = $this->transactionService->reverse($transaction, $request->validated()['reason']);
+
             return redirect()->route('savings-accounts.show', $transaction->account)
                 ->with('success', 'Transaction reversed successfully.');
         } catch (\InvalidArgumentException $e) {

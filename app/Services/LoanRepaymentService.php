@@ -41,13 +41,28 @@ class LoanRepaymentService
             $loan, $amount, $paymentDate, $paymentMethod,
             $paymentMethodId, $referenceNumber, $notes, $idempotencyKey
         ) {
-            $loan->lockForUpdate();
+            // Re-read the loan under a row lock and use THAT row for every
+            // subsequent read and write in this transaction.
+            //
+            // Calling lockForUpdate() on the model instance is a silent no-op:
+            // Eloquent forwards it to a throwaway query builder, which only sets
+            // a lock flag that is discarded because nothing is ever executed.
+            // Without this lock two concurrent repayments both read the same
+            // outstanding_balance, both pass validation, and both write, which
+            // over-collects the loan and corrupts its schedule. This mirrors the
+            // correct pattern already used by SavingsTransactionService.
+            $lockedLoan = Loan::query()
+                ->whereKey($loan->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->validateLoanForRepayment($lockedLoan);
 
             $repayment = LoanRepayment::create([
-                'loan_id' => $loan->id,
-                'organization_id' => $loan->organization_id,
-                'branch_id' => $loan->branch_id,
-                'member_id' => $loan->member_id,
+                'loan_id' => $lockedLoan->id,
+                'organization_id' => $lockedLoan->organization_id,
+                'branch_id' => $lockedLoan->branch_id,
+                'member_id' => $lockedLoan->member_id,
                 'payment_method_id' => $paymentMethodId,
                 'received_by' => auth()->id(),
                 'repayment_number' => $this->numberGenerator->generate(),
@@ -63,11 +78,11 @@ class LoanRepaymentService
                 'notes' => $notes,
             ]);
 
-            $allocations = $this->allocationService->allocatePayment($loan, $amount, $repayment->id);
+            $allocations = $this->allocationService->allocatePayment($lockedLoan, $amount, $repayment->id);
 
-            $totalPrincipal = array_sum(array_map(fn($a) => (float) $a->principal_allocation, $allocations));
-            $totalInterest = array_sum(array_map(fn($a) => (float) $a->interest_allocation, $allocations));
-            $totalFee = array_sum(array_map(fn($a) => (float) $a->fee_allocation, $allocations));
+            $totalPrincipal = array_sum(array_map(fn ($a) => (float) $a->principal_allocation, $allocations));
+            $totalInterest = array_sum(array_map(fn ($a) => (float) $a->interest_allocation, $allocations));
+            $totalFee = array_sum(array_map(fn ($a) => (float) $a->fee_allocation, $allocations));
             $totalAllocated = $totalPrincipal + $totalInterest + $totalFee;
             $overpaymentAmount = max(0, $amount - $totalAllocated);
 
@@ -78,10 +93,10 @@ class LoanRepaymentService
                 'overpayment_amount' => round($overpaymentAmount, 2),
             ]);
 
-            $newAmountPaid = (float) $loan->amount_paid + $amount;
-            $newOutstanding = max(0, (float) $loan->outstanding_balance - $amount);
+            $newAmountPaid = (float) $lockedLoan->amount_paid + $amount;
+            $newOutstanding = max(0, (float) $lockedLoan->outstanding_balance - $amount);
 
-            $nextPayment = $loan->repaymentSchedule()
+            $nextPayment = $lockedLoan->repaymentSchedule()
                 ->whereIn('status', [
                     LoanScheduleInstallmentStatus::Pending->value,
                     LoanScheduleInstallmentStatus::Partial->value,
@@ -90,11 +105,11 @@ class LoanRepaymentService
                 ->orderBy('due_date')
                 ->first();
 
-            $loan->update([
+            $lockedLoan->update([
                 'amount_paid' => round($newAmountPaid, 2),
                 'outstanding_balance' => round($newOutstanding, 2),
                 'next_payment_date' => $nextPayment?->due_date,
-                'installments_paid' => $loan->repaymentSchedule()
+                'installments_paid' => $lockedLoan->repaymentSchedule()
                     ->where('status', LoanScheduleInstallmentStatus::Paid)
                     ->count(),
                 'status' => $newOutstanding <= 0 ? LoanStatus::Completed : LoanStatus::Active,
@@ -110,13 +125,18 @@ class LoanRepaymentService
 
     public function reverseRepayment(LoanRepayment $repayment, string $reason): LoanRepayment
     {
-        if (!$repayment->status->isReversible()) {
+        if (! $repayment->status->isReversible()) {
             throw new \InvalidArgumentException('Only posted repayments can be reversed.');
         }
 
         return DB::transaction(function () use ($repayment, $reason) {
-            $loan = $repayment->loan;
-            $loan->lockForUpdate();
+            // Same defect as the post path: locking the already-loaded model
+            // instance emits no SQL, so a reversal could race a concurrent
+            // repayment and reverse allocations that had just been re-allocated.
+            $loan = Loan::query()
+                ->whereKey($repayment->loan_id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
             $repayment->update([
                 'status' => LoanRepaymentStatus::Reversed,
